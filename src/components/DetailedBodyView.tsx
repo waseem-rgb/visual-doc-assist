@@ -96,11 +96,11 @@ const getQuadrantParts = (quadrant: string, view: string) => {
     },
     chest: {
       Front: [
-        { name: "SHOULDER FRONT", x1: 0.05, y1: 0.02, x2: 0.95, y2: 0.28 },
-        { name: "CHEST UPPER", x1: 0.20, y1: 0.25, x2: 0.80, y2: 0.50 },
-        { name: "CHEST CENTRAL", x1: 0.25, y1: 0.48, x2: 0.75, y2: 0.75 },
-        { name: "CHEST SIDE", x1: 0.08, y1: 0.35, x2: 0.92, y2: 0.70 },
-        { name: "BREAST", x1: 0.15, y1: 0.30, x2: 0.85, y2: 0.65 },
+        { name: "SHOULDER FRONT", x1: 0.05, y1: 0.02, x2: 0.95, y2: 0.25 },
+        { name: "CHEST UPPER", x1: 0.25, y1: 0.24, x2: 0.75, y2: 0.45 },
+        { name: "CHEST CENTRAL", x1: 0.30, y1: 0.44, x2: 0.70, y2: 0.65 },
+        { name: "CHEST SIDE", x1: 0.08, y1: 0.35, x2: 0.26, y2: 0.70 },
+        { name: "BREAST", x1: 0.20, y1: 0.32, x2: 0.80, y2: 0.62 },
       ],
       "Back view": [
         { name: "SHOULDER BACK", x1: 0.05, y1: 0.02, x2: 0.95, y2: 0.28 },
@@ -109,19 +109,19 @@ const getQuadrantParts = (quadrant: string, view: string) => {
     },
     abdomen: {
       Front: [
-        { name: "UPPER ABDOMEN", x1: 0.20, y1: 0.02, x2: 0.80, y2: 0.32 },
-        { name: "ABDOMEN GENERAL", x1: 0.15, y1: 0.20, x2: 0.85, y2: 0.62 },
-        { name: "LOWER ABDOMEN LEFT", x1: 0.15, y1: 0.50, x2: 0.48, y2: 0.72 },
-        { name: "LOWER ABDOMEN RIGHT", x1: 0.52, y1: 0.50, x2: 0.85, y2: 0.72 },
-        { name: "FEMALE LOWER ABDOMEN", x1: 0.20, y1: 0.60, x2: 0.80, y2: 0.78 },
-        { name: "BOWELS DIARRHOEA", x1: 0.22, y1: 0.35, x2: 0.78, y2: 0.58 },
-        { name: "BOWELS CONSTIPATION", x1: 0.25, y1: 0.40, x2: 0.75, y2: 0.63 },
-        { name: "BOWELS ABNORMAL STOOL", x1: 0.27, y1: 0.45, x2: 0.73, y2: 0.68 },
-        { name: "GROIN MALE AND FEMALE", x1: 0.25, y1: 0.75, x2: 0.75, y2: 0.92 },
-        { name: "MALE GENITALS", x1: 0.30, y1: 0.78, x2: 0.70, y2: 0.88 },
+        { name: "UPPER ABDOMEN", x1: 0.25, y1: 0.05, x2: 0.75, y2: 0.25 },
+        { name: "ABDOMEN GENERAL", x1: 0.30, y1: 0.22, x2: 0.70, y2: 0.45 },
+        { name: "LOWER ABDOMEN LEFT", x1: 0.20, y1: 0.42, x2: 0.48, y2: 0.58 },
+        { name: "LOWER ABDOMEN RIGHT", x1: 0.52, y1: 0.42, x2: 0.80, y2: 0.58 },
+        { name: "FEMALE LOWER ABDOMEN", x1: 0.25, y1: 0.55, x2: 0.75, y2: 0.68 },
+        { name: "BOWELS DIARRHOEA", x1: 0.20, y1: 0.25, x2: 0.48, y2: 0.42 },
+        { name: "BOWELS CONSTIPATION", x1: 0.52, y1: 0.25, x2: 0.80, y2: 0.42 },
+        { name: "BOWELS ABNORMAL STOOL", x1: 0.30, y1: 0.45, x2: 0.70, y2: 0.58 },
+        { name: "GROIN MALE AND FEMALE", x1: 0.30, y1: 0.68, x2: 0.70, y2: 0.80 },
+        { name: "MALE GENITALS", x1: 0.35, y1: 0.75, x2: 0.65, y2: 0.85 },
         { name: "FEMALE GENITALS", x1: 0.30, y1: 0.78, x2: 0.70, y2: 0.88 },
-        { name: "URINARY PROBLEMS MALE", x1: 0.28, y1: 0.76, x2: 0.72, y2: 0.90 },
-        { name: "URINARY PROBLEMS FEMALE", x1: 0.28, y1: 0.76, x2: 0.72, y2: 0.90 },
+        { name: "URINARY PROBLEMS MALE", x1: 0.32, y1: 0.70, x2: 0.68, y2: 0.80 },
+        { name: "URINARY PROBLEMS FEMALE", x1: 0.28, y1: 0.72, x2: 0.72, y2: 0.82 },
       ],
       "Back view": [
         { name: "LOWER BACK", x1: 0.20, y1: 0.02, x2: 0.80, y2: 0.58 },
@@ -202,9 +202,17 @@ const DetailedBodyView = ({
   onBack,
   bodyParts
 }: DetailedBodyViewProps) => {
-  const parts = getQuadrantParts(quadrant, currentView).filter(part => 
-    bodyParts.some(bp => bp.Body_part === part.name)
-  );
+  const parts = getQuadrantParts(quadrant, currentView).filter(part => {
+    const bodyPart = bodyParts.find(bp => bp.Body_part === part.name);
+    if (!bodyPart) return false;
+    
+    // Check gender-specific rules
+    const specificRules = bodyPart["Specific rules"];
+    if (specificRules?.includes("Only to Male patient") && gender !== "male") return false;
+    if (specificRules?.includes("Only to Female patient") && gender !== "female") return false;
+    
+    return true;
+  });
   
   const title = getQuadrantTitle(quadrant, currentView);
   const dedicatedImage = getQuadrantImage(quadrant, currentView, gender);
