@@ -165,8 +165,6 @@ const MaskBodySelector = ({
 
   // Load images to canvases
   useEffect(() => {
-    if (!imageLoaded || !maskLoaded) return;
-    
     const canvas = canvasRef.current;
     const maskCanvas = maskCanvasRef.current;
     if (!canvas || !maskCanvas) return;
@@ -192,6 +190,10 @@ const MaskBodySelector = ({
       maskCanvas.width = maskImg.width;
       maskCanvas.height = maskImg.height;
       maskCtx.drawImage(maskImg, 0, 0);
+      console.log(`Mask loaded: ${maskImg.width}x${maskImg.height}`);
+    };
+    maskImg.onerror = (error) => {
+      console.error('Failed to load mask image:', getMaskImageUrl(gender, currentView), error);
     };
     maskImg.src = getMaskImageUrl(gender, currentView);
   }, [imageLoaded, maskLoaded, imageUrl, gender, currentView]);
@@ -199,14 +201,25 @@ const MaskBodySelector = ({
   // Get body part from mouse position
   const getBodyPartAtPosition = useCallback((x: number, y: number): string | null => {
     const maskCanvas = maskCanvasRef.current;
-    if (!maskCanvas) return null;
+    if (!maskCanvas || !maskLoaded) return null;
 
     const rect = maskCanvas.getBoundingClientRect();
+    
+    // Prevent infinite values from division by zero
+    if (rect.width === 0 || rect.height === 0 || maskCanvas.width === 0 || maskCanvas.height === 0) {
+      return null;
+    }
+    
     const scaleX = maskCanvas.width / rect.width;
     const scaleY = maskCanvas.height / rect.height;
     
     const canvasX = Math.floor(x * scaleX);
     const canvasY = Math.floor(y * scaleY);
+
+    // Ensure coordinates are within canvas bounds
+    if (canvasX < 0 || canvasX >= maskCanvas.width || canvasY < 0 || canvasY >= maskCanvas.height) {
+      return null;
+    }
 
     const maskCtx = maskCanvas.getContext('2d');
     if (!maskCtx) return null;
@@ -238,11 +251,11 @@ const MaskBodySelector = ({
       console.warn('Error reading pixel data:', error);
       return null;
     }
-  }, [gender, currentView, bodyParts, debug]);
+  }, [gender, currentView, bodyParts, debug, maskLoaded]);
 
   // Handle mouse move
   const handleMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
-    if (!containerRef.current) return;
+    if (!containerRef.current || !imageLoaded || !maskLoaded) return;
     
     const rect = containerRef.current.getBoundingClientRect();
     const x = e.clientX - rect.left;
@@ -252,7 +265,7 @@ const MaskBodySelector = ({
     
     const bodyPart = getBodyPartAtPosition(x, y);
     onBodyPartHover(bodyPart);
-  }, [getBodyPartAtPosition, onBodyPartHover]);
+  }, [getBodyPartAtPosition, onBodyPartHover, imageLoaded, maskLoaded]);
 
   // Handle mouse click
   const handleMouseClick = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
