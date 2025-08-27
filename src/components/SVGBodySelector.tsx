@@ -12,63 +12,97 @@ interface SVGBodySelectorProps {
   bodyParts: Array<{ Body_part: string; View: string; "Specific rules": string }>;
 }
 
-// Precise SVG path definitions for body parts
+// Precise SVG path definitions for body parts - adjusted for actual body proportions
 const getBodyPartPaths = (view: string, gender: string) => {
   if (view === "Front") {
     return [
-      // Head and face
-      { name: "FACE", path: "M 200,60 L 280,60 L 280,140 L 200,140 Z", viewBox: "0 0 500 700" },
-      { name: "HAIR AND SCALP", path: "M 180,20 L 300,20 L 300,80 L 180,80 Z", viewBox: "0 0 500 700" },
-      { name: "NECK", path: "M 220,140 L 260,140 L 260,180 L 220,180 Z", viewBox: "0 0 500 700" },
+      // Head and face - positioned at actual head location
+      { name: "HAIR AND SCALP", path: "M 190,10 L 310,10 L 310,70 L 190,70 Z", viewBox: "0 0 500 700" },
+      { name: "HEAD FRONT", path: "M 200,30 L 300,30 L 300,90 L 200,90 Z", viewBox: "0 0 500 700" },
+      { name: "HEAD SIDE", path: "M 150,40 L 350,40 L 350,100 L 150,100 Z", viewBox: "0 0 500 700" },
+      { name: "FACE", path: "M 205,70 L 295,70 L 295,130 L 205,130 Z", viewBox: "0 0 500 700" },
       
-      // Eyes, nose, mouth
-      { name: "EYE PHYSICAL", path: "M 200,80 L 280,80 L 280,100 L 200,100 Z", viewBox: "0 0 500 700" },
-      { name: "NOSE", path: "M 230,100 L 250,100 L 250,120 L 230,120 Z", viewBox: "0 0 500 700" },
-      { name: "MOUTH", path: "M 220,120 L 260,120 L 260,140 L 220,140 Z", viewBox: "0 0 500 700" },
+      // Facial features
+      { name: "EYE PHYSICAL", path: "M 200,80 L 300,80 L 300,100 L 200,100 Z", viewBox: "0 0 500 700" },
+      { name: "EYE VISION", path: "M 200,80 L 300,80 L 300,100 L 200,100 Z", viewBox: "0 0 500 700" },
+      { name: "EAR PHYSICAL", path: "M 165,85 L 185,85 L 185,105 L 165,105 Z", viewBox: "0 0 500 700" },
+      { name: "EAR HEARING", path: "M 315,85 L 335,85 L 335,105 L 315,105 Z", viewBox: "0 0 500 700" },
+      { name: "NOSE", path: "M 235,100 L 265,100 L 265,120 L 235,120 Z", viewBox: "0 0 500 700" },
+      { name: "MOUTH", path: "M 225,115 L 275,115 L 275,135 L 225,135 Z", viewBox: "0 0 500 700" },
       
-      // Ears
-      { name: "EAR PHYSICAL", path: "M 180,90 L 200,90 L 200,110 L 180,110 Z", viewBox: "0 0 500 700" },
+      // Neck and throat
+      { name: "NECK", path: "M 225,130 L 275,130 L 275,170 L 225,170 Z", viewBox: "0 0 500 700" },
+      { name: "THROAT", path: "M 230,140 L 270,140 L 270,165 L 230,165 Z", viewBox: "0 0 500 700" },
+      { name: "THROAT VOICE", path: "M 235,145 L 265,145 L 265,160 L 235,160 Z", viewBox: "0 0 500 700" },
       
-      // Shoulders and chest
-      { name: "SHOULDER FRONT", path: "M 120,180 L 360,180 L 360,220 L 120,220 Z", viewBox: "0 0 500 700" },
-      { name: "CHEST UPPER", path: "M 180,220 L 300,220 L 300,280 L 180,280 Z", viewBox: "0 0 500 700" },
-      { name: "CHEST CENTRAL", path: "M 200,280 L 280,280 L 280,340 L 200,340 Z", viewBox: "0 0 500 700" },
+      // Shoulders and upper body
+      { name: "SHOULDER FRONT", path: "M 130,170 L 370,170 L 370,210 L 130,210 Z", viewBox: "0 0 500 700" },
+      { name: "CHEST UPPER", path: "M 190,210 L 310,210 L 310,270 L 190,270 Z", viewBox: "0 0 500 700" },
+      { name: "CHEST CENTRAL", path: "M 205,270 L 295,270 L 295,320 L 205,320 Z", viewBox: "0 0 500 700" },
+      { name: "CHEST SIDE", path: "M 140,220 L 360,220 L 360,300 L 140,300 Z", viewBox: "0 0 500 700" },
+      
+      // Gender-specific chest
+      ...(gender === "female" ? [{ name: "BREAST", path: "M 180,230 L 320,230 L 320,290 L 180,290 Z", viewBox: "0 0 500 700" }] : []),
       
       // Arms
-      { name: "UPPER ARM", path: "M 80,220 L 140,220 L 140,340 L 80,340 Z", viewBox: "0 0 500 700" },
-      { name: "FOREARM AND WRIST", path: "M 60,340 L 120,340 L 120,460 L 60,460 Z", viewBox: "0 0 500 700" },
-      { name: "HAND PALM", path: "M 40,460 L 100,460 L 100,500 L 40,500 Z", viewBox: "0 0 500 700" },
+      { name: "UPPER ARM", path: "M 90,210 L 150,210 L 150,350 L 90,350 Z", viewBox: "0 0 500 700" },
+      { name: "FOREARM AND WRIST", path: "M 70,350 L 130,350 L 130,480 L 70,480 Z", viewBox: "0 0 500 700" },
+      { name: "HAND PALM", path: "M 50,480 L 110,480 L 110,520 L 50,520 Z", viewBox: "0 0 500 700" },
+      { name: "UPPER BACK", path: "M 190,200 L 310,200 L 310,350 L 190,350 Z", viewBox: "0 0 500 700" },
       
-      // Abdomen
-      { name: "UPPER ABDOMEN", path: "M 200,340 L 280,340 L 280,400 L 200,400 Z", viewBox: "0 0 500 700" },
-      { name: "ABDOMEN GENERAL", path: "M 180,400 L 300,400 L 300,480 L 180,480 Z", viewBox: "0 0 500 700" },
-      { name: "LOWER ABDOMEN LEFT", path: "M 180,480 L 240,480 L 240,520 L 180,520 Z", viewBox: "0 0 500 700" },
-      { name: "LOWER ABDOMEN RIGHT", path: "M 240,480 L 300,480 L 300,520 L 240,520 Z", viewBox: "0 0 500 700" },
+      // Abdomen - precisely positioned
+      { name: "UPPER ABDOMEN", path: "M 205,320 L 295,320 L 295,380 L 205,380 Z", viewBox: "0 0 500 700" },
+      { name: "ABDOMEN GENERAL", path: "M 190,380 L 310,380 L 310,460 L 190,460 Z", viewBox: "0 0 500 700" },
+      { name: "LOWER ABDOMEN LEFT", path: "M 190,460 L 250,460 L 250,500 L 190,500 Z", viewBox: "0 0 500 700" },
+      { name: "LOWER ABDOMEN RIGHT", path: "M 250,460 L 310,460 L 310,500 L 250,500 Z", viewBox: "0 0 500 700" },
+      
+      // Gender-specific abdomen
+      ...(gender === "female" ? [{ name: "FEMALE LOWER ABDOMEN", path: "M 205,480 L 295,480 L 295,520 L 205,520 Z", viewBox: "0 0 500 700" }] : []),
+      
+      // Digestive system
+      { name: "BOWELS ABNORMAL STOOL", path: "M 180,420 L 320,420 L 320,480 L 180,480 Z", viewBox: "0 0 500 700" },
+      { name: "BOWELS CONSTIPATION", path: "M 180,420 L 320,420 L 320,480 L 180,480 Z", viewBox: "0 0 500 700" },
+      { name: "BOWELS DIARRHOEA", path: "M 180,420 L 320,420 L 320,480 L 180,480 Z", viewBox: "0 0 500 700" },
       
       // Genitals and groin
-      { name: "GROIN MALE AND FEMALE", path: "M 210,520 L 270,520 L 270,560 L 210,560 Z", viewBox: "0 0 500 700" },
+      { name: "GROIN MALE AND FEMALE", path: "M 215,500 L 285,500 L 285,540 L 215,540 Z", viewBox: "0 0 500 700" },
+      ...(gender === "male" ? [
+        { name: "MALE GENITALS", path: "M 220,510 L 280,510 L 280,550 L 220,550 Z", viewBox: "0 0 500 700" },
+        { name: "URINARY PROBLEMS MALE", path: "M 215,505 L 285,505 L 285,545 L 215,545 Z", viewBox: "0 0 500 700" }
+      ] : []),
+      ...(gender === "female" ? [
+        { name: "FEMALE GENITALS", path: "M 225,510 L 275,510 L 275,540 L 225,540 Z", viewBox: "0 0 500 700" },
+        { name: "URINARY PROBLEMS FEMALE", path: "M 215,505 L 285,505 L 285,545 L 215,545 Z", viewBox: "0 0 500 700" }
+      ] : []),
       
       // Hips and legs
-      { name: "HIP FRONT", path: "M 160,560 L 320,560 L 320,600 L 160,600 Z", viewBox: "0 0 500 700" },
-      { name: "THIGH FRONT", path: "M 180,600 L 300,600 L 300,720 L 180,720 Z", viewBox: "0 0 500 700" },
-      { name: "KNEE FRONT", path: "M 190,720 L 290,720 L 290,760 L 190,760 Z", viewBox: "0 0 500 700" },
-      { name: "LOWER LEG FRONT", path: "M 200,760 L 280,760 L 280,880 L 200,880 Z", viewBox: "0 0 500 700" },
+      { name: "HIP FRONT", path: "M 170,540 L 330,540 L 330,580 L 170,580 Z", viewBox: "0 0 500 700" },
+      { name: "THIGH FRONT", path: "M 190,580 L 310,580 L 310,700 L 190,700 Z", viewBox: "0 0 500 700" },
+      { name: "THIGH BACK", path: "M 190,580 L 310,580 L 310,700 L 190,700 Z", viewBox: "0 0 500 700" },
+      
+      // Knees and lower legs
+      { name: "KNEE FRONT", path: "M 200,700 L 300,700 L 300,740 L 200,740 Z", viewBox: "0 0 500 700" },
+      { name: "LOWER LEG FRONT", path: "M 210,740 L 290,740 L 290,860 L 210,860 Z", viewBox: "0 0 500 700" },
       
       // Feet
-      { name: "ANKLE", path: "M 210,880 L 270,880 L 270,900 L 210,900 Z", viewBox: "0 0 500 700" },
-      { name: "FOOT", path: "M 200,900 L 280,900 L 280,940 L 200,940 Z", viewBox: "0 0 500 700" },
+      { name: "ANKLE", path: "M 220,860 L 280,860 L 280,880 L 220,880 Z", viewBox: "0 0 500 700" },
+      { name: "FOOT", path: "M 210,880 L 290,880 L 290,920 L 210,920 Z", viewBox: "0 0 500 700" },
+      { name: "FOOT UPPER", path: "M 210,880 L 290,880 L 290,910 L 210,910 Z", viewBox: "0 0 500 700" },
+      { name: "FOOT UNDERSIDE", path: "M 210,910 L 290,910 L 290,930 L 210,930 Z", viewBox: "0 0 500 700" },
     ];
   } else {
     return [
-      // Back view paths
-      { name: "HAIR AND SCALP", path: "M 180,20 L 300,20 L 300,80 L 180,80 Z", viewBox: "0 0 500 700" },
-      { name: "SHOULDER BACK", path: "M 120,180 L 360,180 L 360,220 L 120,220 Z", viewBox: "0 0 500 700" },
-      { name: "UPPER BACK", path: "M 180,220 L 300,220 L 300,400 L 180,400 Z", viewBox: "0 0 500 700" },
-      { name: "LOWER BACK", path: "M 190,400 L 290,400 L 290,500 L 190,500 Z", viewBox: "0 0 500 700" },
-      { name: "BUTTOCKS AND ANUS", path: "M 200,500 L 280,500 L 280,560 L 200,560 Z", viewBox: "0 0 500 700" },
-      { name: "HIP BACK", path: "M 160,560 L 320,560 L 320,600 L 160,600 Z", viewBox: "0 0 500 700" },
-      { name: "KNEE BACK", path: "M 190,720 L 290,720 L 290,760 L 190,760 Z", viewBox: "0 0 500 700" },
-      { name: "LOWER LEG BACK", path: "M 200,760 L 280,760 L 280,880 L 200,880 Z", viewBox: "0 0 500 700" },
+      // Back view paths - adjusted for back anatomy
+      { name: "HAIR AND SCALP", path: "M 190,10 L 310,10 L 310,70 L 190,70 Z", viewBox: "0 0 500 700" },
+      { name: "SHOULDER BACK", path: "M 130,170 L 370,170 L 370,210 L 130,210 Z", viewBox: "0 0 500 700" },
+      { name: "UPPER BACK", path: "M 190,210 L 310,210 L 310,380 L 190,380 Z", viewBox: "0 0 500 700" },
+      { name: "LOWER BACK", path: "M 200,380 L 300,380 L 300,480 L 200,480 Z", viewBox: "0 0 500 700" },
+      { name: "BUTTOCKS AND ANUS", path: "M 210,480 L 290,480 L 290,540 L 210,540 Z", viewBox: "0 0 500 700" },
+      { name: "ELBOW", path: "M 70,340 L 110,340 L 110,380 L 70,380 Z", viewBox: "0 0 500 700" },
+      { name: "HAND BACK", path: "M 390,480 L 450,480 L 450,520 L 390,520 Z", viewBox: "0 0 500 700" },
+      { name: "HIP BACK", path: "M 170,540 L 330,540 L 330,580 L 170,580 Z", viewBox: "0 0 500 700" },
+      { name: "KNEE BACK", path: "M 200,700 L 300,700 L 300,740 L 200,740 Z", viewBox: "0 0 500 700" },
+      { name: "LOWER LEG BACK", path: "M 210,740 L 290,740 L 290,860 L 210,860 Z", viewBox: "0 0 500 700" },
     ];
   }
 };
