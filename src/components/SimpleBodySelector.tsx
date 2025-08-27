@@ -12,35 +12,73 @@ interface SimpleBodySelectorProps {
   bodyParts: Array<{ Body_part: string; View: string; "Specific rules": string }>;
 }
 
-// Simple coordinate-based detection with better positioning
+// Simple coordinate-based detection with corrected positioning
 const getBodyRegions = (view: string) => {
   if (view === "Front") {
     return [
-      { name: "EYE VISION", x1: 0.35, y1: 0.12, x2: 0.65, y2: 0.18 },
-      { name: "EYE PHYSICAL", x1: 0.35, y1: 0.12, x2: 0.65, y2: 0.18 },
-      { name: "NOSE", x1: 0.42, y1: 0.18, x2: 0.58, y2: 0.25 },
-      { name: "MOUTH", x1: 0.40, y1: 0.25, x2: 0.60, y2: 0.30 },
-      { name: "NECK", x1: 0.40, y1: 0.30, x2: 0.60, y2: 0.38 },
-      { name: "THROAT", x1: 0.42, y1: 0.32, x2: 0.58, y2: 0.36 },
-      { name: "CHEST UPPER", x1: 0.35, y1: 0.38, x2: 0.65, y2: 0.50 },
-      { name: "CHEST CENTRAL", x1: 0.38, y1: 0.45, x2: 0.62, y2: 0.55 },
-      { name: "ABDOMEN GENERAL", x1: 0.35, y1: 0.55, x2: 0.65, y2: 0.70 },
-      { name: "UPPER ABDOMEN", x1: 0.38, y1: 0.50, x2: 0.62, y2: 0.60 },
-      { name: "LOWER ABDOMEN LEFT", x1: 0.30, y1: 0.65, x2: 0.50, y2: 0.75 },
-      { name: "LOWER ABDOMEN RIGHT", x1: 0.50, y1: 0.65, x2: 0.70, y2: 0.75 },
-      { name: "GROIN MALE AND FEMALE", x1: 0.40, y1: 0.75, x2: 0.60, y2: 0.85 },
-      { name: "MALE GENITALS", x1: 0.42, y1: 0.78, x2: 0.58, y2: 0.82 },
-      { name: "FEMALE GENITALS", x1: 0.42, y1: 0.78, x2: 0.58, y2: 0.82 },
-      { name: "THIGH FRONT", x1: 0.25, y1: 0.85, x2: 0.75, y2: 0.95 },
-      { name: "KNEE FRONT", x1: 0.30, y1: 0.92, x2: 0.70, y2: 0.98 },
-      { name: "FOOT", x1: 0.35, y1: 0.95, x2: 0.65, y2: 1.0 }
+      // Head region - much higher up
+      { name: "EYE VISION", x1: 0.40, y1: 0.08, x2: 0.60, y2: 0.12 },
+      { name: "EYE PHYSICAL", x1: 0.40, y1: 0.08, x2: 0.60, y2: 0.12 },
+      { name: "NOSE", x1: 0.45, y1: 0.12, x2: 0.55, y2: 0.16 },
+      { name: "MOUTH", x1: 0.42, y1: 0.16, x2: 0.58, y2: 0.20 },
+      
+      // Neck region  
+      { name: "NECK", x1: 0.43, y1: 0.20, x2: 0.57, y2: 0.25 },
+      { name: "THROAT", x1: 0.44, y1: 0.22, x2: 0.56, y2: 0.26 },
+      { name: "THROAT VOICE", x1: 0.45, y1: 0.23, x2: 0.55, y2: 0.25 },
+      
+      // Upper body - chest area
+      { name: "CHEST UPPER", x1: 0.35, y1: 0.28, x2: 0.65, y2: 0.40 },
+      { name: "CHEST CENTRAL", x1: 0.38, y1: 0.35, x2: 0.62, y2: 0.45 },
+      { name: "CHEST SIDE", x1: 0.25, y1: 0.30, x2: 0.75, y2: 0.42 },
+      
+      // Abdomen region
+      { name: "UPPER ABDOMEN", x1: 0.38, y1: 0.45, x2: 0.62, y2: 0.55 },
+      { name: "ABDOMEN GENERAL", x1: 0.35, y1: 0.50, x2: 0.65, y2: 0.65 },
+      { name: "LOWER ABDOMEN LEFT", x1: 0.30, y1: 0.60, x2: 0.50, y2: 0.70 },
+      { name: "LOWER ABDOMEN RIGHT", x1: 0.50, y1: 0.60, x2: 0.70, y2: 0.70 },
+      
+      // Bowel issues in abdomen area
+      { name: "BOWELS DIARRHOEA", x1: 0.35, y1: 0.55, x2: 0.65, y2: 0.68 },
+      { name: "BOWELS CONSTIPATION", x1: 0.35, y1: 0.55, x2: 0.65, y2: 0.68 },
+      { name: "BOWELS ABNORMAL STOOL", x1: 0.35, y1: 0.55, x2: 0.65, y2: 0.68 },
+      
+      // Groin and genitals
+      { name: "GROIN MALE AND FEMALE", x1: 0.40, y1: 0.70, x2: 0.60, y2: 0.78 },
+      { name: "MALE GENITALS", x1: 0.42, y1: 0.72, x2: 0.58, y2: 0.76 },
+      { name: "FEMALE GENITALS", x1: 0.42, y1: 0.72, x2: 0.58, y2: 0.76 },
+      { name: "URINARY PROBLEMS MALE", x1: 0.40, y1: 0.70, x2: 0.60, y2: 0.78 },
+      { name: "URINARY PROBLEMS FEMALE", x1: 0.40, y1: 0.70, x2: 0.60, y2: 0.78 },
+      
+      // Arms and hands
+      { name: "UPPER ARM", x1: 0.10, y1: 0.28, x2: 0.25, y2: 0.55 },
+      { name: "FOREARM AND WRIST", x1: 0.05, y1: 0.50, x2: 0.20, y2: 0.75 },
+      { name: "HAND PALM", x1: 0.02, y1: 0.70, x2: 0.15, y2: 0.85 },
+      { name: "SHOULDER FRONT", x1: 0.20, y1: 0.25, x2: 0.80, y2: 0.35 },
+      
+      // Legs 
+      { name: "HIP FRONT", x1: 0.30, y1: 0.75, x2: 0.70, y2: 0.82 },
+      { name: "THIGH FRONT", x1: 0.35, y1: 0.78, x2: 0.65, y2: 0.90 },
+      { name: "KNEE FRONT", x1: 0.40, y1: 0.88, x2: 0.60, y2: 0.92 },
+      { name: "LOWER LEG FRONT", x1: 0.38, y1: 0.90, x2: 0.62, y2: 0.98 },
+      
+      // Feet
+      { name: "ANKLE", x1: 0.40, y1: 0.95, x2: 0.60, y2: 0.98 },
+      { name: "FOOT", x1: 0.35, y1: 0.96, x2: 0.65, y2: 1.0 },
+      { name: "FOOT UPPER", x1: 0.35, y1: 0.96, x2: 0.65, y2: 1.0 },
+      { name: "FOOT UNDERSIDE", x1: 0.35, y1: 0.98, x2: 0.65, y2: 1.0 }
     ];
   } else {
     return [
-      { name: "HAIR AND SCALP", x1: 0.35, y1: 0.05, x2: 0.65, y2: 0.15 },
+      { name: "HAIR AND SCALP", x1: 0.35, y1: 0.02, x2: 0.65, y2: 0.12 },
+      { name: "SHOULDER BACK", x1: 0.20, y1: 0.25, x2: 0.80, y2: 0.35 },
       { name: "UPPER BACK", x1: 0.30, y1: 0.35, x2: 0.70, y2: 0.60 },
       { name: "LOWER BACK", x1: 0.35, y1: 0.60, x2: 0.65, y2: 0.75 },
-      { name: "BUTTOCKS AND ANUS", x1: 0.35, y1: 0.75, x2: 0.65, y2: 0.85 }
+      { name: "BUTTOCKS AND ANUS", x1: 0.35, y1: 0.75, x2: 0.65, y2: 0.85 },
+      { name: "HIP BACK", x1: 0.30, y1: 0.75, x2: 0.70, y2: 0.85 },
+      { name: "THIGH BACK", x1: 0.35, y1: 0.80, x2: 0.65, y2: 0.92 },
+      { name: "KNEE BACK", x1: 0.40, y1: 0.88, x2: 0.60, y2: 0.92 },
+      { name: "LOWER LEG BACK", x1: 0.38, y1: 0.90, x2: 0.62, y2: 0.98 }
     ];
   }
 };
