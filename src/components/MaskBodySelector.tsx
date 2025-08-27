@@ -385,8 +385,9 @@ const MaskBodySelector = ({
               <div 
                 className="absolute bg-primary text-primary-foreground px-3 py-1 rounded-md text-sm font-medium shadow-lg border border-white/20 pointer-events-none z-10"
                 style={{
-                  left: Math.min(mousePosition.x + 10, containerRef.current?.offsetWidth ? containerRef.current.offsetWidth - 200 : 0),
-                  top: Math.max(mousePosition.y - 35, 5)
+                  left: Math.min(mousePosition.x + 15, containerRef.current?.offsetWidth ? containerRef.current.offsetWidth - 200 : 0),
+                  top: Math.max(mousePosition.y - 45, 5),
+                  transform: 'translateY(-50%)'
                 }}
               >
                 {hoveredPart}
