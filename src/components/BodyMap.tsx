@@ -5,6 +5,7 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
+import bodyDiagramFront from "@/assets/body-diagram-front.png";
 
 interface BodyMapProps {
   gender: "male" | "female";
@@ -33,7 +34,6 @@ const BodyMap = ({ gender, patientData }: BodyMapProps) => {
         .from("head to Toe sub areas")
         .select("*")
         .eq("View", currentView)
-        .ilike("Specific rules", `%${gender === "male" ? "Both gender" : gender === "female" ? "Both gender" : "Both gender"}%`);
       
       if (error) {
         toast.error("Failed to load body parts");
@@ -116,29 +116,14 @@ const BodyMap = ({ gender, patientData }: BodyMapProps) => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="relative mx-auto" style={{ width: "300px", height: "600px" }}>
-              {/* Body outline - simplified representation */}
-              <div className="absolute inset-0 border-2 border-muted rounded-full opacity-20" 
-                   style={{ 
-                     width: "120px", 
-                     height: "160px", 
-                     top: "10%", 
-                     left: "50%", 
-                     transform: "translateX(-50%)",
-                     borderRadius: "50% 50% 50% 50% / 60% 60% 40% 40%"
-                   }}>
-              </div>
-              
-              {/* Body torso */}
-              <div className="absolute border-2 border-muted rounded-lg opacity-20"
-                   style={{
-                     width: "140px",
-                     height: "300px",
-                     top: "25%",
-                     left: "50%",
-                     transform: "translateX(-50%)"
-                   }}>
-              </div>
+            <div className="relative mx-auto" style={{ width: "400px", height: "550px" }}>
+              {/* Body diagram background */}
+              <img 
+                src={bodyDiagramFront} 
+                alt={`${gender} body diagram - ${currentView} view`}
+                className="w-full h-full object-contain"
+                style={{ filter: "opacity(0.9)" }}
+              />
 
               {/* Interactive body part points */}
               {bodyParts?.map((part, index) => {
