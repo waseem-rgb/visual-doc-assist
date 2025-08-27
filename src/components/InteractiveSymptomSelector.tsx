@@ -2,7 +2,6 @@ import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Canvas as FabricCanvas, Circle } from "fabric";
 import { ArrowLeft, Info, ZoomIn, ZoomOut } from "lucide-react";
 import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
 import { supabase } from "@/integrations/supabase/client";
@@ -29,14 +28,14 @@ interface TextArea {
 }
 
 const InteractiveSymptomSelector = ({ bodyPart, patientData, onBack }: InteractiveSymptomSelectorProps) => {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [fabricCanvas, setFabricCanvas] = useState<FabricCanvas | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedSymptoms, setSelectedSymptoms] = useState<string[]>([]);
   const [availableSymptoms, setAvailableSymptoms] = useState<string[]>([]);
-  const [cursor, setCursor] = useState<Circle | null>(null);
+  const [cursorPosition, setCursorPosition] = useState({ x: 50, y: 50 });
   const [currentHoveredArea, setCurrentHoveredArea] = useState<string | null>(null);
+  const [showCursor, setShowCursor] = useState(false);
 
   // Define text areas based on the ear anatomy image analysis
   const textAreas: TextArea[] = [
@@ -74,35 +73,6 @@ const InteractiveSymptomSelector = ({ bodyPart, patientData, onBack }: Interacti
     fetchSymptomImage();
     fetchSymptomsFromDatabase();
   }, [bodyPart]);
-
-  useEffect(() => {
-    if (imageUrl && canvasRef.current) {
-      // Wait for image to load and DOM to settle
-      const timer = setTimeout(() => {
-        initializeFabricCanvas();
-      }, 100);
-      return () => clearTimeout(timer);
-    }
-  }, [imageUrl]);
-
-  // Handle window resize to keep canvas responsive
-  useEffect(() => {
-    const handleResize = () => {
-      if (fabricCanvas && canvasRef.current) {
-        const container = canvasRef.current.parentElement;
-        if (container) {
-          fabricCanvas.setDimensions({
-            width: container.clientWidth,
-            height: container.clientHeight
-          });
-          fabricCanvas.renderAll();
-        }
-      }
-    };
-
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, [fabricCanvas]);
 
   const fetchSymptomImage = async () => {
     try {
@@ -154,112 +124,45 @@ const InteractiveSymptomSelector = ({ bodyPart, patientData, onBack }: Interacti
     }
   };
 
-  const initializeFabricCanvas = () => {
-    if (!canvasRef.current || !imageUrl) return;
-
-    // Clear any existing canvas
-    if (fabricCanvas) {
-      fabricCanvas.dispose();
-    }
-
-    // Get the container dimensions
-    const container = canvasRef.current.parentElement;
-    if (!container) return;
-
-    const canvas = new FabricCanvas(canvasRef.current, {
-      width: container.clientWidth || 800,
-      height: container.clientHeight || 600,
-      backgroundColor: "rgba(0,0,0,0)", // Fully transparent
-      selection: false,
-      renderOnAddRemove: true,
-    });
-
-    // Create the movable cursor circle
-    const cursorCircle = new Circle({
-      left: 50,
-      top: 50,
-      radius: 15,
-      fill: "rgba(59, 130, 246, 0.8)",
-      stroke: "rgba(255, 255, 255, 1)",
-      strokeWidth: 3,
-      selectable: false,
-      evented: false,
-      hasControls: false,
-      hasBorders: false,
-    });
-
-    canvas.add(cursorCircle);
-    setCursor(cursorCircle);
-    setFabricCanvas(canvas);
-
-    // Handle mouse movement over the entire container
-    const handleMouseMove = (e: MouseEvent) => {
-      const canvasRect = canvasRef.current?.getBoundingClientRect();
-      if (!canvasRect || !cursorCircle) return;
-
-      // Get mouse position relative to canvas
-      const mouseX = e.clientX - canvasRect.left;
-      const mouseY = e.clientY - canvasRect.top;
-
-      // Update cursor position
-      cursorCircle.set({
-        left: mouseX - cursorCircle.radius,
-        top: mouseY - cursorCircle.radius
-      });
-      
-      canvas.renderAll();
-      
-      // Check for text area intersection using canvas coordinates
-      checkTextAreaIntersection(cursorCircle);
-    };
-
-    // Handle mouse click
-    const handleMouseClick = (e: MouseEvent) => {
-      if (currentHoveredArea) {
-        toggleSymptomSelection(currentHoveredArea);
-      }
-    };
-
-    // Handle mouse leave
-    const handleMouseLeave = () => {
-      setCurrentHoveredArea(null);
-    };
-
-    // Add event listeners to the container
-    if (container) {
-      container.addEventListener('mousemove', handleMouseMove);
-      container.addEventListener('click', handleMouseClick);
-      container.addEventListener('mouseleave', handleMouseLeave);
-      
-      // Store cleanup function
-      canvas.on('canvas:cleared', () => {
-        container.removeEventListener('mousemove', handleMouseMove);
-        container.removeEventListener('click', handleMouseClick);
-        container.removeEventListener('mouseleave', handleMouseLeave);
-      });
-    }
-
-    canvas.renderAll();
-
-    return () => {
-      canvas.dispose();
-    };
+  // Handle mouse movement with CSS cursor
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!containerRef.current) return;
+    
+    const rect = containerRef.current.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    
+    setCursorPosition({ x, y });
+    
+    // Check text area intersection
+    checkTextAreaIntersection(x, y);
   };
 
-  const checkTextAreaIntersection = (circle: Circle) => {
-    const circleLeft = circle.left || 0;
-    const circleTop = circle.top || 0;
-    const circleRadius = circle.radius || 0;
+  const handleMouseEnter = () => {
+    setShowCursor(true);
+  };
 
+  const handleMouseLeave = () => {
+    setShowCursor(false);
+    setCurrentHoveredArea(null);
+  };
+
+  const handleClick = () => {
+    if (currentHoveredArea) {
+      toggleSymptomSelection(currentHoveredArea);
+    }
+  };
+
+  const checkTextAreaIntersection = (x: number, y: number) => {
     let hoveredArea = null;
 
     for (const area of textAreas) {
-      // Check if circle center is within text area bounds
+      // Check if cursor position is within text area bounds
       if (
-        circleLeft >= area.x && 
-        circleLeft <= area.x + area.width &&
-        circleTop >= area.y && 
-        circleTop <= area.y + area.height
+        x >= area.x && 
+        x <= area.x + area.width &&
+        y >= area.y && 
+        y <= area.y + area.height
       ) {
         hoveredArea = area.id;
         break;
@@ -390,26 +293,33 @@ const InteractiveSymptomSelector = ({ bodyPart, patientData, onBack }: Interacti
                         </Button>
                       </div>
                       
-                      <div className="relative border border-gray-200 rounded-lg shadow-lg overflow-hidden h-full">
-                        {/* Interactive Canvas Overlay - OUTSIDE transform component */}
-                        <canvas 
-                          ref={canvasRef} 
-                          className="absolute top-0 left-0 w-full h-full z-50 pointer-events-auto" 
-                          style={{ 
-                            background: 'transparent',
-                            position: 'absolute',
-                            top: 0,
-                            left: 0,
-                            pointerEvents: 'auto'
-                          }} 
-                        />
-                        {/* Image with zoom/pan inside TransformComponent */}
+                      <div 
+                        ref={containerRef}
+                        className="relative border border-gray-200 rounded-lg shadow-lg overflow-hidden h-full cursor-none"
+                        onMouseMove={handleMouseMove}
+                        onMouseEnter={handleMouseEnter}
+                        onMouseLeave={handleMouseLeave}
+                        onClick={handleClick}
+                      >
+                        {/* Custom CSS cursor */}
+                        {showCursor && (
+                          <div
+                            className="absolute w-6 h-6 bg-blue-500 border-2 border-white rounded-full shadow-lg pointer-events-none z-50 transform -translate-x-1/2 -translate-y-1/2"
+                            style={{
+                              left: cursorPosition.x,
+                              top: cursorPosition.y,
+                              background: currentHoveredArea ? 'rgba(34, 197, 94, 0.8)' : 'rgba(59, 130, 246, 0.8)'
+                            }}
+                          />
+                        )}
+                        
+                        {/* Image with zoom/pan */}
                         <TransformComponent>
                           <div className="relative w-full h-full">
                             <img 
                               src={imageUrl} 
                               alt={`${bodyPart} symptom diagram`}
-                              className="w-full h-auto block relative z-10 pointer-events-none"
+                              className="w-full h-auto block pointer-events-none"
                               draggable={false}
                               style={{ maxHeight: '100%', objectFit: 'contain' }}
                             />
