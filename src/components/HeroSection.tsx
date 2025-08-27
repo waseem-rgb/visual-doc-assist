@@ -1,8 +1,11 @@
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Stethoscope, Smartphone } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import heroImage from "@/assets/hero-medical.jpg";
 
 const HeroSection = () => {
+  const navigate = useNavigate();
+
   return (
     <section className="min-h-screen flex items-center justify-center bg-gradient-subtle pt-20">
       <div className="container mx-auto px-6">
@@ -21,7 +24,11 @@ const HeroSection = () => {
             </div>
 
             <div className="flex flex-col sm:flex-row gap-4">
-              <Button size="lg" className="gradient-primary shadow-medium transition-bounce hover:shadow-large">
+              <Button 
+                size="lg" 
+                className="gradient-primary shadow-medium transition-bounce hover:shadow-large"
+                onClick={() => navigate("/consultation")}
+              >
                 Start Consultation
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
