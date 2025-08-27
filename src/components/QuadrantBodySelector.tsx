@@ -15,21 +15,21 @@ const getQuadrants = (view: string) => {
         id: "head",
         name: "Head & Face",
         description: "Eyes, Nose, Mouth, Ears, Hair",
-        x1: 0.25, y1: 0.0, x2: 0.75, y2: 0.28,
+        x1: 0.25, y1: 0.0, x2: 0.75, y2: 0.32,
         color: "rgba(59, 130, 246, 0.2)", // Blue
       },
       {
         id: "chest", 
         name: "Chest & Upper Body",
         description: "Chest, Shoulders, Upper Back, Neck",
-        x1: 0.20, y1: 0.25, x2: 0.80, y2: 0.50,
+        x1: 0.20, y1: 0.28, x2: 0.80, y2: 0.52,
         color: "rgba(16, 185, 129, 0.2)", // Green
       },
       {
         id: "abdomen",
         name: "Abdomen & Core", 
         description: "Stomach, Bowels, Groin, Lower Back",
-        x1: 0.25, y1: 0.47, x2: 0.75, y2: 0.78,
+        x1: 0.25, y1: 0.42, x2: 0.75, y2: 0.78,
         color: "rgba(245, 101, 101, 0.2)", // Red
       },
       {
