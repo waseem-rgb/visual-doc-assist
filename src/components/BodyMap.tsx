@@ -12,6 +12,7 @@ import bodyBackRealistic from "@/assets/body-back-realistic.png";
 import bodyFrontFemale from "@/assets/body-front-female.png";
 import bodyBackFemale from "@/assets/body-back-female.png";
 import SymptomViewer from "./SymptomViewer";
+import MaskBodySelector from "./MaskBodySelector";
 import SVGBodySelector from "./SVGBodySelector";
 
 interface BodyMapProps {
@@ -36,6 +37,8 @@ const BodyMap = ({ gender, patientData }: BodyMapProps) => {
   const [showSymptomViewer, setShowSymptomViewer] = useState(false);
   const [leftSideOpen, setLeftSideOpen] = useState(true);
   const [rightSideOpen, setRightSideOpen] = useState(true);
+  const [debugMode, setDebugMode] = useState(false);
+  const [useMaskSelector, setUseMaskSelector] = useState(true);
 
   const { data: allBodyParts, isLoading } = useQuery({
     queryKey: ["bodyParts"],
@@ -254,24 +257,59 @@ const BodyMap = ({ gender, patientData }: BodyMapProps) => {
             Back View
           </ToggleGroupItem>
         </ToggleGroup>
+        
+        {/* Debug and selector type controls */}
+        <div className="flex justify-center gap-4 mb-4">
+          <Button
+            variant={debugMode ? "default" : "outline"}
+            size="sm"
+            onClick={() => setDebugMode(!debugMode)}
+          >
+            Debug Mode
+          </Button>
+          <Button
+            variant={useMaskSelector ? "default" : "outline"}
+            size="sm"
+            onClick={() => setUseMaskSelector(!useMaskSelector)}
+          >
+            {useMaskSelector ? "Mask Selector" : "SVG Selector"}
+          </Button>
+        </div>
       </div>
 
       <div className="flex justify-center">
         <div className="w-full max-w-4xl">
-          {/* Center - 3D Body Selector */}
-          <SVGBodySelector
-            imageUrl={gender === "male" 
-              ? (currentView === "Front" ? bodyFrontRealistic : bodyBackRealistic)
-              : (currentView === "Front" ? bodyFrontFemale : bodyBackFemale)
-            }
-            gender={gender}
-            currentView={currentView}
-            selectedBodyParts={selectedBodyParts}
-            hoveredPart={hoveredPart}
-            onBodyPartHover={handleBodyPartHover}
-            onBodyPartClick={handleBodyPartClick}
-            bodyParts={bodyParts}
-          />
+          {/* Body Selector - Mask-based or SVG fallback */}
+          {useMaskSelector ? (
+            <MaskBodySelector
+              imageUrl={gender === "male" 
+                ? (currentView === "Front" ? bodyFrontRealistic : bodyBackRealistic)
+                : (currentView === "Front" ? bodyFrontFemale : bodyBackFemale)
+              }
+              gender={gender}
+              currentView={currentView}
+              selectedBodyParts={selectedBodyParts}
+              hoveredPart={hoveredPart}
+              onBodyPartHover={handleBodyPartHover}
+              onBodyPartClick={handleBodyPartClick}
+              bodyParts={bodyParts}
+              debug={debugMode}
+            />
+          ) : (
+            <SVGBodySelector
+              imageUrl={gender === "male" 
+                ? (currentView === "Front" ? bodyFrontRealistic : bodyBackRealistic)
+                : (currentView === "Front" ? bodyFrontFemale : bodyBackFemale)
+              }
+              gender={gender}
+              currentView={currentView}
+              selectedBodyParts={selectedBodyParts}
+              hoveredPart={hoveredPart}
+              onBodyPartHover={handleBodyPartHover}
+              onBodyPartClick={handleBodyPartClick}
+              bodyParts={bodyParts}
+            />
+          )}
         </div>
       </div>
             
