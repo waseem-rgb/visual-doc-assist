@@ -273,31 +273,60 @@ const DetailedBodyView = ({
               />
             </div>
             
-            {/* Interactive overlays for each body part */}
-            {parts.map((part) => (
-              <div
-                key={part.name}
-                className="absolute border-2 border-primary/30 pointer-events-none"
-                style={{
-                  left: `${part.x1 * 100}%`,
-                  top: `${part.y1 * 100}%`,
-                  width: `${(part.x2 - part.x1) * 100}%`,
-                  height: `${(part.y2 - part.y1) * 100}%`,
-                  backgroundColor: hoveredPart === part.name ? 'rgba(59, 130, 246, 0.4)' : 
-                                  selectedBodyParts.includes(part.name) ? 'rgba(16, 185, 129, 0.4)' : 
-                                  'rgba(99, 102, 241, 0.2)',
-                  borderColor: hoveredPart === part.name ? '#3b82f6' : 
-                              selectedBodyParts.includes(part.name) ? '#10b981' : '#6366f1'
-                }}
-              >
-                {/* Part label - show all the time for clarity */}
-                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                  <span className="bg-white/90 text-xs font-medium px-2 py-1 rounded shadow-sm text-center leading-tight">
-                    {part.name}
-                  </span>
+            {/* Interactive red dots for each body part */}
+            {parts.map((part) => {
+              const centerX = (part.x1 + part.x2) / 2;
+              const centerY = (part.y1 + part.y2) / 2;
+              
+              return (
+                <div key={part.name}>
+                  {/* Clickable area - invisible but covers the body part region */}
+                  <div
+                    className="absolute pointer-events-none"
+                    style={{
+                      left: `${part.x1 * 100}%`,
+                      top: `${part.y1 * 100}%`,
+                      width: `${(part.x2 - part.x1) * 100}%`,
+                      height: `${(part.y2 - part.y1) * 100}%`,
+                    }}
+                  />
+                  
+                  {/* Red blinking dot at center */}
+                  <div
+                    className="absolute pointer-events-none z-10"
+                    style={{
+                      left: `${centerX * 100}%`,
+                      top: `${centerY * 100}%`,
+                      transform: 'translate(-50%, -50%)'
+                    }}
+                  >
+                    <div 
+                      className={`w-3 h-3 rounded-full border-2 border-white shadow-lg transition-all duration-200 ${
+                        hoveredPart === part.name 
+                          ? 'bg-blue-500 scale-150' 
+                          : selectedBodyParts.includes(part.name)
+                          ? 'bg-green-500 scale-125'
+                          : 'bg-red-500 animate-pulse'
+                      }`}
+                    />
+                  </div>
+                  
+                  {/* Body part label */}
+                  <div
+                    className="absolute pointer-events-none z-10"
+                    style={{
+                      left: `${centerX * 100}%`,
+                      top: `${centerY * 100 - 8}%`,
+                      transform: 'translate(-50%, -100%)'
+                    }}
+                  >
+                    <span className="bg-white/95 text-xs font-medium px-2 py-1 rounded shadow-sm text-center leading-tight border">
+                      {part.name}
+                    </span>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
             
             {/* Hover label */}
             {hoveredPart && (
