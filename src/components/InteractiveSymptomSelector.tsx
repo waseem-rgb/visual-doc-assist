@@ -104,9 +104,9 @@ const InteractiveSymptomSelector = ({ bodyPart, patientData, onBack }: Interacti
       // Query the "New Master" table to find matching symptom and get probable diagnosis
       const { data, error } = await supabase
         .from('New Master')
-        .select('Probable Diagnosis')
+        .select('"Probable Diagnosis"')
         .ilike('Symptoms', `%${finalSelection.text}%`)
-        .single();
+        .maybeSingle();
 
       if (error) {
         console.error('Error fetching diagnosis:', error);
@@ -114,9 +114,9 @@ const InteractiveSymptomSelector = ({ bodyPart, patientData, onBack }: Interacti
         const keywords = finalSelection.id.replace(/-/g, ' ');
         const { data: fallbackData, error: fallbackError } = await supabase
           .from('New Master')
-          .select('Probable Diagnosis')
+          .select('"Probable Diagnosis"')
           .ilike('Symptoms', `%${keywords}%`)
-          .single();
+          .maybeSingle();
         
         if (fallbackError) {
           console.error('Error fetching fallback diagnosis:', fallbackError);
