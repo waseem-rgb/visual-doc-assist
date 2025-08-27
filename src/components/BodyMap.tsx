@@ -35,6 +35,7 @@ const BodyMap = ({ gender, patientData }: BodyMapProps) => {
         .from("head to Toe sub areas")
         .select("*")
         .eq("View", currentView)
+        .or(`Specific rules.ilike.%Both gender%,Specific rules.ilike.%${gender === "male" ? "Male" : "Female"} patient%`);
       
       if (error) {
         toast.error("Failed to load body parts");
@@ -146,7 +147,18 @@ const BodyMap = ({ gender, patientData }: BodyMapProps) => {
       }
     };
 
-    return positions[view]?.[bodyPart] || { top: "50%", left: "50%" };
+    // Return position if found, otherwise place at a default visible location
+    const position = positions[view]?.[bodyPart];
+    if (!position) {
+      console.warn(`Position not defined for body part: ${bodyPart} in view: ${view}`);
+      // Place unmapped parts in a visible area with some spacing
+      const unmappedIndex = bodyPart.length % 10;
+      return { 
+        top: `${20 + (unmappedIndex * 5)}%`, 
+        left: `${80 + (unmappedIndex % 3) * 5}%` 
+      };
+    }
+    return position;
   };
 
   if (isLoading) {
