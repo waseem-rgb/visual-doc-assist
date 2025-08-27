@@ -34,29 +34,36 @@ const BodyMap = ({ gender, patientData }: BodyMapProps) => {
       // First try with gender-specific filtering using exact table values
       const genderValues = ["shown to Both gender", gender === "male" ? "Only to Male patient" : "Only to Female patient"];
       
+      console.log(`Querying for view: ${currentView}, gender: ${gender}, values:`, genderValues);
+      
       let { data, error } = await supabase
         .from("head to Toe sub areas")
         .select("*")
         .eq("View", currentView)
         .in("Specific rules", genderValues);
       
+      console.log("Query result:", data, "Error:", error);
+      
       // If no results with gender filter, fallback to view-only query
       if (data && data.length === 0) {
+        console.log("No results with gender filter, trying fallback...");
         const fallback = await supabase
           .from("head to Toe sub areas")
           .select("*")
           .eq("View", currentView);
         
+        console.log("Fallback result:", fallback.data);
         data = fallback.data;
         error = fallback.error;
       }
       
       if (error) {
+        console.error("Supabase error:", error);
         toast.error("Failed to load body parts");
         throw error;
       }
       
-      console.log(`Loaded ${data?.length || 0} body parts for ${currentView} view (${gender}):`, data?.map(p => p.Body_part));
+      console.log(`Final result: Loaded ${data?.length || 0} body parts for ${currentView} view (${gender}):`, data?.map(p => p.Body_part));
       return data as BodyPart[];
     },
   });
