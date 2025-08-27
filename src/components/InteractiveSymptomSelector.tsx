@@ -77,9 +77,32 @@ const InteractiveSymptomSelector = ({ bodyPart, patientData, onBack }: Interacti
 
   useEffect(() => {
     if (imageUrl && canvasRef.current) {
-      initializeFabricCanvas();
+      // Wait for image to load and DOM to settle
+      const timer = setTimeout(() => {
+        initializeFabricCanvas();
+      }, 100);
+      return () => clearTimeout(timer);
     }
   }, [imageUrl]);
+
+  // Handle window resize to keep canvas responsive
+  useEffect(() => {
+    const handleResize = () => {
+      if (fabricCanvas && canvasRef.current) {
+        const container = canvasRef.current.parentElement;
+        if (container) {
+          fabricCanvas.setDimensions({
+            width: container.clientWidth,
+            height: container.clientHeight
+          });
+          fabricCanvas.renderAll();
+        }
+      }
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [fabricCanvas]);
 
   const fetchSymptomImage = async () => {
     try {
@@ -134,23 +157,33 @@ const InteractiveSymptomSelector = ({ bodyPart, patientData, onBack }: Interacti
   const initializeFabricCanvas = () => {
     if (!canvasRef.current || !imageUrl) return;
 
+    // Get the container dimensions to make canvas responsive
+    const container = canvasRef.current.parentElement;
+    if (!container) return;
+
     const canvas = new FabricCanvas(canvasRef.current, {
-      width: 800,
-      height: 600,
+      width: container.clientWidth || 800,
+      height: container.clientHeight || 600,
       backgroundColor: "transparent",
+      selection: false,
     });
 
-    // Create the movable cursor circle
+    // Create the movable cursor circle with cleaner appearance
     const cursorCircle = new Circle({
       left: 100,
       top: 100,
-      radius: 15,
-      fill: "rgba(59, 130, 246, 0.8)",
-      stroke: "#1e40af",
-      strokeWidth: 3,
+      radius: 12,
+      fill: "rgba(59, 130, 246, 0.7)",
+      stroke: "rgba(255, 255, 255, 0.9)",
+      strokeWidth: 2,
       selectable: true,
       moveCursor: 'move',
       hoverCursor: 'move',
+      lockScalingX: true,
+      lockScalingY: true,
+      lockRotation: true,
+      hasControls: false,
+      hasBorders: false,
     });
 
     canvas.add(cursorCircle);
@@ -173,10 +206,10 @@ const InteractiveSymptomSelector = ({ bodyPart, patientData, onBack }: Interacti
     // Add mouse move tracking for better responsiveness
     canvas.on('mouse:move', (e) => {
       if (cursor && e.pointer) {
-        // Update cursor position to follow mouse
+        // Update cursor position to follow mouse with proper offset
         cursor.set({
-          left: e.pointer.x - 15,
-          top: e.pointer.y - 15
+          left: e.pointer.x - cursor.radius,
+          top: e.pointer.y - cursor.radius
         });
         canvas.renderAll();
         checkTextAreaIntersection(cursor);
@@ -336,19 +369,25 @@ const InteractiveSymptomSelector = ({ bodyPart, patientData, onBack }: Interacti
                       
                       <div className="relative border border-gray-200 rounded-lg shadow-lg overflow-hidden h-full">
                         <TransformComponent>
-                          <div className="relative">
+                          <div className="relative w-full h-full">
                             {/* Background Image */}
                             <img 
                               src={imageUrl} 
                               alt={`${bodyPart} symptom diagram`}
-                              className="w-full h-auto"
+                              className="w-full h-auto block"
                               draggable={false}
+                              style={{ maxHeight: '100%', objectFit: 'contain' }}
                             />
                             {/* Interactive Canvas Overlay */}
                             <canvas 
                               ref={canvasRef} 
-                              className="absolute top-0 left-0 z-10 pointer-events-auto" 
-                              style={{ background: 'transparent' }} 
+                              className="absolute top-0 left-0 w-full h-full z-20 pointer-events-auto" 
+                              style={{ 
+                                background: 'transparent',
+                                position: 'absolute',
+                                top: 0,
+                                left: 0
+                              }} 
                             />
                           </div>
                         </TransformComponent>
