@@ -16,91 +16,103 @@ interface DetailedBodyViewProps {
   bodyParts: Array<{ Body_part: string; View: string; "Specific rules": string }>;
 }
 
-// Define detailed body parts for each quadrant with precise positioning
+// Define detailed body parts for each quadrant with precise anatomical positioning
 const getQuadrantParts = (quadrant: string, view: string) => {
   const parts: Record<string, any> = {
     head: {
       Front: [
-        { name: "HAIR AND SCALP", x1: 0.20, y1: 0.05, x2: 0.80, y2: 0.30 },
-        { name: "HEAD FRONT", x1: 0.25, y1: 0.25, x2: 0.75, y2: 0.55 },
-        { name: "FACE", x1: 0.22, y1: 0.45, x2: 0.78, y2: 0.75 },
-        { name: "EYE VISION", x1: 0.25, y1: 0.50, x2: 0.45, y2: 0.60 },
-        { name: "EYE PHYSICAL", x1: 0.55, y1: 0.50, x2: 0.75, y2: 0.60 },
-        { name: "NOSE", x1: 0.40, y1: 0.60, x2: 0.60, y2: 0.70 },
-        { name: "MOUTH", x1: 0.35, y1: 0.70, x2: 0.65, y2: 0.80 },
-        { name: "EAR PHYSICAL", x1: 0.05, y1: 0.55, x2: 0.20, y2: 0.65 },
-        { name: "EAR HEARING", x1: 0.80, y1: 0.55, x2: 0.95, y2: 0.65 },
-        { name: "NECK", x1: 0.35, y1: 0.85, x2: 0.65, y2: 1.0 },
-        { name: "THROAT", x1: 0.38, y1: 0.88, x2: 0.62, y2: 0.98 },
-        { name: "THROAT VOICE", x1: 0.42, y1: 0.90, x2: 0.58, y2: 0.96 },
+        { name: "HAIR AND SCALP", x1: 0.15, y1: 0.00, x2: 0.85, y2: 0.25 },
+        { name: "HEAD FRONT", x1: 0.20, y1: 0.20, x2: 0.80, y2: 0.50 },
+        { name: "FACE", x1: 0.18, y1: 0.35, x2: 0.82, y2: 0.75 },
+        { name: "EYE VISION", x1: 0.22, y1: 0.40, x2: 0.42, y2: 0.52 },
+        { name: "EYE PHYSICAL", x1: 0.58, y1: 0.40, x2: 0.78, y2: 0.52 },
+        { name: "NOSE", x1: 0.42, y1: 0.50, x2: 0.58, y2: 0.62 },
+        { name: "MOUTH", x1: 0.35, y1: 0.62, x2: 0.65, y2: 0.72 },
+        { name: "EAR PHYSICAL", x1: 0.02, y1: 0.45, x2: 0.18, y2: 0.60 },
+        { name: "EAR HEARING", x1: 0.82, y1: 0.45, x2: 0.98, y2: 0.60 },
+        { name: "NECK", x1: 0.35, y1: 0.75, x2: 0.65, y2: 0.95 },
+        { name: "THROAT", x1: 0.38, y1: 0.78, x2: 0.62, y2: 0.88 },
+        { name: "THROAT VOICE", x1: 0.40, y1: 0.80, x2: 0.60, y2: 0.86 },
       ],
       "Back view": [
-        { name: "HAIR AND SCALP", x1: 0.15, y1: 0.05, x2: 0.85, y2: 0.95 },
+        { name: "HAIR AND SCALP", x1: 0.10, y1: 0.00, x2: 0.90, y2: 1.00 },
       ]
     },
     chest: {
       Front: [
-        { name: "SHOULDER FRONT", x1: 0.05, y1: 0.05, x2: 0.95, y2: 0.35 },
-        { name: "CHEST UPPER", x1: 0.20, y1: 0.30, x2: 0.80, y2: 0.65 },
-        { name: "CHEST CENTRAL", x1: 0.25, y1: 0.55, x2: 0.75, y2: 0.85 },
-        { name: "CHEST SIDE", x1: 0.10, y1: 0.40, x2: 0.90, y2: 0.80 },
-        { name: "BREAST", x1: 0.15, y1: 0.45, x2: 0.85, y2: 0.75 },
+        { name: "SHOULDER FRONT", x1: 0.00, y1: 0.00, x2: 1.00, y2: 0.25 },
+        { name: "CHEST UPPER", x1: 0.15, y1: 0.20, x2: 0.85, y2: 0.50 },
+        { name: "CHEST CENTRAL", x1: 0.20, y1: 0.45, x2: 0.80, y2: 0.75 },
+        { name: "CHEST SIDE", x1: 0.05, y1: 0.30, x2: 0.95, y2: 0.70 },
+        { name: "BREAST", x1: 0.10, y1: 0.35, x2: 0.90, y2: 0.65 },
       ],
       "Back view": [
-        { name: "SHOULDER BACK", x1: 0.05, y1: 0.05, x2: 0.95, y2: 0.35 },
-        { name: "UPPER BACK", x1: 0.15, y1: 0.25, x2: 0.85, y2: 0.95 },
+        { name: "SHOULDER BACK", x1: 0.00, y1: 0.00, x2: 1.00, y2: 0.25 },
+        { name: "UPPER BACK", x1: 0.10, y1: 0.20, x2: 0.90, y2: 1.00 },
       ]
     },
     abdomen: {
       Front: [
-        { name: "UPPER ABDOMEN", x1: 0.20, y1: 0.05, x2: 0.80, y2: 0.35 },
-        { name: "ABDOMEN GENERAL", x1: 0.15, y1: 0.25, x2: 0.85, y2: 0.70 },
-        { name: "LOWER ABDOMEN LEFT", x1: 0.15, y1: 0.65, x2: 0.50, y2: 0.85 },
-        { name: "LOWER ABDOMEN RIGHT", x1: 0.50, y1: 0.65, x2: 0.85, y2: 0.85 },
-        { name: "FEMALE LOWER ABDOMEN", x1: 0.20, y1: 0.70, x2: 0.80, y2: 0.90 },
-        { name: "BOWELS DIARRHOEA", x1: 0.20, y1: 0.40, x2: 0.80, y2: 0.75 },
-        { name: "BOWELS CONSTIPATION", x1: 0.20, y1: 0.40, x2: 0.80, y2: 0.75 },
-        { name: "BOWELS ABNORMAL STOOL", x1: 0.20, y1: 0.40, x2: 0.80, y2: 0.75 },
-        { name: "GROIN MALE AND FEMALE", x1: 0.25, y1: 0.85, x2: 0.75, y2: 1.0 },
-        { name: "MALE GENITALS", x1: 0.30, y1: 0.87, x2: 0.70, y2: 0.97 },
-        { name: "FEMALE GENITALS", x1: 0.30, y1: 0.87, x2: 0.70, y2: 0.97 },
-        { name: "URINARY PROBLEMS MALE", x1: 0.25, y1: 0.85, x2: 0.75, y2: 1.0 },
-        { name: "URINARY PROBLEMS FEMALE", x1: 0.25, y1: 0.85, x2: 0.75, y2: 1.0 },
+        { name: "UPPER ABDOMEN", x1: 0.15, y1: 0.00, x2: 0.85, y2: 0.30 },
+        { name: "ABDOMEN GENERAL", x1: 0.10, y1: 0.15, x2: 0.90, y2: 0.60 },
+        { name: "LOWER ABDOMEN LEFT", x1: 0.10, y1: 0.55, x2: 0.50, y2: 0.75 },
+        { name: "LOWER ABDOMEN RIGHT", x1: 0.50, y1: 0.55, x2: 0.90, y2: 0.75 },
+        { name: "FEMALE LOWER ABDOMEN", x1: 0.15, y1: 0.60, x2: 0.85, y2: 0.80 },
+        { name: "BOWELS DIARRHOEA", x1: 0.15, y1: 0.30, x2: 0.85, y2: 0.65 },
+        { name: "BOWELS CONSTIPATION", x1: 0.15, y1: 0.30, x2: 0.85, y2: 0.65 },
+        { name: "BOWELS ABNORMAL STOOL", x1: 0.15, y1: 0.30, x2: 0.85, y2: 0.65 },
+        { name: "GROIN MALE AND FEMALE", x1: 0.20, y1: 0.75, x2: 0.80, y2: 0.95 },
+        { name: "MALE GENITALS", x1: 0.25, y1: 0.77, x2: 0.75, y2: 0.87 },
+        { name: "FEMALE GENITALS", x1: 0.25, y1: 0.77, x2: 0.75, y2: 0.87 },
+        { name: "URINARY PROBLEMS MALE", x1: 0.20, y1: 0.75, x2: 0.80, y2: 0.90 },
+        { name: "URINARY PROBLEMS FEMALE", x1: 0.20, y1: 0.75, x2: 0.80, y2: 0.90 },
       ],
       "Back view": [
-        { name: "LOWER BACK", x1: 0.20, y1: 0.05, x2: 0.80, y2: 0.70 },
-        { name: "BUTTOCKS AND ANUS", x1: 0.15, y1: 0.60, x2: 0.85, y2: 1.0 },
+        { name: "LOWER BACK", x1: 0.15, y1: 0.00, x2: 0.85, y2: 0.60 },
+        { name: "BUTTOCKS AND ANUS", x1: 0.10, y1: 0.55, x2: 0.90, y2: 1.00 },
+      ]
+    },
+    back: {
+      "Back view": [
+        { name: "SHOULDER BACK", x1: 0.00, y1: 0.00, x2: 1.00, y2: 0.30 },
+        { name: "UPPER BACK", x1: 0.10, y1: 0.25, x2: 0.90, y2: 1.00 },
+      ]
+    },
+    buttocks: {
+      "Back view": [
+        { name: "LOWER BACK", x1: 0.15, y1: 0.00, x2: 0.85, y2: 0.45 },
+        { name: "BUTTOCKS AND ANUS", x1: 0.10, y1: 0.40, x2: 0.90, y2: 1.00 },
       ]
     },
     arms: {
       Front: [
-        { name: "UPPER ARM", x1: 0.10, y1: 0.10, x2: 0.90, y2: 0.55 },
-        { name: "FOREARM AND WRIST", x1: 0.05, y1: 0.50, x2: 0.95, y2: 0.85 },
-        { name: "HAND PALM", x1: 0.00, y1: 0.80, x2: 1.00, y2: 1.00 },
+        { name: "UPPER ARM", x1: 0.05, y1: 0.00, x2: 0.95, y2: 0.50 },
+        { name: "FOREARM AND WRIST", x1: 0.00, y1: 0.45, x2: 1.00, y2: 0.80 },
+        { name: "HAND PALM", x1: 0.00, y1: 0.75, x2: 1.00, y2: 1.00 },
       ],
       "Back view": [
-        { name: "UPPER ARM", x1: 0.10, y1: 0.10, x2: 0.90, y2: 0.55 },
-        { name: "ELBOW", x1: 0.30, y1: 0.50, x2: 0.70, y2: 0.65 },
-        { name: "HAND BACK", x1: 0.00, y1: 0.80, x2: 1.00, y2: 1.00 },
+        { name: "UPPER ARM", x1: 0.05, y1: 0.00, x2: 0.95, y2: 0.50 },
+        { name: "ELBOW", x1: 0.25, y1: 0.45, x2: 0.75, y2: 0.60 },
+        { name: "HAND BACK", x1: 0.00, y1: 0.75, x2: 1.00, y2: 1.00 },
       ]
     },
     legs: {
       Front: [
-        { name: "HIP FRONT", x1: 0.15, y1: 0.05, x2: 0.85, y2: 0.30 },
-        { name: "THIGH FRONT", x1: 0.20, y1: 0.25, x2: 0.80, y2: 0.65 },
-        { name: "KNEE FRONT", x1: 0.25, y1: 0.60, x2: 0.75, y2: 0.75 },
-        { name: "LOWER LEG FRONT", x1: 0.22, y1: 0.70, x2: 0.78, y2: 0.95 },
-        { name: "ANKLE", x1: 0.30, y1: 0.90, x2: 0.70, y2: 0.98 },
-        { name: "FOOT", x1: 0.15, y1: 0.95, x2: 0.85, y2: 1.00 },
-        { name: "FOOT UPPER", x1: 0.20, y1: 0.97, x2: 0.80, y2: 1.00 },
-        { name: "FOOT UNDERSIDE", x1: 0.20, y1: 0.98, x2: 0.80, y2: 1.00 },
+        { name: "HIP FRONT", x1: 0.10, y1: 0.00, x2: 0.90, y2: 0.25 },
+        { name: "THIGH FRONT", x1: 0.15, y1: 0.20, x2: 0.85, y2: 0.60 },
+        { name: "KNEE FRONT", x1: 0.20, y1: 0.55, x2: 0.80, y2: 0.70 },
+        { name: "LOWER LEG FRONT", x1: 0.18, y1: 0.65, x2: 0.82, y2: 0.90 },
+        { name: "ANKLE", x1: 0.25, y1: 0.85, x2: 0.75, y2: 0.95 },
+        { name: "FOOT", x1: 0.10, y1: 0.90, x2: 0.90, y2: 1.00 },
+        { name: "FOOT UPPER", x1: 0.15, y1: 0.92, x2: 0.85, y2: 1.00 },
+        { name: "FOOT UNDERSIDE", x1: 0.15, y1: 0.93, x2: 0.85, y2: 1.00 },
       ],
       "Back view": [
-        { name: "HIP BACK", x1: 0.15, y1: 0.05, x2: 0.85, y2: 0.30 },
-        { name: "THIGH BACK", x1: 0.20, y1: 0.25, x2: 0.80, y2: 0.65 },
-        { name: "KNEE BACK", x1: 0.25, y1: 0.60, x2: 0.75, y2: 0.75 },
-        { name: "LOWER LEG BACK", x1: 0.22, y1: 0.70, x2: 0.78, y2: 0.95 },
-        { name: "FOOT", x1: 0.15, y1: 0.95, x2: 0.85, y2: 1.00 },
+        { name: "HIP BACK", x1: 0.10, y1: 0.00, x2: 0.90, y2: 0.25 },
+        { name: "THIGH BACK", x1: 0.15, y1: 0.20, x2: 0.85, y2: 0.60 },
+        { name: "KNEE BACK", x1: 0.20, y1: 0.55, x2: 0.80, y2: 0.70 },
+        { name: "LOWER LEG BACK", x1: 0.18, y1: 0.65, x2: 0.82, y2: 0.90 },
+        { name: "FOOT", x1: 0.10, y1: 0.90, x2: 0.90, y2: 1.00 },
       ]
     }
   };
@@ -108,7 +120,7 @@ const getQuadrantParts = (quadrant: string, view: string) => {
   return parts[quadrant]?.[view] || [];
 };
 
-// Get the cropping style for each quadrant to show zoomed view
+// Get the cropping style for each quadrant to show anatomically correct zoomed view
 const getQuadrantCropStyle = (quadrant: string, view: string) => {
   const cropStyles: Record<string, Record<string, any>> = {
     head: {
@@ -116,31 +128,31 @@ const getQuadrantCropStyle = (quadrant: string, view: string) => {
         objectFit: "cover" as const,
         objectPosition: "50% 12%", // Focus precisely on head area
         height: "500px",
-        transform: "scale(3.2)", // Zoom in significantly for head only
+        transform: "scale(3.8)", // Zoom in significantly for head only
         transformOrigin: "50% 12%"
       },
       "Back view": {
         objectFit: "cover" as const,
-        objectPosition: "50% 8%", // Focus on head back
+        objectPosition: "50% 10%", // Focus on head back
         height: "500px", 
-        transform: "scale(3.5)", // Zoom for head back
-        transformOrigin: "50% 8%"
+        transform: "scale(4.0)", // Zoom for head back
+        transformOrigin: "50% 10%"
       }
     },
     chest: {
       Front: {
         objectFit: "cover" as const,
-        objectPosition: "50% 28%", // Focus precisely on chest area
+        objectPosition: "50% 30%", // Focus precisely on chest area
         height: "500px",
-        transform: "scale(2.8)", // Zoom for chest area
-        transformOrigin: "50% 28%"
+        transform: "scale(3.0)", // Zoom for chest area
+        transformOrigin: "50% 30%"
       },
       "Back view": {
         objectFit: "cover" as const,
-        objectPosition: "50% 30%", // Focus on upper back/shoulders
+        objectPosition: "50% 32%", // Focus on upper back/shoulders
         height: "500px",
-        transform: "scale(2.8)", 
-        transformOrigin: "50% 30%"
+        transform: "scale(3.0)", 
+        transformOrigin: "50% 32%"
       }
     },
     abdomen: {
@@ -148,15 +160,15 @@ const getQuadrantCropStyle = (quadrant: string, view: string) => {
         objectFit: "cover" as const,
         objectPosition: "50% 50%", // Focus precisely on abdomen area
         height: "500px",
-        transform: "scale(2.5)", // Zoom for abdomen
+        transform: "scale(2.7)", // Zoom for abdomen
         transformOrigin: "50% 50%"
       },
       "Back view": {
         objectFit: "cover" as const,
-        objectPosition: "50% 60%", // Focus on lower back
+        objectPosition: "50% 65%", // Focus on lower back
         height: "500px",
-        transform: "scale(2.2)",
-        transformOrigin: "50% 60%"
+        transform: "scale(2.5)",
+        transformOrigin: "50% 65%"
       }
     },
     back: {
@@ -164,17 +176,17 @@ const getQuadrantCropStyle = (quadrant: string, view: string) => {
         objectFit: "cover" as const,
         objectPosition: "50% 35%", // Focus on back & shoulders area
         height: "500px",
-        transform: "scale(2.5)",
+        transform: "scale(2.8)",
         transformOrigin: "50% 35%"
       }
     },
     buttocks: {
       "Back view": {
         objectFit: "cover" as const,
-        objectPosition: "50% 63%", // Focus on buttocks area
+        objectPosition: "50% 60%", // Focus on buttocks area
         height: "500px",
-        transform: "scale(2.8)",
-        transformOrigin: "50% 63%"
+        transform: "scale(3.0)",
+        transformOrigin: "50% 60%"
       }
     },
     arms: {
@@ -182,31 +194,31 @@ const getQuadrantCropStyle = (quadrant: string, view: string) => {
         objectFit: "cover" as const,
         objectPosition: "15% 45%", // Focus on left arm area
         height: "600px",
-        transform: "scale(2.8)",
+        transform: "scale(3.2)",
         transformOrigin: "15% 45%"
       },
       "Back view": {
         objectFit: "cover" as const,
         objectPosition: "15% 45%", // Focus on left arm back
         height: "600px",
-        transform: "scale(2.8)",
+        transform: "scale(3.2)",
         transformOrigin: "15% 45%"
       }
     },
     legs: {
       Front: {
         objectFit: "cover" as const,
-        objectPosition: "50% 80%", // Focus precisely on legs area
+        objectPosition: "50% 78%", // Focus precisely on legs area
         height: "500px",
-        transform: "scale(2.3)", // Zoom for legs
-        transformOrigin: "50% 80%"
+        transform: "scale(2.5)", // Zoom for legs
+        transformOrigin: "50% 78%"
       },
       "Back view": {
         objectFit: "cover" as const,
-        objectPosition: "50% 82%", // Focus on legs back
+        objectPosition: "50% 80%", // Focus on legs back
         height: "500px", 
-        transform: "scale(2.3)",
-        transformOrigin: "50% 82%"
+        transform: "scale(2.5)",
+        transformOrigin: "50% 80%"
       }
     }
   };
