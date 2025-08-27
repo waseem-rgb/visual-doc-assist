@@ -75,11 +75,8 @@ const BodyMap = ({ gender, patientData }: BodyMapProps) => {
   }) || [];
 
   const handleBodyPartClick = (bodyPart: string) => {
-    setSelectedBodyParts(prev => 
-      prev.includes(bodyPart) 
-        ? prev.filter(part => part !== bodyPart)
-        : [...prev, bodyPart]
-    );
+    // Only allow single selection - replace current selection
+    setSelectedBodyParts([bodyPart]);
   };
 
   const getBodyPartPosition = (bodyPart: string, view: string) => {
@@ -203,7 +200,7 @@ const BodyMap = ({ gender, patientData }: BodyMapProps) => {
       <div className="text-center">
         <h3 className="text-2xl font-semibold mb-4">Select Affected Body Areas</h3>
         <p className="text-muted-foreground mb-6">
-          Click on the body parts where you're experiencing symptoms. You can select multiple areas.
+          Click on the body part where you're experiencing symptoms. Select one area at a time.
         </p>
         
         <ToggleGroup 
@@ -285,15 +282,14 @@ const BodyMap = ({ gender, patientData }: BodyMapProps) => {
             {/* Selected body parts display */}
             {selectedBodyParts.length > 0 && (
               <div className="mt-6 p-4 bg-muted/50 rounded-lg">
-                <h4 className="font-semibold mb-2">Selected Areas:</h4>
+                <h4 className="font-semibold mb-2">Selected Area:</h4>
                 <div className="flex flex-wrap gap-2">
                   {selectedBodyParts.map((part) => (
                     <span
                       key={part}
-                      className="px-3 py-1 bg-primary/10 text-primary rounded-full text-sm cursor-pointer hover:bg-primary/20"
-                      onClick={() => handleBodyPartClick(part)}
+                      className="px-3 py-1 bg-primary/10 text-primary rounded-full text-sm"
                     >
-                      {part} ×
+                      {part}
                     </span>
                   ))}
                 </div>
@@ -306,7 +302,7 @@ const BodyMap = ({ gender, patientData }: BodyMapProps) => {
       {selectedBodyParts.length > 0 && (
         <div className="text-center">
           <Button className="gradient-primary" size="lg">
-            Continue with Selected Areas ({selectedBodyParts.length})
+            Continue with Selected Area
           </Button>
         </div>
       )}
