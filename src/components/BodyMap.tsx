@@ -31,16 +31,32 @@ const BodyMap = ({ gender, patientData }: BodyMapProps) => {
   const { data: bodyParts, isLoading } = useQuery({
     queryKey: ["bodyParts", currentView, gender],
     queryFn: async () => {
-      const { data, error } = await supabase
+      // First try with gender-specific filtering using exact table values
+      const genderValues = ["Both gender", gender === "male" ? "Male patient" : "Female patient"];
+      
+      let { data, error } = await supabase
         .from("head to Toe sub areas")
         .select("*")
         .eq("View", currentView)
-        .or(`Specific rules.ilike.%Both gender%,Specific rules.ilike.%${gender === "male" ? "Male" : "Female"} patient%`);
+        .in("Specific rules", genderValues);
+      
+      // If no results with gender filter, fallback to view-only query
+      if (data && data.length === 0) {
+        const fallback = await supabase
+          .from("head to Toe sub areas")
+          .select("*")
+          .eq("View", currentView);
+        
+        data = fallback.data;
+        error = fallback.error;
+      }
       
       if (error) {
         toast.error("Failed to load body parts");
         throw error;
       }
+      
+      console.log(`Loaded ${data?.length || 0} body parts for ${currentView} view (${gender}):`, data?.map(p => p.Body_part));
       return data as BodyPart[];
     },
   });
@@ -218,7 +234,7 @@ const BodyMap = ({ gender, patientData }: BodyMapProps) => {
                   return (
                   <div
                     key={`${part.Body_part}-${index}`}
-                    className={`absolute w-4 h-4 rounded-full cursor-pointer transition-all duration-300 border-2 border-white shadow-xl ${
+                    className={`absolute w-3 h-3 rounded-full cursor-pointer transition-all duration-300 border-2 border-white shadow-xl ${
                       isSelected 
                         ? "bg-green-500 scale-150 ring-4 ring-green-300 animate-none" 
                         : "bg-red-500 animate-pulse hover:bg-blue-500 hover:scale-150 hover:animate-none"
