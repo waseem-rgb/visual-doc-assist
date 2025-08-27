@@ -28,34 +28,14 @@ const BodyMap = ({ gender, patientData }: BodyMapProps) => {
   const [selectedBodyParts, setSelectedBodyParts] = useState<string[]>([]);
   const [hoveredPart, setHoveredPart] = useState<string | null>(null);
 
-  const { data: bodyParts, isLoading } = useQuery({
-    queryKey: ["bodyParts", currentView, gender],
+  const { data: allBodyParts, isLoading } = useQuery({
+    queryKey: ["bodyParts"],
     queryFn: async () => {
-      // First try with gender-specific filtering using exact table values
-      const genderValues = ["shown to Both gender", gender === "male" ? "Only to Male patient" : "Only to Female patient"];
+      console.log("Fetching all body parts...");
       
-      console.log(`Querying for view: ${currentView}, gender: ${gender}, values:`, genderValues);
-      
-      let { data, error } = await supabase
+      const { data, error } = await supabase
         .from("head to Toe sub areas")
-        .select("*")
-        .eq("View", currentView)
-        .in("Specific rules", genderValues);
-      
-      console.log("Query result:", data, "Error:", error);
-      
-      // If no results with gender filter, fallback to view-only query
-      if (data && data.length === 0) {
-        console.log("No results with gender filter, trying fallback...");
-        const fallback = await supabase
-          .from("head to Toe sub areas")
-          .select("*")
-          .eq("View", currentView);
-        
-        console.log("Fallback result:", fallback.data);
-        data = fallback.data;
-        error = fallback.error;
-      }
+        .select("*");
       
       if (error) {
         console.error("Supabase error:", error);
@@ -63,10 +43,21 @@ const BodyMap = ({ gender, patientData }: BodyMapProps) => {
         throw error;
       }
       
-      console.log(`Final result: Loaded ${data?.length || 0} body parts for ${currentView} view (${gender}):`, data?.map(p => p.Body_part));
+      console.log("Raw data from Supabase:", data);
       return data as BodyPart[];
     },
   });
+
+  // Filter body parts based on current view and gender
+  const bodyParts = allBodyParts?.filter(part => {
+    const matchesView = part.View === currentView;
+    const genderRules = ["shown to Both gender", gender === "male" ? "Only to Male patient" : "Only to Female patient"];
+    const matchesGender = genderRules.includes(part["Specific rules"]);
+    
+    console.log(`Part: ${part.Body_part}, View: ${part.View} (matches: ${matchesView}), Rules: ${part["Specific rules"]} (matches: ${matchesGender})`);
+    
+    return matchesView && matchesGender;
+  }) || [];
 
   const handleBodyPartClick = (bodyPart: string) => {
     setSelectedBodyParts(prev => 
