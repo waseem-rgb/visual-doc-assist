@@ -60,14 +60,14 @@ const getQuadrants = (view: string) => {
         id: "back",
         name: "Back & Shoulders", 
         description: "Upper Back, Lower Back, Shoulders",
-        x1: 0.25, y1: 0.14, x2: 0.75, y2: 0.58,
+        x1: 0.25, y1: 0.12, x2: 0.75, y2: 0.54,
         color: "rgba(16, 185, 129, 0.2)",
       },
       {
         id: "buttocks",
         name: "Buttocks & Hip",
         description: "Buttocks, Anus, Hip Back",
-        x1: 0.32, y1: 0.56, x2: 0.68, y2: 0.72,
+        x1: 0.32, y1: 0.52, x2: 0.68, y2: 0.68,
         color: "rgba(245, 101, 101, 0.2)",
       },
       {
