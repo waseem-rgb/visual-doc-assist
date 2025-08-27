@@ -238,7 +238,7 @@ const BodyMap = ({ gender, patientData }: BodyMapProps) => {
       <div className="text-center">
         <h3 className="text-2xl font-semibold mb-4">Select Affected Body Areas</h3>
         <p className="text-muted-foreground mb-6">
-          Click on the body part where you're experiencing symptoms. Select one area at a time.
+          Hover over the body image to see body part names. Click on highlighted areas to select them.
         </p>
         
         <ToggleGroup 
@@ -257,95 +257,21 @@ const BodyMap = ({ gender, patientData }: BodyMapProps) => {
       </div>
 
       <div className="flex justify-center">
-        <div className="w-full max-w-7xl grid grid-cols-1 lg:grid-cols-3 gap-6">
-          
-          {/* Left Side Body Parts */}
-          <div className="space-y-4">
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-lg">Left Side Body Parts</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <Collapsible open={leftSideOpen} onOpenChange={setLeftSideOpen}>
-                  <CollapsibleTrigger className="flex items-center justify-between w-full p-2 hover:bg-muted rounded">
-                    <span className="font-medium">Body Areas ({leftSideBodyParts.length})</span>
-                    {leftSideOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
-                  </CollapsibleTrigger>
-                  <CollapsibleContent className="mt-2 space-y-1">
-                    {leftSideBodyParts.map((part, index) => (
-                      <div
-                        key={`left-${part.Body_part}-${index}`}
-                        className={`p-3 rounded-lg cursor-pointer transition-all duration-200 text-sm border ${
-                          selectedBodyParts.includes(part.Body_part)
-                            ? "bg-primary text-primary-foreground border-primary shadow-lg"
-                            : hoveredPart === part.Body_part
-                            ? "bg-muted border-primary/50 shadow-md"
-                            : "bg-muted/50 hover:bg-muted border-border hover:shadow-md"
-                        }`}
-                        onClick={() => handleBodyPartClick(part.Body_part)}
-                        onMouseEnter={() => handleBodyPartHover(part.Body_part)}
-                        onMouseLeave={() => handleBodyPartHover(null)}
-                      >
-                        <div className="font-medium">{part.Body_part}</div>
-                      </div>
-                    ))}
-                  </CollapsibleContent>
-                </Collapsible>
-              </CardContent>
-            </Card>
-          </div>
-
+        <div className="w-full max-w-4xl">
           {/* Center - 3D Body Selector */}
-          <div>
-            <ThreeDBodySelector
-              imageUrl={gender === "male" 
-                ? (currentView === "Front" ? bodyFrontRealistic : bodyBackRealistic)
-                : (currentView === "Front" ? bodyFrontFemale : bodyBackFemale)
-              }
-              gender={gender}
-              currentView={currentView}
-              selectedBodyParts={selectedBodyParts}
-              hoveredPart={hoveredPart}
-              onBodyPartHover={handleBodyPartHover}
-              onBodyPartClick={handleBodyPartClick}
-            />
-          </div>
-
-          {/* Right Side Body Parts */}
-          <div className="space-y-4">
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-lg">Right Side Body Parts</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <Collapsible open={rightSideOpen} onOpenChange={setRightSideOpen}>
-                  <CollapsibleTrigger className="flex items-center justify-between w-full p-2 hover:bg-muted rounded">
-                    <span className="font-medium">Body Areas ({rightSideBodyParts.length})</span>
-                    {rightSideOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
-                  </CollapsibleTrigger>
-                  <CollapsibleContent className="mt-2 space-y-1">
-                    {rightSideBodyParts.map((part, index) => (
-                      <div
-                        key={`right-${part.Body_part}-${index}`}
-                        className={`p-3 rounded-lg cursor-pointer transition-all duration-200 text-sm border ${
-                          selectedBodyParts.includes(part.Body_part)
-                            ? "bg-primary text-primary-foreground border-primary shadow-lg"
-                            : hoveredPart === part.Body_part
-                            ? "bg-muted border-primary/50 shadow-md"
-                            : "bg-muted/50 hover:bg-muted border-border hover:shadow-md"
-                        }`}
-                        onClick={() => handleBodyPartClick(part.Body_part)}
-                        onMouseEnter={() => handleBodyPartHover(part.Body_part)}
-                        onMouseLeave={() => handleBodyPartHover(null)}
-                      >
-                        <div className="font-medium">{part.Body_part}</div>
-                      </div>
-                    ))}
-                  </CollapsibleContent>
-                </Collapsible>
-              </CardContent>
-            </Card>
-          </div>
+          <ThreeDBodySelector
+            imageUrl={gender === "male" 
+              ? (currentView === "Front" ? bodyFrontRealistic : bodyBackRealistic)
+              : (currentView === "Front" ? bodyFrontFemale : bodyBackFemale)
+            }
+            gender={gender}
+            currentView={currentView}
+            selectedBodyParts={selectedBodyParts}
+            hoveredPart={hoveredPart}
+            onBodyPartHover={handleBodyPartHover}
+            onBodyPartClick={handleBodyPartClick}
+            bodyParts={bodyParts}
+          />
         </div>
       </div>
             

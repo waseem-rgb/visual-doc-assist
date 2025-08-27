@@ -4,7 +4,7 @@ import { OrbitControls, Html } from "@react-three/drei";
 import * as THREE from "three";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ZoomIn, ZoomOut, RotateCcw } from "lucide-react";
+import { RotateCcw } from "lucide-react";
 
 interface ThreeDBodySelectorProps {
   imageUrl: string;
@@ -14,7 +14,58 @@ interface ThreeDBodySelectorProps {
   hoveredPart: string | null;
   onBodyPartHover: (part: string | null) => void;
   onBodyPartClick: (part: string) => void;
+  bodyParts: Array<{ Body_part: string; View: string; "Specific rules": string }>;
 }
+
+// Body part area definitions for hit detection
+const getBodyPartAreas = (view: string, gender: string) => {
+  const areas: { [key: string]: { x: number; y: number; width: number; height: number } } = {};
+  
+  if (view === "Front") {
+    return {
+      "HEAD FRONT": { x: 0.4, y: 0.08, width: 0.2, height: 0.12 },
+      "FACE": { x: 0.42, y: 0.14, width: 0.16, height: 0.08 },
+      "EYE PHYSICAL": { x: 0.38, y: 0.13, width: 0.24, height: 0.04 },
+      "NOSE": { x: 0.47, y: 0.16, width: 0.06, height: 0.03 },
+      "MOUTH": { x: 0.46, y: 0.18, width: 0.08, height: 0.02 },
+      "NECK": { x: 0.46, y: 0.21, width: 0.08, height: 0.05 },
+      "THROAT": { x: 0.46, y: 0.23, width: 0.08, height: 0.03 },
+      "SHOULDER FRONT": { x: 0.18, y: 0.26, width: 0.64, height: 0.06 },
+      "CHEST UPPER": { x: 0.4, y: 0.3, width: 0.2, height: 0.08 },
+      "CHEST CENTRAL": { x: 0.38, y: 0.32, width: 0.24, height: 0.1 },
+      "BREAST": { x: 0.35, y: 0.32, width: 0.3, height: 0.08 },
+      "UPPER ARM": { x: 0.1, y: 0.32, width: 0.15, height: 0.2 },
+      "UPPER ABDOMEN": { x: 0.4, y: 0.4, width: 0.2, height: 0.08 },
+      "ABDOMEN GENERAL": { x: 0.38, y: 0.45, width: 0.24, height: 0.1 },
+      "LOWER ABDOMEN LEFT": { x: 0.35, y: 0.5, width: 0.15, height: 0.08 },
+      "LOWER ABDOMEN RIGHT": { x: 0.5, y: 0.5, width: 0.15, height: 0.08 },
+      "GROIN MALE AND FEMALE": { x: 0.44, y: 0.55, width: 0.12, height: 0.06 },
+      "MALE GENITALS": gender === "male" ? { x: 0.45, y: 0.56, width: 0.1, height: 0.04 } : null,
+      "FEMALE GENITALS": gender === "female" ? { x: 0.46, y: 0.56, width: 0.08, height: 0.04 } : null,
+      "FOREARM AND WRIST": { x: 0.05, y: 0.42, width: 0.12, height: 0.15 },
+      "HAND PALM": { x: 0.02, y: 0.52, width: 0.1, height: 0.08 },
+      "HIP FRONT": { x: 0.3, y: 0.58, width: 0.4, height: 0.08 },
+      "THIGH FRONT": { x: 0.32, y: 0.65, width: 0.36, height: 0.15 },
+      "KNEE FRONT": { x: 0.35, y: 0.76, width: 0.3, height: 0.06 },
+      "LOWER LEG FRONT": { x: 0.36, y: 0.8, width: 0.28, height: 0.12 },
+      "ANKLE": { x: 0.38, y: 0.9, width: 0.24, height: 0.04 },
+      "FOOT": { x: 0.36, y: 0.93, width: 0.28, height: 0.07 },
+    };
+  } else {
+    return {
+      "HAIR AND SCALP": { x: 0.4, y: 0.06, width: 0.2, height: 0.1 },
+      "SHOULDER BACK": { x: 0.18, y: 0.26, width: 0.64, height: 0.06 },
+      "UPPER BACK": { x: 0.38, y: 0.3, width: 0.24, height: 0.15 },
+      "LOWER BACK": { x: 0.4, y: 0.45, width: 0.2, height: 0.1 },
+      "ELBOW": { x: 0.1, y: 0.4, width: 0.15, height: 0.08 },
+      "HAND BACK": { x: 0.75, y: 0.52, width: 0.1, height: 0.08 },
+      "HIP BACK": { x: 0.3, y: 0.58, width: 0.4, height: 0.08 },
+      "BUTTOCKS AND ANUS": { x: 0.4, y: 0.6, width: 0.2, height: 0.08 },
+      "KNEE BACK": { x: 0.35, y: 0.76, width: 0.3, height: 0.06 },
+      "LOWER LEG BACK": { x: 0.36, y: 0.8, width: 0.28, height: 0.12 },
+    };
+  }
+};
 
 // Component to display the body image as a texture in 3D space
 function BodyImage({ imageUrl, hoveredPart }: { imageUrl: string; hoveredPart: string | null }) {
@@ -43,48 +94,107 @@ function BodyImage({ imageUrl, hoveredPart }: { imageUrl: string; hoveredPart: s
 }
 
 // Smart cursor/loupe that follows mouse and provides magnification
-function SmartLoupe({ selectedBodyParts }: { selectedBodyParts: string[] }) {
-  const { camera, gl, scene, mouse } = useThree();
+function SmartLoupe({ 
+  selectedBodyParts, 
+  hoveredPart, 
+  mousePosition,
+  onHover, 
+  onClick,
+  bodyParts,
+  currentView,
+  gender 
+}: { 
+  selectedBodyParts: string[];
+  hoveredPart: string | null;
+  mousePosition: { x: number; y: number };
+  onHover: (part: string | null) => void;
+  onClick: (part: string) => void;
+  bodyParts: Array<{ Body_part: string; View: string; "Specific rules": string }>;
+  currentView: string;
+  gender: string;
+}) {
+  const { mouse } = useThree();
   const loupeRef = useRef<THREE.Group>(null);
-  const [worldPosition, setWorldPosition] = useState(new THREE.Vector3());
+  
+  // Check which body part we're hovering over
+  useEffect(() => {
+    const areas = getBodyPartAreas(currentView, gender);
+    let foundPart = null;
+    
+    // Convert mouse coordinates to normalized coordinates (0-1)
+    const normalizedX = (mousePosition.x + 1) / 2;
+    const normalizedY = 1 - (mousePosition.y + 1) / 2; // Flip Y coordinate
+    
+    // Check each body part area
+    for (const [partName, area] of Object.entries(areas)) {
+      if (area && normalizedX >= area.x && normalizedX <= area.x + area.width &&
+          normalizedY >= area.y && normalizedY <= area.y + area.height) {
+        // Verify this part exists in our body parts list
+        const partExists = bodyParts.some(part => part.Body_part === partName);
+        if (partExists) {
+          foundPart = partName;
+          break;
+        }
+      }
+    }
+    
+    onHover(foundPart);
+  }, [mousePosition, currentView, gender, bodyParts, onHover]);
   
   useFrame(() => {
     if (loupeRef.current) {
-      // Convert mouse coordinates to world position
+      // Convert mouse coordinates to world position (smaller loupe)
       const vector = new THREE.Vector3(mouse.x * 2, mouse.y * 3, 0.1);
       loupeRef.current.position.copy(vector);
       
       // Add subtle floating animation
-      loupeRef.current.position.y += Math.sin(Date.now() * 0.002) * 0.02;
+      loupeRef.current.position.y += Math.sin(Date.now() * 0.002) * 0.01;
       
       // Rotate slightly for visual appeal
-      loupeRef.current.rotation.z = Math.sin(Date.now() * 0.001) * 0.1;
+      loupeRef.current.rotation.z = Math.sin(Date.now() * 0.001) * 0.05;
     }
   });
 
+  const handleClick = () => {
+    if (hoveredPart) {
+      onClick(hoveredPart);
+    }
+  };
+
   return (
-    <group ref={loupeRef}>
+    <group ref={loupeRef} onClick={handleClick}>
+      {/* Main ring - smaller than before */}
       <mesh>
-        <ringGeometry args={[0.15, 0.2, 32]} />
+        <ringGeometry args={[0.08, 0.1, 32]} />
         <meshBasicMaterial 
-          color={selectedBodyParts.length > 0 ? "#10b981" : "#3b82f6"} 
+          color={hoveredPart ? "#10b981" : selectedBodyParts.length > 0 ? "#f59e0b" : "#3b82f6"} 
           transparent 
-          opacity={0.8}
+          opacity={0.9}
         />
       </mesh>
+      {/* Outer highlight ring */}
       <mesh>
-        <ringGeometry args={[0.18, 0.22, 32]} />
+        <ringGeometry args={[0.1, 0.12, 32]} />
         <meshBasicMaterial 
           color="#ffffff" 
           transparent 
-          opacity={0.6}
+          opacity={0.5}
         />
       </mesh>
-      {/* Crosshair in the center */}
+      {/* Center dot */}
       <mesh position={[0, 0, 0.001]}>
-        <ringGeometry args={[0.01, 0.015, 8]} />
+        <circleGeometry args={[0.008, 16]} />
         <meshBasicMaterial color="#ffffff" />
       </mesh>
+      
+      {/* Body part label */}
+      {hoveredPart && (
+        <Html position={[0, 0.2, 0]} center>
+          <div className="bg-primary text-primary-foreground px-3 py-1 rounded-md text-sm font-medium shadow-lg border border-white/20 pointer-events-none">
+            {hoveredPart}
+          </div>
+        </Html>
+      )}
     </group>
   );
 }
@@ -121,19 +231,23 @@ const ThreeDBodySelector = ({
   selectedBodyParts,
   hoveredPart,
   onBodyPartHover,
-  onBodyPartClick
+  onBodyPartClick,
+  bodyParts
 }: ThreeDBodySelectorProps) => {
   const [isLoading, setIsLoading] = useState(true);
+  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   const handleImageLoad = () => {
     setIsLoading(false);
   };
 
-  const handleCanvasClick = (event: React.MouseEvent) => {
-    // If there's a hovered part, select it
-    if (hoveredPart) {
-      onBodyPartClick(hoveredPart);
+  const handleMouseMove = (event: React.MouseEvent) => {
+    if (canvasRef.current) {
+      const rect = canvasRef.current.getBoundingClientRect();
+      const x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+      const y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+      setMousePosition({ x, y });
     }
   };
 
@@ -159,14 +273,7 @@ const ThreeDBodySelector = ({
           
           <Canvas
             ref={canvasRef}
-            onClick={handleCanvasClick}
-            onMouseMove={(event) => {
-              // Detect which body part we're hovering over based on cursor position
-              // This is a simplified implementation - in production you'd want more precise hit detection
-              if (hoveredPart !== selectedBodyParts[0]) {
-                // onBodyPartHover(selectedBodyParts[0] || null);
-              }
-            }}
+            onMouseMove={handleMouseMove}
             style={{ cursor: hoveredPart ? 'pointer' : 'grab' }}
             camera={{ position: [0, 0, 5], fov: 50 }}
           >
@@ -183,7 +290,16 @@ const ThreeDBodySelector = ({
               <BodyImage imageUrl={imageUrl} hoveredPart={hoveredPart} />
               
               {/* Smart loupe cursor */}
-              <SmartLoupe selectedBodyParts={selectedBodyParts} />
+              <SmartLoupe 
+                selectedBodyParts={selectedBodyParts}
+                hoveredPart={hoveredPart}
+                mousePosition={mousePosition}
+                onHover={onBodyPartHover}
+                onClick={onBodyPartClick}
+                bodyParts={bodyParts}
+                currentView={currentView}
+                gender={gender}
+              />
               
               {/* Camera controls */}
               <CameraController />
@@ -203,7 +319,7 @@ const ThreeDBodySelector = ({
               {hoveredPart ? (
                 <span className="text-primary font-medium">Click to select: {hoveredPart}</span>
               ) : (
-                "Pan to explore • Scroll to zoom • Click body parts from the side lists"
+                "Pan to explore • Scroll to zoom • Hover over body areas to see names"
               )}
             </div>
           </div>
