@@ -15,35 +15,35 @@ const getQuadrants = (view: string) => {
         id: "head",
         name: "Head & Face",
         description: "Eyes, Nose, Mouth, Ears, Hair",
-        x1: 0.25, y1: 0.0, x2: 0.75, y2: 0.32,
+        x1: 0.32, y1: 0.02, x2: 0.68, y2: 0.22,
         color: "rgba(59, 130, 246, 0.2)", // Blue
       },
       {
         id: "chest", 
         name: "Chest & Upper Body",
         description: "Chest, Shoulders, Upper Back, Neck",
-        x1: 0.20, y1: 0.28, x2: 0.80, y2: 0.52,
+        x1: 0.25, y1: 0.20, x2: 0.75, y2: 0.42,
         color: "rgba(16, 185, 129, 0.2)", // Green
       },
       {
         id: "abdomen",
         name: "Abdomen & Core", 
         description: "Stomach, Bowels, Groin, Lower Back",
-        x1: 0.25, y1: 0.42, x2: 0.75, y2: 0.78,
+        x1: 0.32, y1: 0.40, x2: 0.68, y2: 0.65,
         color: "rgba(245, 101, 101, 0.2)", // Red
       },
       {
         id: "arms",
         name: "Arms & Hands",
         description: "Upper Arms, Forearms, Hands, Wrists",
-        x1: 0.0, y1: 0.25, x2: 0.25, y2: 0.85,
+        x1: 0.02, y1: 0.22, x2: 0.32, y2: 0.75,
         color: "rgba(168, 85, 247, 0.2)", // Purple
       },
       {
         id: "legs",
         name: "Legs & Feet", 
         description: "Thighs, Knees, Lower Legs, Feet",
-        x1: 0.30, y1: 0.75, x2: 0.70, y2: 1.0,
+        x1: 0.35, y1: 0.62, x2: 0.65, y2: 0.98,
         color: "rgba(245, 158, 11, 0.2)", // Orange
       }
     ];
@@ -53,35 +53,35 @@ const getQuadrants = (view: string) => {
         id: "head",
         name: "Head & Scalp",
         description: "Hair, Scalp, Head Back",
-        x1: 0.25, y1: 0.0, x2: 0.75, y2: 0.20,
+        x1: 0.32, y1: 0.02, x2: 0.68, y2: 0.18,
         color: "rgba(59, 130, 246, 0.2)",
       },
       {
         id: "back",
         name: "Back & Shoulders", 
         description: "Upper Back, Lower Back, Shoulders",
-        x1: 0.20, y1: 0.18, x2: 0.80, y2: 0.78,
+        x1: 0.25, y1: 0.16, x2: 0.75, y2: 0.62,
         color: "rgba(16, 185, 129, 0.2)",
       },
       {
         id: "buttocks",
         name: "Buttocks & Hip",
         description: "Buttocks, Anus, Hip Back",
-        x1: 0.25, y1: 0.75, x2: 0.75, y2: 0.88,
+        x1: 0.32, y1: 0.60, x2: 0.68, y2: 0.75,
         color: "rgba(245, 101, 101, 0.2)",
       },
       {
         id: "arms",
         name: "Arms & Hands",
         description: "Upper Arms, Elbows, Hands Back",
-        x1: 0.0, y1: 0.25, x2: 0.25, y2: 0.85,
+        x1: 0.02, y1: 0.20, x2: 0.32, y2: 0.70,
         color: "rgba(168, 85, 247, 0.2)",
       },
       {
         id: "legs",
         name: "Legs & Feet",
         description: "Thighs Back, Knees Back, Lower Legs",
-        x1: 0.30, y1: 0.85, x2: 0.70, y2: 1.0,
+        x1: 0.35, y1: 0.72, x2: 0.65, y2: 0.98,
         color: "rgba(245, 158, 11, 0.2)",
       }
     ];
