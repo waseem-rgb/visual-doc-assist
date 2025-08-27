@@ -310,20 +310,6 @@ const DetailedBodyView = ({
                       }`}
                     />
                   </div>
-                  
-                  {/* Body part label */}
-                  <div
-                    className="absolute pointer-events-none z-10"
-                    style={{
-                      left: `${centerX * 100}%`,
-                      top: `${centerY * 100 - 8}%`,
-                      transform: 'translate(-50%, -100%)'
-                    }}
-                  >
-                    <span className="bg-white/95 text-xs font-medium px-2 py-1 rounded shadow-sm text-center leading-tight border">
-                      {part.name}
-                    </span>
-                  </div>
                 </div>
               );
             })}
