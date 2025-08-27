@@ -12,7 +12,7 @@ import bodyBackRealistic from "@/assets/body-back-realistic.png";
 import bodyFrontFemale from "@/assets/body-front-female.png";
 import bodyBackFemale from "@/assets/body-back-female.png";
 import SymptomViewer from "./SymptomViewer";
-import ThreeDBodySelector from "./ThreeDBodySelector";
+import SVGBodySelector from "./SVGBodySelector";
 
 interface BodyMapProps {
   gender: "male" | "female";
@@ -259,7 +259,7 @@ const BodyMap = ({ gender, patientData }: BodyMapProps) => {
       <div className="flex justify-center">
         <div className="w-full max-w-4xl">
           {/* Center - 3D Body Selector */}
-          <ThreeDBodySelector
+          <SVGBodySelector
             imageUrl={gender === "male" 
               ? (currentView === "Front" ? bodyFrontRealistic : bodyBackRealistic)
               : (currentView === "Front" ? bodyFrontFemale : bodyBackFemale)
