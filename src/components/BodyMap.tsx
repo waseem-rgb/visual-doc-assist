@@ -222,14 +222,14 @@ const BodyMap = ({ gender, patientData }: BodyMapProps) => {
       </div>
 
       <div className="flex justify-center">
-        <Card className="w-full max-w-2xl">
+        <Card className="w-full max-w-4xl">
           <CardHeader>
             <CardTitle className="text-center">
               {gender === "male" ? "Male" : "Female"} Body - {currentView} View
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="relative mx-auto" style={{ width: "400px", height: "600px" }}>
+            <div className="relative mx-auto" style={{ width: "600px", height: "800px" }}>
               {/* Body diagram background */}
               <img 
                 src={currentView === "Front" ? bodyFrontRealistic : bodyBackRealistic} 
