@@ -158,8 +158,9 @@ function SmartLoupe({
     
     // Convert mouse coordinates to texture coordinates (0-1 range)
     // Mouse coordinates are -1 to 1, we need to convert to 0-1
+    // CRITICAL: Y must be flipped because texture (0,0) is top-left, WebGL (0,0) is bottom-left
     const textureX = (mousePosition.x + 1) / 2;  // Convert -1,1 to 0,1
-    const textureY = (mousePosition.y + 1) / 2;  // Convert -1,1 to 0,1 (note: NOT flipped)
+    const textureY = 1 - (mousePosition.y + 1) / 2;  // Convert -1,1 to 0,1 AND flip Y-axis
     
     console.log(`Mouse: ${mousePosition.x.toFixed(2)}, ${mousePosition.y.toFixed(2)} -> Texture: ${textureX.toFixed(2)}, ${textureY.toFixed(2)}`);
     
