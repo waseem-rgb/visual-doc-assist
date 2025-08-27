@@ -118,18 +118,23 @@ const FullscreenSymptomLightbox = ({
 
     let hoveredArea = null;
 
-    // Direct coordinate matching with large hit zones
+    // Much simpler coordinate mapping - use fixed zones
     for (const area of textAreas) {
       const imageRect = imageRef.current?.getBoundingClientRect();
       if (!imageRect) return;
       
-      // Simple percentage-based mapping
-      const areaLeft = (area.x / 800) * imageRect.width;
-      const areaTop = (area.y / 600) * imageRect.height;
-      const areaRight = ((area.x + area.width) / 800) * imageRect.width;
-      const areaBottom = ((area.y + area.height) / 600) * imageRect.height;
+      // Map coordinates as percentage of image size
+      const leftPercent = area.x / 800;
+      const topPercent = area.y / 600;
+      const rightPercent = (area.x + area.width) / 800;
+      const bottomPercent = (area.y + area.height) / 600;
       
-      if (x >= areaLeft && x <= areaRight && y >= areaTop && y <= areaBottom) {
+      const left = leftPercent * imageRect.width;
+      const top = topPercent * imageRect.height;
+      const right = rightPercent * imageRect.width;
+      const bottom = bottomPercent * imageRect.height;
+      
+      if (x >= left && x <= right && y >= top && y <= bottom) {
         hoveredArea = area.id;
         break;
       }
@@ -172,29 +177,29 @@ const FullscreenSymptomLightbox = ({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-[100vw] max-h-[100vh] w-full h-full p-0 gap-0">
-        <div className="flex h-full">
-          {/* Left Side - Image (Larger) */}
-          <div className="flex-[2] relative bg-gray-50">
+      <DialogContent className="max-w-[100vw] max-h-[100vh] w-full h-full p-0 gap-0 m-0">
+        <div className="flex h-screen w-screen">
+          {/* Left Side - Image (Full Screen) */}
+          <div className="flex-[3] relative bg-gray-50 h-full">
             {/* Header */}
-            <div className="absolute top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur border-b p-4">
+            <div className="absolute top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur border-b p-3">
               <div className="flex items-center justify-between">
-                <h2 className="text-xl font-bold">Select Your {bodyPart} Symptom</h2>
+                <h2 className="text-lg font-bold">Select Your {bodyPart} Symptom</h2>
                 <Button onClick={onClose} variant="ghost" size="sm">
                   <X className="h-4 w-4" />
                 </Button>
               </div>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-xs text-muted-foreground">
                 Patient: {patientData.name} | Age: {patientData.age} | Gender: {patientData.gender}
               </p>
             </div>
 
-            {/* Image Container with Zoom - Full Height */}
-            <div className="h-full pt-20 pb-2 px-4">
+            {/* Image Container - Full Height */}
+            <div className="h-full pt-16">
               <TransformWrapper
                 initialScale={1}
-                minScale={0.5}
-                maxScale={4}
+                minScale={0.8}
+                maxScale={3}
                 wheel={{ step: 0.1 }}
                 pinch={{ step: 5 }}
                 doubleClick={{ disabled: false, mode: "zoomIn", step: 0.3 }}
@@ -207,24 +212,24 @@ const FullscreenSymptomLightbox = ({
                 {({ zoomIn, zoomOut, resetTransform }) => (
                   <div className="h-full">
                     {/* Zoom Controls */}
-                    <div className="absolute top-24 right-4 z-40 flex flex-col space-y-2">
+                    <div className="absolute top-20 right-4 z-40 flex flex-col space-y-1">
                       <Button onClick={() => zoomIn()} size="sm" variant="outline">
-                        <ZoomIn className="h-4 w-4" />
+                        <ZoomIn className="h-3 w-3" />
                       </Button>
                       <Button onClick={() => zoomOut()} size="sm" variant="outline">
-                        <ZoomOut className="h-4 w-4" />
+                        <ZoomOut className="h-3 w-3" />
                       </Button>
                       <Button onClick={() => resetTransform()} size="sm" variant="outline">
                         Reset
                       </Button>
-                      <div className="text-xs text-center bg-background/80 rounded px-2 py-1">
+                      <div className="text-xs text-center bg-background/80 rounded px-1 py-1">
                         {Math.round(zoomLevel * 100)}%
                       </div>
                     </div>
                     
                     <div 
                       ref={containerRef}
-                      className="relative h-full overflow-hidden cursor-none select-none flex items-center justify-center"
+                      className="relative h-full w-full overflow-hidden cursor-none select-none flex items-center justify-center"
                       onMouseMove={handleMouseMove}
                       onMouseEnter={handleMouseEnter}
                       onMouseLeave={handleMouseLeave}
@@ -265,7 +270,7 @@ const FullscreenSymptomLightbox = ({
                           ref={imageRef}
                           src={imageUrl} 
                           alt={`${bodyPart} symptom diagram`}
-                          className="w-full h-full object-contain pointer-events-none"
+                          className="w-full h-full object-cover pointer-events-none"
                           draggable={false}
                           onLoad={handleImageLoad}
                         />
@@ -277,8 +282,8 @@ const FullscreenSymptomLightbox = ({
             </div>
           </div>
 
-          {/* Right Side - Symptom Details (Smaller) */}
-          <div className="w-80 bg-background border-l flex flex-col">
+          {/* Right Side - Symptom Details (Compact) */}
+          <div className="w-72 bg-background border-l flex flex-col h-screen">
             <div className="p-6 flex-1 overflow-y-auto space-y-6">
               {/* Instructions */}
               <Card>

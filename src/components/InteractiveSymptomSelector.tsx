@@ -38,17 +38,15 @@ const InteractiveSymptomSelector = ({ bodyPart, patientData, onBack }: Interacti
     switch(bodyPart.toUpperCase()) {
       case 'MALE GENITALS':
         return [
-          { id: "penile-discharge", x: 50, y: 200, width: 400, height: 60, 
-            symptomText: "Discharge from penis that may be clear, white, yellow, or green. May be associated with burning sensation during urination." },
-          { id: "painful-urination", x: 50, y: 280, width: 400, height: 60, 
-            symptomText: "Burning, stinging, or pain during urination. May be associated with increased frequency of urination." },
-          { id: "testicular-pain", x: 50, y: 360, width: 400, height: 60, 
-            symptomText: "Pain or discomfort in one or both testicles. May be sudden or gradual onset, dull ache or sharp pain." },
-          { id: "genital-sores", x: 50, y: 440, width: 400, height: 60, 
+          { id: "penile-issues", x: 300, y: 150, width: 200, height: 150, 
+            symptomText: "Discharge from penis, burning during urination, or pain. May be clear, white, yellow, or green discharge." },
+          { id: "testicular-problems", x: 250, y: 350, width: 300, height: 200, 
+            symptomText: "Pain or discomfort in one or both testicles. Swelling of testicles or scrotum. May be sudden or gradual onset." },
+          { id: "genital-sores", x: 200, y: 200, width: 400, height: 250, 
             symptomText: "Sores, ulcers, or lesions on the penis, testicles, or surrounding area. May be painful or painless." },
-          { id: "swelling-genitals", x: 50, y: 520, width: 400, height: 60, 
-            symptomText: "Swelling of the penis, testicles, or scrotum. May be accompanied by pain, redness, or warmth." },
-          { id: "erectile-dysfunction", x: 50, y: 600, width: 400, height: 60, 
+          { id: "urinary-problems", x: 300, y: 100, width: 200, height: 100, 
+            symptomText: "Burning, stinging, or pain during urination. Increased frequency of urination or difficulty urinating." },
+          { id: "erectile-issues", x: 280, y: 180, width: 240, height: 180, 
             symptomText: "Difficulty achieving or maintaining an erection sufficient for sexual intercourse." },
         ];
       case 'EAR PHYSICAL':
