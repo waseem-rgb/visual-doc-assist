@@ -114,81 +114,99 @@ const getQuadrantCropStyle = (quadrant: string, view: string) => {
     head: {
       Front: {
         objectFit: "cover" as const,
-        objectPosition: "50% 15%", // Focus on head area
+        objectPosition: "50% 12%", // Focus precisely on head area
         height: "500px",
-        transform: "scale(2.5)", // Zoom in significantly
-        transformOrigin: "50% 15%"
+        transform: "scale(3.2)", // Zoom in significantly for head only
+        transformOrigin: "50% 12%"
       },
       "Back view": {
         objectFit: "cover" as const,
-        objectPosition: "50% 10%",
+        objectPosition: "50% 8%", // Focus on head back
         height: "500px", 
-        transform: "scale(2.5)",
-        transformOrigin: "50% 10%"
+        transform: "scale(3.5)", // Zoom for head back
+        transformOrigin: "50% 8%"
       }
     },
     chest: {
       Front: {
         objectFit: "cover" as const,
-        objectPosition: "50% 35%", // Focus on chest area
+        objectPosition: "50% 28%", // Focus precisely on chest area
         height: "500px",
-        transform: "scale(2.2)",
-        transformOrigin: "50% 35%"
+        transform: "scale(2.8)", // Zoom for chest area
+        transformOrigin: "50% 28%"
       },
       "Back view": {
         objectFit: "cover" as const,
-        objectPosition: "50% 35%", // Focus on upper back
+        objectPosition: "50% 30%", // Focus on upper back/shoulders
         height: "500px",
-        transform: "scale(2.2)", 
-        transformOrigin: "50% 35%"
+        transform: "scale(2.8)", 
+        transformOrigin: "50% 30%"
       }
     },
     abdomen: {
       Front: {
         objectFit: "cover" as const,
-        objectPosition: "50% 60%", // Focus on abdomen area
+        objectPosition: "50% 50%", // Focus precisely on abdomen area
         height: "500px",
-        transform: "scale(2.0)",
-        transformOrigin: "50% 60%"
+        transform: "scale(2.5)", // Zoom for abdomen
+        transformOrigin: "50% 50%"
       },
       "Back view": {
         objectFit: "cover" as const,
-        objectPosition: "50% 65%", // Focus on lower back/buttocks
+        objectPosition: "50% 60%", // Focus on lower back
         height: "500px",
-        transform: "scale(2.0)",
-        transformOrigin: "50% 65%"
+        transform: "scale(2.2)",
+        transformOrigin: "50% 60%"
+      }
+    },
+    back: {
+      "Back view": {
+        objectFit: "cover" as const,
+        objectPosition: "50% 35%", // Focus on back & shoulders area
+        height: "500px",
+        transform: "scale(2.5)",
+        transformOrigin: "50% 35%"
+      }
+    },
+    buttocks: {
+      "Back view": {
+        objectFit: "cover" as const,
+        objectPosition: "50% 63%", // Focus on buttocks area
+        height: "500px",
+        transform: "scale(2.8)",
+        transformOrigin: "50% 63%"
       }
     },
     arms: {
       Front: {
         objectFit: "cover" as const,
-        objectPosition: "15% 50%", // Focus on left arm area
+        objectPosition: "15% 45%", // Focus on left arm area
         height: "600px",
-        transform: "scale(2.5)",
-        transformOrigin: "15% 50%"
+        transform: "scale(2.8)",
+        transformOrigin: "15% 45%"
       },
       "Back view": {
         objectFit: "cover" as const,
-        objectPosition: "15% 50%", 
+        objectPosition: "15% 45%", // Focus on left arm back
         height: "600px",
-        transform: "scale(2.5)",
-        transformOrigin: "15% 50%"
+        transform: "scale(2.8)",
+        transformOrigin: "15% 45%"
       }
     },
     legs: {
       Front: {
         objectFit: "cover" as const,
-        objectPosition: "50% 85%", // Focus on leg area
+        objectPosition: "50% 80%", // Focus precisely on legs area
         height: "500px",
-        transform: "scale(2.0)",
-        transformOrigin: "50% 85%"
+        transform: "scale(2.3)", // Zoom for legs
+        transformOrigin: "50% 80%"
       },
       "Back view": {
         objectFit: "cover" as const,
-        objectPosition: "50% 85%",
+        objectPosition: "50% 82%", // Focus on legs back
         height: "500px", 
-        transform: "scale(2.0)",
-        transformOrigin: "50% 85%"
+        transform: "scale(2.3)",
+        transformOrigin: "50% 82%"
       }
     }
   };
