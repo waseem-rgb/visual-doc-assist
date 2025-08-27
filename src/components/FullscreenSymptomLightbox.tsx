@@ -76,7 +76,7 @@ const FullscreenSymptomLightbox = ({
     }
   }, [zoomLevel]);
 
-  // Fast responsive mouse movement handler
+  // Ultra-fast mouse movement handler
   const handleMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
     if (!imageRef.current || selectedSymptom) return;
     
@@ -84,13 +84,8 @@ const FullscreenSymptomLightbox = ({
     const x = e.clientX - imageRect.left;
     const y = e.clientY - imageRect.top;
     
-    // Only update if within image bounds
-    if (x >= 0 && x <= imageRect.width && y >= 0 && y <= imageRect.height) {
-      setCursorPosition({ x, y });
-      
-      // Direct coordinate mapping without scaling
-      checkTextAreaIntersection(x, y);
-    }
+    setCursorPosition({ x, y });
+    checkTextAreaIntersection(x, y);
   }, [selectedSymptom]);
 
   const handleMouseEnter = () => {
@@ -123,28 +118,18 @@ const FullscreenSymptomLightbox = ({
 
     let hoveredArea = null;
 
-    // Use generous hit areas for better clicking
+    // Direct coordinate matching with large hit zones
     for (const area of textAreas) {
-      const padding = 30;
-      // Scale the coordinates to match display size
       const imageRect = imageRef.current?.getBoundingClientRect();
       if (!imageRect) return;
       
-      // Map text area coordinates to current image display size
-      const scaleX = imageRect.width / 800; // Assuming base width of 800
-      const scaleY = imageRect.height / 600; // Assuming base height of 600
+      // Simple percentage-based mapping
+      const areaLeft = (area.x / 800) * imageRect.width;
+      const areaTop = (area.y / 600) * imageRect.height;
+      const areaRight = ((area.x + area.width) / 800) * imageRect.width;
+      const areaBottom = ((area.y + area.height) / 600) * imageRect.height;
       
-      const scaledX = area.x * scaleX;
-      const scaledY = area.y * scaleY;
-      const scaledWidth = area.width * scaleX;
-      const scaledHeight = area.height * scaleY;
-      
-      if (
-        x >= scaledX - padding && 
-        x <= scaledX + scaledWidth + padding &&
-        y >= scaledY - padding && 
-        y <= scaledY + scaledHeight + padding
-      ) {
+      if (x >= areaLeft && x <= areaRight && y >= areaTop && y <= areaBottom) {
         hoveredArea = area.id;
         break;
       }
@@ -189,8 +174,8 @@ const FullscreenSymptomLightbox = ({
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-[100vw] max-h-[100vh] w-full h-full p-0 gap-0">
         <div className="flex h-full">
-          {/* Left Side - Image */}
-          <div className="flex-1 relative bg-gray-50">
+          {/* Left Side - Image (Larger) */}
+          <div className="flex-[2] relative bg-gray-50">
             {/* Header */}
             <div className="absolute top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur border-b p-4">
               <div className="flex items-center justify-between">
@@ -280,10 +265,9 @@ const FullscreenSymptomLightbox = ({
                           ref={imageRef}
                           src={imageUrl} 
                           alt={`${bodyPart} symptom diagram`}
-                          className="max-w-full max-h-full object-contain pointer-events-none"
+                          className="w-full h-full object-contain pointer-events-none"
                           draggable={false}
                           onLoad={handleImageLoad}
-                          style={{ minHeight: '500px' }}
                         />
                       </TransformComponent>
                     </div>
@@ -293,8 +277,8 @@ const FullscreenSymptomLightbox = ({
             </div>
           </div>
 
-          {/* Right Side - Symptom Details */}
-          <div className="w-96 bg-background border-l flex flex-col">
+          {/* Right Side - Symptom Details (Smaller) */}
+          <div className="w-80 bg-background border-l flex flex-col">
             <div className="p-6 flex-1 overflow-y-auto space-y-6">
               {/* Instructions */}
               <Card>

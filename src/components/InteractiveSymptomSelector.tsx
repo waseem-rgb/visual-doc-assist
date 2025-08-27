@@ -38,16 +38,18 @@ const InteractiveSymptomSelector = ({ bodyPart, patientData, onBack }: Interacti
     switch(bodyPart.toUpperCase()) {
       case 'MALE GENITALS':
         return [
-          { id: "penile-discharge", x: 350, y: 200, width: 150, height: 100, 
+          { id: "penile-discharge", x: 50, y: 200, width: 400, height: 60, 
             symptomText: "Discharge from penis that may be clear, white, yellow, or green. May be associated with burning sensation during urination." },
-          { id: "painful-urination", x: 300, y: 320, width: 200, height: 80, 
+          { id: "painful-urination", x: 50, y: 280, width: 400, height: 60, 
             symptomText: "Burning, stinging, or pain during urination. May be associated with increased frequency of urination." },
-          { id: "testicular-pain", x: 250, y: 400, width: 180, height: 120, 
+          { id: "testicular-pain", x: 50, y: 360, width: 400, height: 60, 
             symptomText: "Pain or discomfort in one or both testicles. May be sudden or gradual onset, dull ache or sharp pain." },
-          { id: "genital-sores", x: 320, y: 240, width: 160, height: 90, 
+          { id: "genital-sores", x: 50, y: 440, width: 400, height: 60, 
             symptomText: "Sores, ulcers, or lesions on the penis, testicles, or surrounding area. May be painful or painless." },
-          { id: "swelling-genitals", x: 280, y: 420, width: 170, height: 100, 
+          { id: "swelling-genitals", x: 50, y: 520, width: 400, height: 60, 
             symptomText: "Swelling of the penis, testicles, or scrotum. May be accompanied by pain, redness, or warmth." },
+          { id: "erectile-dysfunction", x: 50, y: 600, width: 400, height: 60, 
+            symptomText: "Difficulty achieving or maintaining an erection sufficient for sexual intercourse." },
         ];
       case 'EAR PHYSICAL':
       case 'EAR HEARING':
