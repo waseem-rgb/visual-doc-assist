@@ -7,6 +7,8 @@ import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import bodyFrontRealistic from "@/assets/body-front-realistic.png";
 import bodyBackRealistic from "@/assets/body-back-realistic.png";
+import bodyFrontFemale from "@/assets/body-front-female.png";
+import bodyBackFemale from "@/assets/body-back-female.png";
 import SymptomViewer from "./SymptomViewer";
 
 interface BodyMapProps {
@@ -251,7 +253,10 @@ const BodyMap = ({ gender, patientData }: BodyMapProps) => {
             <div className="relative mx-auto" style={{ width: "600px", height: "800px" }}>
               {/* Body diagram background */}
               <img 
-                src={currentView === "Front" ? bodyFrontRealistic : bodyBackRealistic} 
+                src={gender === "male" 
+                  ? (currentView === "Front" ? bodyFrontRealistic : bodyBackRealistic)
+                  : (currentView === "Front" ? bodyFrontFemale : bodyBackFemale)
+                } 
                 alt={`${gender} body diagram - ${currentView} view`}
                 className="w-full h-full object-contain rounded-lg"
               />
