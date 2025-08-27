@@ -169,7 +169,7 @@ const InteractiveSymptomSelector = ({ bodyPart, patientData, onBack }: Interacti
     const canvas = new FabricCanvas(canvasRef.current, {
       width: container.clientWidth || 800,
       height: container.clientHeight || 600,
-      backgroundColor: "transparent",
+      backgroundColor: "rgba(0,0,0,0)", // Fully transparent
       selection: false,
       renderOnAddRemove: true,
       skipTargetFind: false,
@@ -180,7 +180,7 @@ const InteractiveSymptomSelector = ({ bodyPart, patientData, onBack }: Interacti
       left: 100,
       top: 100,
       radius: 12,
-      fill: "rgba(59, 130, 246, 0.8)",
+      fill: "rgba(59, 130, 246, 0.9)",
       stroke: "rgba(255, 255, 255, 1)",
       strokeWidth: 2,
       selectable: false, // Make it non-selectable so it follows mouse
@@ -198,40 +198,20 @@ const InteractiveSymptomSelector = ({ bodyPart, patientData, onBack }: Interacti
     setCursor(cursorCircle);
     setFabricCanvas(canvas);
 
-    // Track mouse movement on the entire canvas container
-    const handleMouseMove = (e: MouseEvent) => {
-      const rect = canvasRef.current?.getBoundingClientRect();
-      if (!rect || !cursorCircle) return;
-
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
-
-      cursorCircle.set({
-        left: x - cursorCircle.radius,
-        top: y - cursorCircle.radius
-      });
-      
-      canvas.renderAll();
-      checkTextAreaIntersection(cursorCircle);
-    };
-
-    // Add event listeners to the container
-    const canvasContainer = canvasRef.current.parentElement;
-    if (canvasContainer) {
-      canvasContainer.addEventListener('mousemove', handleMouseMove);
-      canvasContainer.addEventListener('mouseleave', () => {
-        setCurrentHoveredArea(null);
-      });
-    }
-
-    // Handle cursor movement and mouse events
-    canvas.on('object:moving', (e) => {
-      if (e.target === cursorCircle) {
-        checkTextAreaIntersection(e.target as Circle);
+    // Track mouse movement on the canvas itself
+    canvas.on('mouse:move', (e) => {
+      if (cursorCircle && e.pointer) {
+        cursorCircle.set({
+          left: e.pointer.x - cursorCircle.radius,
+          top: e.pointer.y - cursorCircle.radius
+        });
+        
+        canvas.renderAll();
+        checkTextAreaIntersection(cursorCircle);
       }
     });
 
-    // Handle click to select symptom - improved event handling
+    // Handle click to select symptom
     canvas.on('mouse:up', (e) => {
       if (currentHoveredArea && e.pointer) {
         toggleSymptomSelection(currentHoveredArea);
@@ -390,26 +370,26 @@ const InteractiveSymptomSelector = ({ bodyPart, patientData, onBack }: Interacti
                       </div>
                       
                       <div className="relative border border-gray-200 rounded-lg shadow-lg overflow-hidden h-full">
-                        {/* Interactive Canvas Overlay - completely separate from image transforms */}
-                        <canvas 
-                          ref={canvasRef} 
-                          className="absolute inset-0 w-full h-full z-50 pointer-events-auto" 
-                          style={{ 
-                            background: 'transparent',
-                            position: 'absolute',
-                            top: 0,
-                            left: 0
-                          }} 
-                        />
                         <TransformComponent>
                           <div className="relative w-full h-full">
                             {/* Background Image */}
                             <img 
                               src={imageUrl} 
                               alt={`${bodyPart} symptom diagram`}
-                              className="w-full h-auto block relative z-10 pointer-events-none"
+                              className="w-full h-auto block relative z-50"
                               draggable={false}
                               style={{ maxHeight: '100%', objectFit: 'contain' }}
+                            />
+                            {/* Interactive Canvas Overlay - positioned on top but transparent */}
+                            <canvas 
+                              ref={canvasRef} 
+                              className="absolute top-0 left-0 w-full h-full z-40 pointer-events-auto" 
+                              style={{ 
+                                background: 'transparent',
+                                position: 'absolute',
+                                top: 0,
+                                left: 0
+                              }} 
                             />
                           </div>
                         </TransformComponent>
