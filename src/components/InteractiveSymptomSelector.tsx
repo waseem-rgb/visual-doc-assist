@@ -33,37 +33,63 @@ const InteractiveSymptomSelector = ({ bodyPart, patientData, onBack }: Interacti
   const [diagnosis, setDiagnosis] = useState<string | null>(null);
   const [loadingDiagnosis, setLoadingDiagnosis] = useState(false);
 
-  // Define text areas based on the ear anatomy image analysis
-  const textAreas: TextArea[] = [
-    { id: "hearing-loss-gradual", x: 50, y: 280, width: 200, height: 80, 
-      symptomText: "Gradually increasing hearing loss affecting both ears. Develops with advancing age. Higher notes affected initially, then lower notes. Background noise makes it harder to hear conversation." },
-    { id: "blocked-ear", x: 230, y: 290, width: 180, height: 60, 
-      symptomText: "Blocked ear with possible mild discomfort and a reduction in hearing." },
-    { id: "reduced-hearing", x: 50, y: 380, width: 200, height: 60, 
-      symptomText: "Reduced hearing (such as needing the volume high on the television); speech that is quieter than normal. May have had a recent cold. More common in children." },
-    { id: "hearing-loss-unequal", x: 230, y: 340, width: 180, height: 80, 
-      symptomText: "Increasing level of hearing loss affecting both ears; may be unequal. Hearing may be improved when there is a noisy background. Tinnitus (noises in ears) and vertigo (dizziness) may be present." },
-    { id: "vertigo-dizziness", x: 50, y: 450, width: 200, height: 80, 
-      symptomText: "Vertigo (dizziness), worsened by change of head position; tinnitus (noises in ears); hearing loss. Fever, and feeling of fullness or pressure in the ear may also be present." },
-    { id: "one-sided-hearing-loss", x: 230, y: 430, width: 180, height: 80, 
-      symptomText: "One-sided, slowly developing hearing loss with tinnitus (noises in ears). Loss of balance may develop along with headaches and numbness or weakness of the face on the affected side." },
-    { id: "attacks-dizziness", x: 50, y: 540, width: 200, height: 60, 
-      symptomText: "Attacks of dizziness, hearing loss, and tinnitus (noises in ears). Lasts between a few minutes and several days." },
-    { id: "sudden-hearing-loss", x: 230, y: 520, width: 180, height: 60, 
-      symptomText: "Sudden hearing loss, usually on one side only. See doctor soon." },
-    { id: "hearing-loss-brief-pain", x: 230, y: 590, width: 180, height: 60, 
-      symptomText: "Slight hearing loss following brief, intense pain. There may be slight bleeding or discharge from ear." },
-    { id: "sudden-dizziness-nausea", x: 50, y: 620, width: 200, height: 60, 
-      symptomText: "Sudden onset of dizziness with nausea and vomiting. Associated with feeling of being unsteady." },
-    { id: "noises-in-ears", x: 520, y: 350, width: 200, height: 80, 
-      symptomText: "Development of noises that are coming from inside the head and not from outside. Nature of sounds may vary, including ringing, whistling, hissing. May be associated hearing loss." },
-    { id: "vertigo-with-tinnitus", x: 520, y: 450, width: 200, height: 80, 
-      symptomText: "Dizziness, worsened by change of head position; tinnitus; hearing loss. Fever, and feeling of fullness or pressure in the ear may also be present." },
-    { id: "attacks-vertigo-tinnitus", x: 520, y: 540, width: 200, height: 60, 
-      symptomText: "Attacks of dizziness, hearing loss, and tinnitus. Lasts between a few minutes and several days." },
-    { id: "balance-loss-headaches", x: 520, y: 620, width: 200, height: 80, 
-      symptomText: "One-sided, slowly developing hearing loss with tinnitus. Loss of balance may develop along with headaches and numbness or weakness of face on the affected side." }
-  ];
+  // Define text areas dynamically based on body part
+  const getTextAreasForBodyPart = (bodyPart: string): TextArea[] => {
+    switch(bodyPart.toUpperCase()) {
+      case 'MALE GENITALS':
+        return [
+          { id: "penile-discharge", x: 350, y: 200, width: 150, height: 100, 
+            symptomText: "Discharge from penis that may be clear, white, yellow, or green. May be associated with burning sensation during urination." },
+          { id: "painful-urination", x: 300, y: 320, width: 200, height: 80, 
+            symptomText: "Burning, stinging, or pain during urination. May be associated with increased frequency of urination." },
+          { id: "testicular-pain", x: 250, y: 400, width: 180, height: 120, 
+            symptomText: "Pain or discomfort in one or both testicles. May be sudden or gradual onset, dull ache or sharp pain." },
+          { id: "genital-sores", x: 320, y: 240, width: 160, height: 90, 
+            symptomText: "Sores, ulcers, or lesions on the penis, testicles, or surrounding area. May be painful or painless." },
+          { id: "swelling-genitals", x: 280, y: 420, width: 170, height: 100, 
+            symptomText: "Swelling of the penis, testicles, or scrotum. May be accompanied by pain, redness, or warmth." },
+        ];
+      case 'EAR PHYSICAL':
+      case 'EAR HEARING':
+        return [
+          { id: "hearing-loss-gradual", x: 50, y: 280, width: 200, height: 80, 
+            symptomText: "Gradually increasing hearing loss affecting both ears. Develops with advancing age. Higher notes affected initially, then lower notes. Background noise makes it harder to hear conversation." },
+          { id: "blocked-ear", x: 230, y: 290, width: 180, height: 60, 
+            symptomText: "Blocked ear with possible mild discomfort and a reduction in hearing." },
+          { id: "reduced-hearing", x: 50, y: 380, width: 200, height: 60, 
+            symptomText: "Reduced hearing (such as needing the volume high on the television); speech that is quieter than normal. May have had a recent cold. More common in children." },
+          { id: "hearing-loss-unequal", x: 230, y: 340, width: 180, height: 80, 
+            symptomText: "Increasing level of hearing loss affecting both ears; may be unequal. Hearing may be improved when there is a noisy background. Tinnitus (noises in ears) and vertigo (dizziness) may be present." },
+          { id: "vertigo-dizziness", x: 50, y: 450, width: 200, height: 80, 
+            symptomText: "Vertigo (dizziness), worsened by change of head position; tinnitus (noises in ears); hearing loss. Fever, and feeling of fullness or pressure in the ear may also be present." },
+          { id: "one-sided-hearing-loss", x: 230, y: 430, width: 180, height: 80, 
+            symptomText: "One-sided, slowly developing hearing loss with tinnitus (noises in ears). Loss of balance may develop along with headaches and numbness or weakness of the face on the affected side." },
+          { id: "attacks-dizziness", x: 50, y: 540, width: 200, height: 60, 
+            symptomText: "Attacks of dizziness, hearing loss, and tinnitus (noises in ears). Lasts between a few minutes and several days." },
+          { id: "sudden-hearing-loss", x: 230, y: 520, width: 180, height: 60, 
+            symptomText: "Sudden hearing loss, usually on one side only. See doctor soon." },
+          { id: "hearing-loss-brief-pain", x: 230, y: 590, width: 180, height: 60, 
+            symptomText: "Slight hearing loss following brief, intense pain. There may be slight bleeding or discharge from ear." },
+          { id: "sudden-dizziness-nausea", x: 50, y: 620, width: 200, height: 60, 
+            symptomText: "Sudden onset of dizziness with nausea and vomiting. Associated with feeling of being unsteady." },
+          { id: "noises-in-ears", x: 520, y: 350, width: 200, height: 80, 
+            symptomText: "Development of noises that are coming from inside the head and not from outside. Nature of sounds may vary, including ringing, whistling, hissing. May be associated hearing loss." },
+          { id: "vertigo-with-tinnitus", x: 520, y: 450, width: 200, height: 80, 
+            symptomText: "Dizziness, worsened by change of head position; tinnitus; hearing loss. Fever, and feeling of fullness or pressure in the ear may also be present." },
+          { id: "attacks-vertigo-tinnitus", x: 520, y: 540, width: 200, height: 60, 
+            symptomText: "Attacks of dizziness, hearing loss, and tinnitus. Lasts between a few minutes and several days." },
+          { id: "balance-loss-headaches", x: 520, y: 620, width: 200, height: 80, 
+            symptomText: "One-sided, slowly developing hearing loss with tinnitus. Loss of balance may develop along with headaches and numbness or weakness of face on the affected side." }
+        ];
+      default:
+        return [
+          { id: "general-pain", x: 300, y: 300, width: 200, height: 100, 
+            symptomText: "General pain or discomfort in the affected area. Please describe your symptoms to a healthcare provider." },
+        ];
+    }
+  };
+
+  const textAreas: TextArea[] = getTextAreasForBodyPart(bodyPart);
 
   useEffect(() => {
     fetchSymptomImage();

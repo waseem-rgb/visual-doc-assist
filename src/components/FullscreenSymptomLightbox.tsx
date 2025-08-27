@@ -93,9 +93,9 @@ const FullscreenSymptomLightbox = ({
     if (x >= 0 && x <= imageRect.width && y >= 0 && y <= imageRect.height) {
       setCursorPosition({ x, y });
       
-      // Simplified coordinate mapping
-      const scaleX = 800 / imageRect.width; // Using fixed width for ear diagram
-      const scaleY = 700 / imageRect.height; // Using fixed height for ear diagram
+      // Simplified coordinate mapping - use actual image dimensions
+      const scaleX = (imageNaturalSize.width || imageRect.width) / imageRect.width;
+      const scaleY = (imageNaturalSize.height || imageRect.height) / imageRect.height;
       
       const naturalX = x * scaleX;
       const naturalY = y * scaleY;
