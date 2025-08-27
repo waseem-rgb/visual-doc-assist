@@ -17,101 +17,80 @@ interface MaskBodySelectorProps {
   debug?: boolean;
 }
 
-// Color mapping for mask-based detection
+// Color mapping for mask-based detection - Updated with more flexible detection
 const COLOR_MAP = {
   male: {
     Front: {
-      "#FF0001": "HEAD FRONT",
-      "#FF0002": "HAIR AND SCALP", 
+      // Head region - red spectrum
+      "#FF0000": "HEAD FRONT",
+      "#FF0001": "HEAD FRONT", 
+      "#FF0002": "HAIR AND SCALP",
+      "#FE0000": "FACE",
+      "#FC0000": "FACE",
+      
+      // Eyes - blue spectrum  
       "#0000FF": "EYE VISION",
-      "#0000FE": "EYE PHYSICAL",
+      "#0000FE": "EYE PHYSICAL", 
+      "#0001FF": "EYE VISION",
+      "#0002FF": "EYE PHYSICAL",
+      
+      // Nose - green spectrum
       "#00FF00": "NOSE",
+      "#00FE00": "NOSE",
+      "#01FF00": "NOSE",
+      
+      // Mouth - yellow spectrum
       "#FFFF00": "MOUTH",
+      "#FFFE00": "MOUTH", 
+      "#FFFD00": "MOUTH",
+      
+      // Neck - cyan spectrum
       "#00FFFF": "NECK",
       "#00FFFE": "THROAT",
       "#00FFFD": "THROAT VOICE",
+      
+      // Chest - magenta spectrum
       "#FF00FF": "CHEST UPPER",
       "#FF00FE": "CHEST CENTRAL",
       "#FF00FD": "CHEST SIDE",
+      
+      // Abdomen - orange spectrum  
       "#FFA500": "ABDOMEN GENERAL",
       "#FFA501": "UPPER ABDOMEN",
       "#FFA502": "LOWER ABDOMEN LEFT",
-      "#FFA503": "LOWER ABDOMEN RIGHT",
+      "#FFA503": "LOWER ABDOMEN RIGHT", 
       "#FFA504": "BOWELS DIARRHOEA",
-      "#FFA505": "BOWELS CONSTIPATION", 
+      "#FFA505": "BOWELS CONSTIPATION",
       "#FFA506": "BOWELS ABNORMAL STOOL",
+      
+      // Groin - purple spectrum
       "#800080": "GROIN MALE AND FEMALE",
-      "#800081": "MALE GENITALS",
+      "#800081": "MALE GENITALS", 
       "#800082": "URINARY PROBLEMS MALE",
+      
+      // Arms - brown spectrum
       "#A52A2A": "UPPER ARM",
       "#A52A2B": "FOREARM AND WRIST",
       "#A52A2C": "SHOULDER FRONT",
-      "#FFC0CB": "THIGH FRONT",
-      "#FFC0CC": "KNEE FRONT", 
+      
+      // Legs - pink spectrum
+      "#FFC0CB": "THIGH FRONT", 
+      "#FFC0CC": "KNEE FRONT",
       "#FFC0CD": "LOWER LEG FRONT",
       "#FFC0CE": "HIP FRONT",
+      
+      // Hands - gray spectrum
       "#808080": "HAND PALM",
+      "#808081": "HAND PALM",
+      
+      // Feet - navy spectrum
       "#000080": "FOOT",
-      "#000081": "FOOT UPPER",
+      "#000081": "FOOT UPPER", 
       "#000082": "FOOT UNDERSIDE",
       "#000083": "ANKLE"
     },
     "Back view": {
-      "#FF0001": "HAIR AND SCALP",
-      "#0000FF": "SHOULDER BACK", 
-      "#00FF00": "UPPER BACK",
-      "#FFFF00": "LOWER BACK",
-      "#00FFFF": "BUTTOCKS AND ANUS",
-      "#A52A2A": "UPPER ARM",
-      "#A52A2B": "ELBOW",
-      "#FFC0CB": "THIGH BACK",
-      "#FFC0CC": "KNEE BACK",
-      "#FFC0CD": "LOWER LEG BACK",
-      "#FFC0CE": "HIP BACK", 
-      "#808080": "HAND BACK",
-      "#000080": "FOOT"
-    }
-  },
-  female: {
-    Front: {
-      "#FF0001": "HEAD FRONT",
-      "#FF0002": "HAIR AND SCALP",
-      "#0000FF": "EYE VISION", 
-      "#0000FE": "EYE PHYSICAL",
-      "#00FF00": "NOSE",
-      "#FFFF00": "MOUTH",
-      "#00FFFF": "NECK",
-      "#00FFFE": "THROAT",
-      "#00FFFD": "THROAT VOICE",
-      "#FF00FF": "CHEST UPPER",
-      "#FF00FE": "CHEST CENTRAL", 
-      "#FF00FD": "CHEST SIDE",
-      "#FF00FC": "BREAST",
-      "#FFA500": "ABDOMEN GENERAL",
-      "#FFA501": "UPPER ABDOMEN",
-      "#FFA502": "LOWER ABDOMEN LEFT", 
-      "#FFA503": "LOWER ABDOMEN RIGHT",
-      "#FFA504": "FEMALE LOWER ABDOMEN",
-      "#FFA505": "BOWELS DIARRHOEA",
-      "#FFA506": "BOWELS CONSTIPATION",
-      "#FFA507": "BOWELS ABNORMAL STOOL", 
-      "#800080": "GROIN MALE AND FEMALE",
-      "#800081": "FEMALE GENITALS",
-      "#800082": "URINARY PROBLEMS FEMALE",
-      "#A52A2A": "UPPER ARM",
-      "#A52A2B": "FOREARM AND WRIST",
-      "#A52A2C": "SHOULDER FRONT",
-      "#FFC0CB": "THIGH FRONT",
-      "#FFC0CC": "KNEE FRONT",
-      "#FFC0CD": "LOWER LEG FRONT", 
-      "#FFC0CE": "HIP FRONT",
-      "#808080": "HAND PALM",
-      "#000080": "FOOT",
-      "#000081": "FOOT UPPER",
-      "#000082": "FOOT UNDERSIDE",
-      "#000083": "ANKLE"
-    },
-    "Back view": {
+      "#FF0000": "HAIR AND SCALP",
       "#FF0001": "HAIR AND SCALP",
       "#0000FF": "SHOULDER BACK",
       "#00FF00": "UPPER BACK", 
@@ -121,9 +100,55 @@ const COLOR_MAP = {
       "#A52A2B": "ELBOW",
       "#FFC0CB": "THIGH BACK",
       "#FFC0CC": "KNEE BACK",
-      "#FFC0CD": "LOWER LEG BACK",
+      "#FFC0CD": "LOWER LEG BACK", 
       "#FFC0CE": "HIP BACK",
-      "#808080": "HAND BACK", 
+      "#808080": "HAND BACK",
+      "#000080": "FOOT"
+    }
+  },
+  female: {
+    Front: {
+      // Same as male but with additional female-specific parts
+      "#FF0000": "HEAD FRONT",
+      "#FF0001": "HEAD FRONT",
+      "#FF0002": "HAIR AND SCALP", 
+      "#0000FF": "EYE VISION",
+      "#0000FE": "EYE PHYSICAL",
+      "#00FF00": "NOSE", 
+      "#FFFF00": "MOUTH",
+      "#00FFFF": "NECK",
+      "#00FFFE": "THROAT",
+      "#FF00FF": "CHEST UPPER",
+      "#FF00FE": "CHEST CENTRAL",
+      "#FF00FD": "CHEST SIDE",
+      "#FF00FC": "BREAST",
+      "#FFA500": "ABDOMEN GENERAL",
+      "#FFA501": "UPPER ABDOMEN", 
+      "#FFA502": "LOWER ABDOMEN LEFT",
+      "#FFA503": "LOWER ABDOMEN RIGHT",
+      "#FFA504": "FEMALE LOWER ABDOMEN",
+      "#800080": "GROIN MALE AND FEMALE",
+      "#800081": "FEMALE GENITALS",
+      "#800082": "URINARY PROBLEMS FEMALE",
+      "#A52A2A": "UPPER ARM",
+      "#A52A2B": "FOREARM AND WRIST",
+      "#FFC0CB": "THIGH FRONT",
+      "#FFC0CC": "KNEE FRONT", 
+      "#FFC0CD": "LOWER LEG FRONT",
+      "#808080": "HAND PALM",
+      "#000080": "FOOT",
+      "#000081": "FOOT UPPER",
+      "#000082": "FOOT UNDERSIDE"
+    },
+    "Back view": {
+      "#FF0000": "HAIR AND SCALP",
+      "#0000FF": "SHOULDER BACK",
+      "#00FF00": "UPPER BACK",
+      "#FFFF00": "LOWER BACK", 
+      "#00FFFF": "BUTTOCKS AND ANUS",
+      "#A52A2A": "UPPER ARM",
+      "#FFC0CB": "THIGH BACK",
+      "#808080": "HAND BACK",
       "#000080": "FOOT"
     }
   }
@@ -230,14 +255,31 @@ const MaskBodySelector = ({
       
       const hexColor = rgbToHex(r, g, b);
       
+      // Enhanced debugging
       if (debug) {
+        console.log(`Pixel at (${canvasX}, ${canvasY}): RGB(${r}, ${g}, ${b}) = ${hexColor}`);
         setDebugInfo({ color: hexColor, bodyPart: null });
       }
       
       const colorMap = COLOR_MAP[gender][currentView];
-      const bodyPart = colorMap[hexColor] || null;
+      let bodyPart = colorMap[hexColor] || null;
       
-      if (debug && bodyPart) {
+      // If exact match not found, try approximate matching for common colors
+      if (!bodyPart && (r > 240 || g > 240 || b > 240)) {
+        // Try major color groups for generated images
+        if (r > 200 && g < 50 && b < 50) bodyPart = "NOSE"; // Reddish
+        else if (r < 50 && g < 50 && b > 200) bodyPart = "EYE VISION"; // Bluish  
+        else if (r < 50 && g > 200 && b < 50) bodyPart = "NOSE"; // Greenish
+        else if (r > 200 && g > 200 && b < 50) bodyPart = "MOUTH"; // Yellowish
+        else if (r > 200 && g < 50 && b > 200) bodyPart = "CHEST UPPER"; // Magentaish
+        else if (r > 200 && g > 100 && b < 100) bodyPart = "ABDOMEN GENERAL"; // Orangish
+        
+        if (debug && bodyPart) {
+          console.log(`Approximate match found: ${bodyPart} for color ${hexColor}`);
+        }
+      }
+      
+      if (debug) {
         setDebugInfo(prev => ({ ...prev, bodyPart }));
       }
       
