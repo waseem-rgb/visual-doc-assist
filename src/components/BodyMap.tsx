@@ -7,6 +7,7 @@ import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import bodyFrontRealistic from "@/assets/body-front-realistic.png";
 import bodyBackRealistic from "@/assets/body-back-realistic.png";
+import SymptomViewer from "./SymptomViewer";
 
 interface BodyMapProps {
   gender: "male" | "female";
@@ -27,6 +28,7 @@ const BodyMap = ({ gender, patientData }: BodyMapProps) => {
   const [currentView, setCurrentView] = useState<"Front" | "Back view">("Front");
   const [selectedBodyParts, setSelectedBodyParts] = useState<string[]>([]);
   const [hoveredPart, setHoveredPart] = useState<string | null>(null);
+  const [showSymptomViewer, setShowSymptomViewer] = useState(false);
 
   const { data: allBodyParts, isLoading } = useQuery({
     queryKey: ["bodyParts"],
@@ -77,6 +79,16 @@ const BodyMap = ({ gender, patientData }: BodyMapProps) => {
   const handleBodyPartClick = (bodyPart: string) => {
     // Only allow single selection - replace current selection
     setSelectedBodyParts([bodyPart]);
+  };
+
+  const handleContinue = () => {
+    if (selectedBodyParts.length > 0) {
+      setShowSymptomViewer(true);
+    }
+  };
+
+  const handleBackToBodyMap = () => {
+    setShowSymptomViewer(false);
   };
 
   const getBodyPartPosition = (bodyPart: string, view: string) => {
@@ -195,6 +207,16 @@ const BodyMap = ({ gender, patientData }: BodyMapProps) => {
     );
   }
 
+  if (showSymptomViewer && selectedBodyParts.length > 0) {
+    return (
+      <SymptomViewer
+        bodyPart={selectedBodyParts[0]}
+        patientData={patientData}
+        onBack={handleBackToBodyMap}
+      />
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div className="text-center">
@@ -301,7 +323,7 @@ const BodyMap = ({ gender, patientData }: BodyMapProps) => {
 
       {selectedBodyParts.length > 0 && (
         <div className="text-center">
-          <Button className="gradient-primary" size="lg">
+          <Button className="gradient-primary" size="lg" onClick={handleContinue}>
             Continue with Selected Area
           </Button>
         </div>
