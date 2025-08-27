@@ -5,6 +5,7 @@ import * as THREE from "three";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { RotateCcw } from "lucide-react";
+import BodyPartDebugger from "./BodyPartDebugger";
 
 interface ThreeDBodySelectorProps {
   imageUrl: string;
@@ -17,86 +18,86 @@ interface ThreeDBodySelectorProps {
   bodyParts: Array<{ Body_part: string; View: string; "Specific rules": string }>;
 }
 
-// Body part area definitions for hit detection - adjusted for accurate positioning
+// Body part area definitions for hit detection - recalibrated for accurate positioning
 const getBodyPartAreas = (view: string, gender: string) => {
   if (view === "Front") {
     return {
-      // Head region - top of image
-      "HAIR AND SCALP": { x: 0.42, y: 0.05, width: 0.16, height: 0.08 },
-      "HEAD FRONT": { x: 0.42, y: 0.08, width: 0.16, height: 0.08 },
-      "HEAD SIDE": { x: 0.35, y: 0.08, width: 0.3, height: 0.08 },
-      "FACE": { x: 0.43, y: 0.12, width: 0.14, height: 0.08 },
+      // Head region (top 15% of image)
+      "HAIR AND SCALP": { x: 0.4, y: 0.0, width: 0.2, height: 0.08 },
+      "HEAD FRONT": { x: 0.42, y: 0.05, width: 0.16, height: 0.08 },
+      "HEAD SIDE": { x: 0.3, y: 0.05, width: 0.4, height: 0.08 },
+      "FACE": { x: 0.43, y: 0.08, width: 0.14, height: 0.12 },
       
-      // Facial features
-      "EYE PHYSICAL": { x: 0.41, y: 0.13, width: 0.18, height: 0.03 },
-      "EYE VISION": { x: 0.41, y: 0.13, width: 0.18, height: 0.03 },
-      "EAR PHYSICAL": { x: 0.35, y: 0.12, width: 0.08, height: 0.04 },
-      "EAR HEARING": { x: 0.57, y: 0.12, width: 0.08, height: 0.04 },
-      "NOSE": { x: 0.47, y: 0.15, width: 0.06, height: 0.03 },
-      "MOUTH": { x: 0.46, y: 0.17, width: 0.08, height: 0.02 },
+      // Facial features (around 10-20% of image height)
+      "EYE PHYSICAL": { x: 0.4, y: 0.1, width: 0.2, height: 0.03 },
+      "EYE VISION": { x: 0.4, y: 0.1, width: 0.2, height: 0.03 },
+      "EAR PHYSICAL": { x: 0.25, y: 0.09, width: 0.1, height: 0.05 },
+      "EAR HEARING": { x: 0.65, y: 0.09, width: 0.1, height: 0.05 },
+      "NOSE": { x: 0.47, y: 0.12, width: 0.06, height: 0.04 },
+      "MOUTH": { x: 0.46, y: 0.16, width: 0.08, height: 0.03 },
       
-      // Neck and throat
-      "NECK": { x: 0.46, y: 0.19, width: 0.08, height: 0.05 },
-      "THROAT": { x: 0.46, y: 0.21, width: 0.08, height: 0.03 },
-      "THROAT VOICE": { x: 0.46, y: 0.22, width: 0.08, height: 0.02 },
+      // Neck (around 20% of image height)
+      "NECK": { x: 0.45, y: 0.19, width: 0.1, height: 0.06 },
+      "THROAT": { x: 0.46, y: 0.2, width: 0.08, height: 0.04 },
+      "THROAT VOICE": { x: 0.46, y: 0.21, width: 0.08, height: 0.03 },
       
-      // Upper body
-      "SHOULDER FRONT": { x: 0.25, y: 0.24, width: 0.5, height: 0.08 },
-      "CHEST UPPER": { x: 0.42, y: 0.28, width: 0.16, height: 0.08 },
-      "CHEST CENTRAL": { x: 0.42, y: 0.32, width: 0.16, height: 0.08 },
-      "CHEST SIDE": { x: 0.3, y: 0.32, width: 0.4, height: 0.08 },
-      "BREAST": gender === "female" ? { x: 0.38, y: 0.3, width: 0.24, height: 0.08 } : null,
-      "UPPER ARM": { x: 0.15, y: 0.32, width: 0.15, height: 0.2 },
-      "UPPER BACK": { x: 0.42, y: 0.28, width: 0.16, height: 0.15 },
+      // Shoulders and upper body (25-35% of image height)
+      "SHOULDER FRONT": { x: 0.2, y: 0.25, width: 0.6, height: 0.08 },
+      "CHEST UPPER": { x: 0.4, y: 0.3, width: 0.2, height: 0.1 },
+      "CHEST CENTRAL": { x: 0.38, y: 0.35, width: 0.24, height: 0.1 },
+      "CHEST SIDE": { x: 0.25, y: 0.32, width: 0.5, height: 0.12 },
+      "BREAST": gender === "female" ? { x: 0.35, y: 0.32, width: 0.3, height: 0.1 } : null,
+      "UPPER ARM": { x: 0.05, y: 0.3, width: 0.2, height: 0.25 },
+      "UPPER BACK": { x: 0.38, y: 0.28, width: 0.24, height: 0.15 },
       
-      // Abdomen - more precise positioning
-      "UPPER ABDOMEN": { x: 0.42, y: 0.4, width: 0.16, height: 0.08 },
-      "ABDOMEN GENERAL": { x: 0.4, y: 0.44, width: 0.2, height: 0.1 },
-      "LOWER ABDOMEN LEFT": { x: 0.38, y: 0.5, width: 0.12, height: 0.08 },
-      "LOWER ABDOMEN RIGHT": { x: 0.5, y: 0.5, width: 0.12, height: 0.08 },
-      "FEMALE LOWER ABDOMEN": gender === "female" ? { x: 0.42, y: 0.52, width: 0.16, height: 0.06 } : null,
+      // Abdomen (45-65% of image height)
+      "UPPER ABDOMEN": { x: 0.4, y: 0.45, width: 0.2, height: 0.1 },
+      "ABDOMEN GENERAL": { x: 0.38, y: 0.5, width: 0.24, height: 0.15 },
+      "LOWER ABDOMEN LEFT": { x: 0.3, y: 0.58, width: 0.2, height: 0.1 },
+      "LOWER ABDOMEN RIGHT": { x: 0.5, y: 0.58, width: 0.2, height: 0.1 },
+      "FEMALE LOWER ABDOMEN": gender === "female" ? { x: 0.4, y: 0.6, width: 0.2, height: 0.08 } : null,
       
-      // Digestive areas
-      "BOWELS ABNORMAL STOOL": { x: 0.4, y: 0.48, width: 0.2, height: 0.08 },
-      "BOWELS CONSTIPATION": { x: 0.4, y: 0.48, width: 0.2, height: 0.08 },
-      "BOWELS DIARRHOEA": { x: 0.4, y: 0.48, width: 0.2, height: 0.08 },
+      // Digestive areas (overlap with abdomen)
+      "BOWELS ABNORMAL STOOL": { x: 0.35, y: 0.55, width: 0.3, height: 0.12 },
+      "BOWELS CONSTIPATION": { x: 0.35, y: 0.55, width: 0.3, height: 0.12 },
+      "BOWELS DIARRHOEA": { x: 0.35, y: 0.55, width: 0.3, height: 0.12 },
       
-      // Genitals and groin
-      "GROIN MALE AND FEMALE": { x: 0.44, y: 0.55, width: 0.12, height: 0.06 },
-      "MALE GENITALS": gender === "male" ? { x: 0.45, y: 0.56, width: 0.1, height: 0.04 } : null,
-      "FEMALE GENITALS": gender === "female" ? { x: 0.46, y: 0.56, width: 0.08, height: 0.04 } : null,
-      "URINARY PROBLEMS MALE": gender === "male" ? { x: 0.44, y: 0.54, width: 0.12, height: 0.06 } : null,
-      "URINARY PROBLEMS FEMALE": gender === "female" ? { x: 0.44, y: 0.54, width: 0.12, height: 0.06 } : null,
+      // Genitals and groin (around 65-70% of image height)
+      "GROIN MALE AND FEMALE": { x: 0.42, y: 0.65, width: 0.16, height: 0.08 },
+      "MALE GENITALS": gender === "male" ? { x: 0.43, y: 0.66, width: 0.14, height: 0.06 } : null,
+      "FEMALE GENITALS": gender === "female" ? { x: 0.44, y: 0.66, width: 0.12, height: 0.06 } : null,
+      "URINARY PROBLEMS MALE": gender === "male" ? { x: 0.42, y: 0.64, width: 0.16, height: 0.08 } : null,
+      "URINARY PROBLEMS FEMALE": gender === "female" ? { x: 0.42, y: 0.64, width: 0.16, height: 0.08 } : null,
       
-      // Arms and hands - adjusted for realistic positioning
-      "FOREARM AND WRIST": { x: 0.08, y: 0.42, width: 0.12, height: 0.15 },
-      "HAND PALM": { x: 0.05, y: 0.55, width: 0.1, height: 0.08 },
+      // Arms and hands
+      "FOREARM AND WRIST": { x: 0.02, y: 0.45, width: 0.15, height: 0.2 },
+      "HAND PALM": { x: 0.0, y: 0.62, width: 0.12, height: 0.1 },
       
-      // Hips and legs
-      "HIP FRONT": { x: 0.35, y: 0.58, width: 0.3, height: 0.08 },
-      "THIGH FRONT": { x: 0.38, y: 0.64, width: 0.24, height: 0.15 },
-      "THIGH BACK": { x: 0.38, y: 0.64, width: 0.24, height: 0.15 },
-      "KNEE FRONT": { x: 0.4, y: 0.76, width: 0.2, height: 0.06 },
-      "LOWER LEG FRONT": { x: 0.4, y: 0.8, width: 0.2, height: 0.12 },
+      // Hips and legs (70-85% of image height)
+      "HIP FRONT": { x: 0.3, y: 0.7, width: 0.4, height: 0.1 },
+      "THIGH FRONT": { x: 0.35, y: 0.75, width: 0.3, height: 0.15 },
+      "THIGH BACK": { x: 0.35, y: 0.75, width: 0.3, height: 0.15 },
+      "KNEE FRONT": { x: 0.38, y: 0.86, width: 0.24, height: 0.06 },
+      "LOWER LEG FRONT": { x: 0.4, y: 0.88, width: 0.2, height: 0.1 },
       
-      // Feet
-      "ANKLE": { x: 0.42, y: 0.9, width: 0.16, height: 0.04 },
-      "FOOT": { x: 0.4, y: 0.93, width: 0.2, height: 0.07 },
-      "FOOT UPPER": { x: 0.4, y: 0.93, width: 0.2, height: 0.04 },
-      "FOOT UNDERSIDE": { x: 0.4, y: 0.95, width: 0.2, height: 0.03 },
+      // Feet (bottom 5% of image)
+      "ANKLE": { x: 0.42, y: 0.95, width: 0.16, height: 0.03 },
+      "FOOT": { x: 0.4, y: 0.96, width: 0.2, height: 0.04 },
+      "FOOT UPPER": { x: 0.4, y: 0.96, width: 0.2, height: 0.03 },
+      "FOOT UNDERSIDE": { x: 0.4, y: 0.98, width: 0.2, height: 0.02 },
     };
   } else {
     return {
-      "HAIR AND SCALP": { x: 0.42, y: 0.05, width: 0.16, height: 0.1 },
-      "SHOULDER BACK": { x: 0.25, y: 0.24, width: 0.5, height: 0.08 },
-      "UPPER BACK": { x: 0.4, y: 0.3, width: 0.2, height: 0.15 },
-      "LOWER BACK": { x: 0.42, y: 0.45, width: 0.16, height: 0.1 },
-      "ELBOW": { x: 0.12, y: 0.4, width: 0.12, height: 0.08 },
-      "HAND BACK": { x: 0.75, y: 0.55, width: 0.1, height: 0.08 },
-      "HIP BACK": { x: 0.35, y: 0.58, width: 0.3, height: 0.08 },
-      "BUTTOCKS AND ANUS": { x: 0.42, y: 0.6, width: 0.16, height: 0.08 },
-      "KNEE BACK": { x: 0.4, y: 0.76, width: 0.2, height: 0.06 },
-      "LOWER LEG BACK": { x: 0.4, y: 0.8, width: 0.2, height: 0.12 },
+      "HAIR AND SCALP": { x: 0.4, y: 0.0, width: 0.2, height: 0.1 },
+      "SHOULDER BACK": { x: 0.2, y: 0.25, width: 0.6, height: 0.08 },
+      "UPPER BACK": { x: 0.35, y: 0.3, width: 0.3, height: 0.2 },
+      "LOWER BACK": { x: 0.38, y: 0.5, width: 0.24, height: 0.15 },
+      "ELBOW": { x: 0.05, y: 0.4, width: 0.15, height: 0.1 },
+      "HAND BACK": { x: 0.85, y: 0.62, width: 0.12, height: 0.1 },
+      "HIP BACK": { x: 0.3, y: 0.7, width: 0.4, height: 0.1 },
+      "BUTTOCKS AND ANUS": { x: 0.38, y: 0.72, width: 0.24, height: 0.1 },
+      "KNEE BACK": { x: 0.38, y: 0.86, width: 0.24, height: 0.06 },
+      "LOWER LEG BACK": { x: 0.4, y: 0.88, width: 0.2, height: 0.1 },
     };
   }
 };
@@ -155,17 +156,24 @@ function SmartLoupe({
     const areas = getBodyPartAreas(currentView, gender);
     let foundPart = null;
     
-    // Convert mouse coordinates to normalized coordinates (0-1)
-    const normalizedX = (mousePosition.x + 1) / 2;
-    const normalizedY = 1 - (mousePosition.y + 1) / 2; // Flip Y coordinate
+    // Convert mouse coordinates to texture coordinates (0-1 range)
+    // Mouse coordinates are -1 to 1, we need to convert to 0-1
+    const textureX = (mousePosition.x + 1) / 2;  // Convert -1,1 to 0,1
+    const textureY = (mousePosition.y + 1) / 2;  // Convert -1,1 to 0,1 (note: NOT flipped)
+    
+    console.log(`Mouse: ${mousePosition.x.toFixed(2)}, ${mousePosition.y.toFixed(2)} -> Texture: ${textureX.toFixed(2)}, ${textureY.toFixed(2)}`);
     
     // Check each body part area
     for (const [partName, area] of Object.entries(areas)) {
-      if (area && normalizedX >= area.x && normalizedX <= area.x + area.width &&
-          normalizedY >= area.y && normalizedY <= area.y + area.height) {
+      if (area && 
+          textureX >= area.x && 
+          textureX <= area.x + area.width &&
+          textureY >= area.y && 
+          textureY <= area.y + area.height) {
         // Verify this part exists in our body parts list
         const partExists = bodyParts.some(part => part.Body_part === partName);
         if (partExists) {
+          console.log(`Found body part: ${partName} at texture coords ${textureX.toFixed(2)}, ${textureY.toFixed(2)}`);
           foundPart = partName;
           break;
         }
@@ -299,11 +307,11 @@ const ThreeDBodySelector = ({
       </CardHeader>
       <CardContent>
         <div className="relative w-full h-[700px] bg-gradient-to-b from-background to-muted/20 rounded-lg overflow-hidden">
-          {isLoading && (
-            <div className="absolute inset-0 flex items-center justify-center bg-muted/50">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-            </div>
-          )}
+          {/* Debug overlay */}
+          <BodyPartDebugger 
+            mousePosition={mousePosition} 
+            hoveredPart={hoveredPart} 
+          />
           
           <Canvas
             ref={canvasRef}
