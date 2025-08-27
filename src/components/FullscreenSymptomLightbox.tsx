@@ -76,14 +76,9 @@ const FullscreenSymptomLightbox = ({
     }
   }, [zoomLevel]);
 
-  // Throttled mouse movement handler for better performance
+  // Fast responsive mouse movement handler
   const handleMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
     if (!imageRef.current || selectedSymptom) return;
-    
-    // Throttle to max 60fps
-    const now = Date.now();
-    if (now - lastMouseMoveTime.current < 16) return;
-    lastMouseMoveTime.current = now;
     
     const imageRect = imageRef.current.getBoundingClientRect();
     const x = e.clientX - imageRect.left;
@@ -93,14 +88,8 @@ const FullscreenSymptomLightbox = ({
     if (x >= 0 && x <= imageRect.width && y >= 0 && y <= imageRect.height) {
       setCursorPosition({ x, y });
       
-      // Simplified coordinate mapping - use actual image dimensions
-      const scaleX = (imageNaturalSize.width || imageRect.width) / imageRect.width;
-      const scaleY = (imageNaturalSize.height || imageRect.height) / imageRect.height;
-      
-      const naturalX = x * scaleX;
-      const naturalY = y * scaleY;
-      
-      checkTextAreaIntersection(naturalX, naturalY);
+      // Direct coordinate mapping without scaling
+      checkTextAreaIntersection(x, y);
     }
   }, [selectedSymptom]);
 
@@ -134,22 +123,34 @@ const FullscreenSymptomLightbox = ({
 
     let hoveredArea = null;
 
-    // Expanded hit areas for better responsiveness
+    // Use generous hit areas for better clicking
     for (const area of textAreas) {
-      const padding = 20; // Add padding around each area
+      const padding = 30;
+      // Scale the coordinates to match display size
+      const imageRect = imageRef.current?.getBoundingClientRect();
+      if (!imageRect) return;
+      
+      // Map text area coordinates to current image display size
+      const scaleX = imageRect.width / 800; // Assuming base width of 800
+      const scaleY = imageRect.height / 600; // Assuming base height of 600
+      
+      const scaledX = area.x * scaleX;
+      const scaledY = area.y * scaleY;
+      const scaledWidth = area.width * scaleX;
+      const scaledHeight = area.height * scaleY;
+      
       if (
-        x >= area.x - padding && 
-        x <= area.x + area.width + padding &&
-        y >= area.y - padding && 
-        y <= area.y + area.height + padding
+        x >= scaledX - padding && 
+        x <= scaledX + scaledWidth + padding &&
+        y >= scaledY - padding && 
+        y <= scaledY + scaledHeight + padding
       ) {
         hoveredArea = area.id;
         break;
       }
     }
 
-    // Only update state if changed to reduce re-renders
-    setCurrentHoveredArea(prev => prev !== hoveredArea ? hoveredArea : prev);
+    setCurrentHoveredArea(hoveredArea);
   }, [selectedSymptom, textAreas]);
 
   const changeSelection = () => {
@@ -203,8 +204,8 @@ const FullscreenSymptomLightbox = ({
               </p>
             </div>
 
-            {/* Image Container with Zoom */}
-            <div className="h-full pt-20 pb-4 px-4">
+            {/* Image Container with Zoom - Full Height */}
+            <div className="h-full pt-20 pb-2 px-4">
               <TransformWrapper
                 initialScale={1}
                 minScale={0.5}
@@ -238,7 +239,7 @@ const FullscreenSymptomLightbox = ({
                     
                     <div 
                       ref={containerRef}
-                      className="relative h-full overflow-hidden cursor-none select-none"
+                      className="relative h-full overflow-hidden cursor-none select-none flex items-center justify-center"
                       onMouseMove={handleMouseMove}
                       onMouseEnter={handleMouseEnter}
                       onMouseLeave={handleMouseLeave}
@@ -279,9 +280,10 @@ const FullscreenSymptomLightbox = ({
                           ref={imageRef}
                           src={imageUrl} 
                           alt={`${bodyPart} symptom diagram`}
-                          className="w-full h-full object-contain pointer-events-none"
+                          className="max-w-full max-h-full object-contain pointer-events-none"
                           draggable={false}
                           onLoad={handleImageLoad}
+                          style={{ minHeight: '500px' }}
                         />
                       </TransformComponent>
                     </div>
