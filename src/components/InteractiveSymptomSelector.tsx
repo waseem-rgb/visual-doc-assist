@@ -182,7 +182,7 @@ const InteractiveSymptomSelector = ({ bodyPart, patientData, onBack }: Interacti
       radius: 12,
       fill: "rgba(59, 130, 246, 0.9)",
       stroke: "rgba(255, 255, 255, 1)",
-      strokeWidth: 2,
+      strokeWidth: 3,
       selectable: false, // Make it non-selectable so it follows mouse
       moveCursor: 'move',
       hoverCursor: 'move',
@@ -376,19 +376,20 @@ const InteractiveSymptomSelector = ({ bodyPart, patientData, onBack }: Interacti
                             <img 
                               src={imageUrl} 
                               alt={`${bodyPart} symptom diagram`}
-                              className="w-full h-auto block relative z-50"
+                              className="w-full h-auto block relative z-10"
                               draggable={false}
                               style={{ maxHeight: '100%', objectFit: 'contain' }}
                             />
-                            {/* Interactive Canvas Overlay - positioned on top but transparent */}
+                            {/* Interactive Canvas Overlay - positioned on top */}
                             <canvas 
                               ref={canvasRef} 
-                              className="absolute top-0 left-0 w-full h-full z-40 pointer-events-auto" 
+                              className="absolute top-0 left-0 w-full h-full z-50 pointer-events-auto" 
                               style={{ 
                                 background: 'transparent',
                                 position: 'absolute',
                                 top: 0,
-                                left: 0
+                                left: 0,
+                                pointerEvents: 'auto'
                               }} 
                             />
                           </div>
