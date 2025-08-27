@@ -32,6 +32,7 @@ const InteractiveSymptomSelector = ({ bodyPart, patientData, onBack }: Interacti
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedSymptoms, setSelectedSymptoms] = useState<string[]>([]);
+  const [selectedSymptomPositions, setSelectedSymptomPositions] = useState<Array<{id: string, x: number, y: number, text: string}>>([]);
   const [availableSymptoms, setAvailableSymptoms] = useState<string[]>([]);
   const [cursorPosition, setCursorPosition] = useState({ x: 50, y: 50 });
   const [currentHoveredArea, setCurrentHoveredArea] = useState<string | null>(null);
@@ -150,6 +151,26 @@ const InteractiveSymptomSelector = ({ bodyPart, patientData, onBack }: Interacti
 
   const handleClick = () => {
     if (currentHoveredArea) {
+      const area = textAreas.find(a => a.id === currentHoveredArea);
+      if (!area) return;
+
+      const isAlreadySelected = selectedSymptomPositions.some(pos => pos.id === currentHoveredArea);
+      
+      if (isAlreadySelected) {
+        // Deselect - remove from both arrays
+        setSelectedSymptoms(prev => prev.filter(symptom => symptom !== area.symptomText));
+        setSelectedSymptomPositions(prev => prev.filter(pos => pos.id !== currentHoveredArea));
+      } else {
+        // Select - add to both arrays
+        setSelectedSymptoms(prev => [...prev, area.symptomText]);
+        setSelectedSymptomPositions(prev => [...prev, {
+          id: currentHoveredArea,
+          x: cursorPosition.x,
+          y: cursorPosition.y,
+          text: area.symptomText
+        }]);
+      }
+      
       toggleSymptomSelection(currentHoveredArea);
     }
   };
@@ -197,17 +218,13 @@ const InteractiveSymptomSelector = ({ bodyPart, patientData, onBack }: Interacti
     const area = textAreas.find(a => a.id === areaId);
     if (!area) return;
 
-    setSelectedSymptoms(prev => 
-      prev.includes(area.symptomText) 
-        ? prev.filter(symptom => symptom !== area.symptomText)
-        : [...prev, area.symptomText]
-    );
-
-    toast.success(
-      selectedSymptoms.includes(area.symptomText) 
-        ? "Symptom deselected" 
-        : "Symptom selected"
-    );
+    const isSelected = selectedSymptoms.includes(area.symptomText);
+    
+    if (isSelected) {
+      toast.success("Symptom deselected");
+    } else {
+      toast.success("Symptom selected");  
+    }
   };
 
   if (loading) {
@@ -321,7 +338,21 @@ const InteractiveSymptomSelector = ({ bodyPart, patientData, onBack }: Interacti
                         onMouseLeave={handleMouseLeave}
                         onClick={handleClick}
                       >
-                        {/* Custom CSS cursor - size adjusts to zoom level */}
+                        {/* Fixed green circles for selected symptoms */}
+                        {selectedSymptomPositions.map((selectedPos, index) => (
+                          <div
+                            key={`selected-${selectedPos.id}-${index}`}
+                            className="absolute bg-green-500 border-2 border-white rounded-full shadow-lg pointer-events-none z-40 transform -translate-x-1/2 -translate-y-1/2"
+                            style={{
+                              left: selectedPos.x,
+                              top: selectedPos.y,
+                              width: `${getCircleSize()}px`,
+                              height: `${getCircleSize()}px`,
+                            }}
+                          />
+                        ))}
+
+                        {/* Moving blue/green cursor */}
                         {showCursor && (
                           <div
                             className="absolute bg-blue-500 border-2 border-white rounded-full shadow-lg pointer-events-none z-50 transform -translate-x-1/2 -translate-y-1/2 transition-all duration-150"
@@ -372,9 +403,9 @@ const InteractiveSymptomSelector = ({ bodyPart, patientData, onBack }: Interacti
                         <Button 
                           className="w-full mt-3" 
                           size="sm"
-                          onClick={() => toggleSymptomSelection(currentHoveredArea)}
+                          onClick={() => handleClick()}
                         >
-                          {selectedSymptoms.some(s => s === area.symptomText) ? 'Deselect' : 'Select'} Symptom
+                          {selectedSymptomPositions.some(pos => pos.id === currentHoveredArea) ? 'Deselect' : 'Select'} Symptom
                         </Button>
                       </div>
                     ) : null;
@@ -384,28 +415,32 @@ const InteractiveSymptomSelector = ({ bodyPart, patientData, onBack }: Interacti
             )}
 
             {/* Selected Symptoms Summary */}
-            {selectedSymptoms.length > 0 && (
+            {selectedSymptomPositions.length > 0 && (
               <Card>
                 <CardHeader>
                   <CardTitle className="text-lg flex items-center justify-between">
                     Selected Symptoms
-                    <Badge variant="secondary">{selectedSymptoms.length}</Badge>
+                    <Badge variant="secondary">{selectedSymptomPositions.length}</Badge>
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="space-y-2 max-h-60 overflow-y-auto">
-                    {selectedSymptoms.map((symptom, index) => (
-                      <div key={index} className="p-3 bg-muted/30 rounded-lg border">
-                        <p className="text-sm font-medium mb-1">
-                          Symptom {index + 1}
-                        </p>
-                        <p className="text-xs text-muted-foreground">{symptom}</p>
+                  <div className="space-y-3 max-h-60 overflow-y-auto">
+                    {selectedSymptomPositions.map((selectedPos, index) => (
+                      <div key={`symptom-${selectedPos.id}-${index}`} className="p-3 bg-muted/30 rounded-lg border">
+                        <div className="flex items-start justify-between mb-2">
+                          <p className="text-sm font-medium">
+                            {selectedPos.id.replace(/-/g, ' ').toUpperCase()}
+                          </p>
+                          <div className="w-3 h-3 bg-green-500 rounded-full border border-white flex-shrink-0"></div>
+                        </div>
+                        <p className="text-xs text-muted-foreground mb-2">{selectedPos.text}</p>
                         <Button
                           variant="outline"
                           size="sm"
-                          className="mt-2 h-6 px-2 text-xs"
+                          className="h-6 px-2 text-xs"
                           onClick={() => {
-                            setSelectedSymptoms(prev => prev.filter(s => s !== symptom));
+                            setSelectedSymptoms(prev => prev.filter(s => s !== selectedPos.text));
+                            setSelectedSymptomPositions(prev => prev.filter(pos => pos.id !== selectedPos.id));
                           }}
                         >
                           Remove
@@ -414,7 +449,7 @@ const InteractiveSymptomSelector = ({ bodyPart, patientData, onBack }: Interacti
                     ))}
                   </div>
                   <Button className="w-full" size="lg">
-                    Continue with {selectedSymptoms.length} Symptom{selectedSymptoms.length !== 1 ? 's' : ''}
+                    Continue with {selectedSymptomPositions.length} Symptom{selectedSymptomPositions.length !== 1 ? 's' : ''}
                   </Button>
                 </CardContent>
               </Card>
