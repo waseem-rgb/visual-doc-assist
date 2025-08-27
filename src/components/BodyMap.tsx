@@ -12,6 +12,7 @@ import bodyBackRealistic from "@/assets/body-back-realistic.png";
 import bodyFrontFemale from "@/assets/body-front-female.png";
 import bodyBackFemale from "@/assets/body-back-female.png";
 import SymptomViewer from "./SymptomViewer";
+import ThreeDBodySelector from "./ThreeDBodySelector";
 
 interface BodyMapProps {
   gender: "male" | "female";
@@ -89,6 +90,11 @@ const BodyMap = ({ gender, patientData }: BodyMapProps) => {
   const handleBodyPartClick = (bodyPart: string) => {
     // Only allow single selection - replace current selection
     setSelectedBodyParts([bodyPart]);
+    setHoveredPart(null); // Clear hover when selecting
+  };
+
+  const handleBodyPartHover = (bodyPart: string | null) => {
+    setHoveredPart(bodyPart);
   };
 
   const handleContinue = () => {
@@ -272,9 +278,13 @@ const BodyMap = ({ gender, patientData }: BodyMapProps) => {
                         className={`p-3 rounded-lg cursor-pointer transition-all duration-200 text-sm border ${
                           selectedBodyParts.includes(part.Body_part)
                             ? "bg-primary text-primary-foreground border-primary shadow-lg"
+                            : hoveredPart === part.Body_part
+                            ? "bg-muted border-primary/50 shadow-md"
                             : "bg-muted/50 hover:bg-muted border-border hover:shadow-md"
                         }`}
                         onClick={() => handleBodyPartClick(part.Body_part)}
+                        onMouseEnter={() => handleBodyPartHover(part.Body_part)}
+                        onMouseLeave={() => handleBodyPartHover(null)}
                       >
                         <div className="font-medium">{part.Body_part}</div>
                       </div>
@@ -285,27 +295,20 @@ const BodyMap = ({ gender, patientData }: BodyMapProps) => {
             </Card>
           </div>
 
-          {/* Center - Body Diagram */}
+          {/* Center - 3D Body Selector */}
           <div>
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-center">
-                  {gender === "male" ? "Male" : "Female"} Body - {currentView} View
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="flex justify-center">
-                <div className="relative" style={{ width: "400px", height: "600px" }}>
-                  <img 
-                    src={gender === "male" 
-                      ? (currentView === "Front" ? bodyFrontRealistic : bodyBackRealistic)
-                      : (currentView === "Front" ? bodyFrontFemale : bodyBackFemale)
-                    } 
-                    alt={`${gender} body diagram - ${currentView} view`}
-                    className="w-full h-full object-contain rounded-lg"
-                  />
-                </div>
-              </CardContent>
-            </Card>
+            <ThreeDBodySelector
+              imageUrl={gender === "male" 
+                ? (currentView === "Front" ? bodyFrontRealistic : bodyBackRealistic)
+                : (currentView === "Front" ? bodyFrontFemale : bodyBackFemale)
+              }
+              gender={gender}
+              currentView={currentView}
+              selectedBodyParts={selectedBodyParts}
+              hoveredPart={hoveredPart}
+              onBodyPartHover={handleBodyPartHover}
+              onBodyPartClick={handleBodyPartClick}
+            />
           </div>
 
           {/* Right Side Body Parts */}
@@ -327,9 +330,13 @@ const BodyMap = ({ gender, patientData }: BodyMapProps) => {
                         className={`p-3 rounded-lg cursor-pointer transition-all duration-200 text-sm border ${
                           selectedBodyParts.includes(part.Body_part)
                             ? "bg-primary text-primary-foreground border-primary shadow-lg"
+                            : hoveredPart === part.Body_part
+                            ? "bg-muted border-primary/50 shadow-md"
                             : "bg-muted/50 hover:bg-muted border-border hover:shadow-md"
                         }`}
                         onClick={() => handleBodyPartClick(part.Body_part)}
+                        onMouseEnter={() => handleBodyPartHover(part.Body_part)}
+                        onMouseLeave={() => handleBodyPartHover(null)}
                       >
                         <div className="font-medium">{part.Body_part}</div>
                       </div>
