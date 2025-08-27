@@ -36,6 +36,7 @@ const InteractiveSymptomSelector = ({ bodyPart, patientData, onBack }: Interacti
   const [cursorPosition, setCursorPosition] = useState({ x: 50, y: 50 });
   const [currentHoveredArea, setCurrentHoveredArea] = useState<string | null>(null);
   const [showCursor, setShowCursor] = useState(false);
+  const [zoomLevel, setZoomLevel] = useState(1);
 
   // Define text areas based on the ear anatomy image analysis
   const textAreas: TextArea[] = [
@@ -134,8 +135,8 @@ const InteractiveSymptomSelector = ({ bodyPart, patientData, onBack }: Interacti
     
     setCursorPosition({ x, y });
     
-    // Check text area intersection
-    checkTextAreaIntersection(x, y);
+    // Check text area intersection with zoom-adjusted coordinates
+    checkTextAreaIntersection(x / zoomLevel, y / zoomLevel);
   };
 
   const handleMouseEnter = () => {
@@ -151,6 +152,17 @@ const InteractiveSymptomSelector = ({ bodyPart, patientData, onBack }: Interacti
     if (currentHoveredArea) {
       toggleSymptomSelection(currentHoveredArea);
     }
+  };
+
+  // Calculate dynamic circle size based on zoom level
+  const getCircleSize = () => {
+    const baseSize = 24; // Base size in pixels
+    const minSize = 12;  // Minimum size
+    const maxSize = 48;  // Maximum size
+    
+    // Inverse relationship with zoom - smaller circle when zoomed in
+    const dynamicSize = baseSize / Math.sqrt(zoomLevel);
+    return Math.max(minSize, Math.min(maxSize, dynamicSize));
   };
 
   const checkTextAreaIntersection = (x: number, y: number) => {
@@ -277,6 +289,11 @@ const InteractiveSymptomSelector = ({ bodyPart, patientData, onBack }: Interacti
                   wheel={{ step: 0.1 }}
                   pinch={{ step: 5 }}
                   doubleClick={{ disabled: false, mode: "zoomIn", step: 0.3 }}
+                  onTransformed={(ref) => {
+                    if (ref.state.scale) {
+                      setZoomLevel(ref.state.scale);
+                    }
+                  }}
                 >
                   {({ zoomIn, zoomOut, resetTransform }) => (
                     <div className="h-full">
@@ -291,6 +308,9 @@ const InteractiveSymptomSelector = ({ bodyPart, patientData, onBack }: Interacti
                         <Button onClick={() => resetTransform()} size="sm" variant="outline">
                           Reset
                         </Button>
+                        <div className="text-xs text-muted-foreground flex items-center">
+                          Zoom: {Math.round(zoomLevel * 100)}%
+                        </div>
                       </div>
                       
                       <div 
@@ -301,13 +321,15 @@ const InteractiveSymptomSelector = ({ bodyPart, patientData, onBack }: Interacti
                         onMouseLeave={handleMouseLeave}
                         onClick={handleClick}
                       >
-                        {/* Custom CSS cursor */}
+                        {/* Custom CSS cursor - size adjusts to zoom level */}
                         {showCursor && (
                           <div
-                            className="absolute w-6 h-6 bg-blue-500 border-2 border-white rounded-full shadow-lg pointer-events-none z-50 transform -translate-x-1/2 -translate-y-1/2"
+                            className="absolute bg-blue-500 border-2 border-white rounded-full shadow-lg pointer-events-none z-50 transform -translate-x-1/2 -translate-y-1/2 transition-all duration-150"
                             style={{
                               left: cursorPosition.x,
                               top: cursorPosition.y,
+                              width: `${getCircleSize()}px`,
+                              height: `${getCircleSize()}px`,
                               background: currentHoveredArea ? 'rgba(34, 197, 94, 0.8)' : 'rgba(59, 130, 246, 0.8)'
                             }}
                           />
@@ -344,7 +366,17 @@ const InteractiveSymptomSelector = ({ bodyPart, patientData, onBack }: Interacti
                   {(() => {
                     const area = textAreas.find(a => a.id === currentHoveredArea);
                     return area ? (
-                      <p className="text-sm">{area.symptomText}</p>
+                      <div>
+                        <p className="text-sm font-medium mb-2">{area.id.replace(/-/g, ' ').toUpperCase()}</p>
+                        <p className="text-sm text-muted-foreground">{area.symptomText}</p>
+                        <Button 
+                          className="w-full mt-3" 
+                          size="sm"
+                          onClick={() => toggleSymptomSelection(currentHoveredArea)}
+                        >
+                          {selectedSymptoms.some(s => s === area.symptomText) ? 'Deselect' : 'Select'} Symptom
+                        </Button>
+                      </div>
                     ) : null;
                   })()}
                 </CardContent>
@@ -355,18 +387,34 @@ const InteractiveSymptomSelector = ({ bodyPart, patientData, onBack }: Interacti
             {selectedSymptoms.length > 0 && (
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-lg">Selected Symptoms ({selectedSymptoms.length})</CardTitle>
+                  <CardTitle className="text-lg flex items-center justify-between">
+                    Selected Symptoms
+                    <Badge variant="secondary">{selectedSymptoms.length}</Badge>
+                  </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="space-y-2 max-h-60 overflow-y-auto">
                     {selectedSymptoms.map((symptom, index) => (
-                      <div key={index} className="p-2 bg-muted/30 rounded-lg">
-                        <p className="text-xs">{symptom}</p>
+                      <div key={index} className="p-3 bg-muted/30 rounded-lg border">
+                        <p className="text-sm font-medium mb-1">
+                          Symptom {index + 1}
+                        </p>
+                        <p className="text-xs text-muted-foreground">{symptom}</p>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="mt-2 h-6 px-2 text-xs"
+                          onClick={() => {
+                            setSelectedSymptoms(prev => prev.filter(s => s !== symptom));
+                          }}
+                        >
+                          Remove
+                        </Button>
                       </div>
                     ))}
                   </div>
-                  <Button className="w-full gradient-primary" size="lg">
-                    Continue with Selected Symptoms
+                  <Button className="w-full" size="lg">
+                    Continue with {selectedSymptoms.length} Symptom{selectedSymptoms.length !== 1 ? 's' : ''}
                   </Button>
                 </CardContent>
               </Card>
