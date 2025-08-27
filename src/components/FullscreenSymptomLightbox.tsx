@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
@@ -46,6 +46,7 @@ const FullscreenSymptomLightbox = ({
   const [zoomLevel, setZoomLevel] = useState(1);
   const [imageNaturalSize, setImageNaturalSize] = useState({ width: 0, height: 0 });
   const [imageDisplaySize, setImageDisplaySize] = useState({ width: 0, height: 0 });
+  const lastMouseMoveTime = useRef(0);
 
   // Handle image load to get natural dimensions
   const handleImageLoad = () => {
@@ -75,28 +76,33 @@ const FullscreenSymptomLightbox = ({
     }
   }, [zoomLevel]);
 
-  // Handle mouse movement with simplified coordinate mapping
-  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+  // Throttled mouse movement handler for better performance
+  const handleMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
     if (!imageRef.current || selectedSymptom) return;
+    
+    // Throttle to max 60fps
+    const now = Date.now();
+    if (now - lastMouseMoveTime.current < 16) return;
+    lastMouseMoveTime.current = now;
     
     const imageRect = imageRef.current.getBoundingClientRect();
     const x = e.clientX - imageRect.left;
     const y = e.clientY - imageRect.top;
     
-    // Only update cursor if within image bounds
+    // Only update if within image bounds
     if (x >= 0 && x <= imageRect.width && y >= 0 && y <= imageRect.height) {
       setCursorPosition({ x, y });
       
-      // Map display coordinates to natural image coordinates with zoom consideration
-      const scaleX = (imageNaturalSize.width || imageRect.width) / imageRect.width;
-      const scaleY = (imageNaturalSize.height || imageRect.height) / imageRect.height;
+      // Simplified coordinate mapping
+      const scaleX = 800 / imageRect.width; // Using fixed width for ear diagram
+      const scaleY = 700 / imageRect.height; // Using fixed height for ear diagram
       
       const naturalX = x * scaleX;
       const naturalY = y * scaleY;
       
       checkTextAreaIntersection(naturalX, naturalY);
     }
-  };
+  }, [selectedSymptom]);
 
   const handleMouseEnter = () => {
     if (!selectedSymptom) {
@@ -109,7 +115,7 @@ const FullscreenSymptomLightbox = ({
     setCurrentHoveredArea(null);
   };
 
-  const handleClick = () => {
+  const handleClick = useCallback(() => {
     if (selectedSymptom || !currentHoveredArea) return;
     
     const area = textAreas.find(a => a.id === currentHoveredArea);
@@ -120,44 +126,31 @@ const FullscreenSymptomLightbox = ({
       text: area.symptomText
     });
     setShowCursor(false);
-  };
+    setCurrentHoveredArea(null);
+  }, [selectedSymptom, currentHoveredArea, textAreas]);
 
-  const checkTextAreaIntersection = (x: number, y: number) => {
+  const checkTextAreaIntersection = useCallback((x: number, y: number) => {
     if (selectedSymptom) return;
 
     let hoveredArea = null;
-    let minDistance = Infinity;
 
-    // Check for exact intersection first
+    // Expanded hit areas for better responsiveness
     for (const area of textAreas) {
+      const padding = 20; // Add padding around each area
       if (
-        x >= area.x && 
-        x <= area.x + area.width &&
-        y >= area.y && 
-        y <= area.y + area.height
+        x >= area.x - padding && 
+        x <= area.x + area.width + padding &&
+        y >= area.y - padding && 
+        y <= area.y + area.height + padding
       ) {
         hoveredArea = area.id;
         break;
       }
     }
 
-    // If no exact match, find closest area within a reasonable distance
-    if (!hoveredArea) {
-      for (const area of textAreas) {
-        const centerX = area.x + area.width / 2;
-        const centerY = area.y + area.height / 2;
-        const distance = Math.sqrt(Math.pow(x - centerX, 2) + Math.pow(y - centerY, 2));
-        
-        // Only consider areas within 50 pixels of the cursor
-        if (distance < 50 && distance < minDistance) {
-          minDistance = distance;
-          hoveredArea = area.id;
-        }
-      }
-    }
-
-    setCurrentHoveredArea(hoveredArea);
-  };
+    // Only update state if changed to reduce re-renders
+    setCurrentHoveredArea(prev => prev !== hoveredArea ? hoveredArea : prev);
+  }, [selectedSymptom, textAreas]);
 
   const changeSelection = () => {
     setSelectedSymptom(null);
@@ -245,11 +238,12 @@ const FullscreenSymptomLightbox = ({
                     
                     <div 
                       ref={containerRef}
-                      className="relative h-full overflow-hidden cursor-none"
+                      className="relative h-full overflow-hidden cursor-none select-none"
                       onMouseMove={handleMouseMove}
                       onMouseEnter={handleMouseEnter}
                       onMouseLeave={handleMouseLeave}
                       onClick={handleClick}
+                      style={{ touchAction: 'none' }}
                     >
                       {/* Selected symptom indicator */}
                       {selectedSymptom && (
