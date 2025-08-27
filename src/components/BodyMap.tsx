@@ -266,14 +266,14 @@ const BodyMap = ({ gender, patientData }: BodyMapProps) => {
             size="sm"
             onClick={() => setDebugMode(!debugMode)}
           >
-            Debug Mode
+            {debugMode ? "Debug: ON" : "Debug: OFF"}
           </Button>
           <Button
-            variant={useMaskSelector ? "default" : "outline"}
+            variant={useMaskSelector ? "outline" : "default"}
             size="sm"
             onClick={() => setUseMaskSelector(!useMaskSelector)}
           >
-            {useMaskSelector ? "Mask Selector" : "Simple Selector"}
+            {useMaskSelector ? "Switch to Simple" : "Simple Mode (Active)"}
           </Button>
         </div>
       </div>
