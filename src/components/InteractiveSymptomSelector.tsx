@@ -162,7 +162,7 @@ const InteractiveSymptomSelector = ({ bodyPart, patientData, onBack }: Interacti
       fabricCanvas.dispose();
     }
 
-    // Get the container dimensions to make canvas responsive
+    // Get the container dimensions
     const container = canvasRef.current.parentElement;
     if (!container) return;
 
@@ -172,51 +172,72 @@ const InteractiveSymptomSelector = ({ bodyPart, patientData, onBack }: Interacti
       backgroundColor: "rgba(0,0,0,0)", // Fully transparent
       selection: false,
       renderOnAddRemove: true,
-      skipTargetFind: false,
     });
 
-    // Create the movable cursor circle with cleaner appearance
+    // Create the movable cursor circle
     const cursorCircle = new Circle({
-      left: 100,
-      top: 100,
-      radius: 12,
-      fill: "rgba(59, 130, 246, 0.9)",
+      left: 50,
+      top: 50,
+      radius: 15,
+      fill: "rgba(59, 130, 246, 0.8)",
       stroke: "rgba(255, 255, 255, 1)",
       strokeWidth: 3,
-      selectable: false, // Make it non-selectable so it follows mouse
-      moveCursor: 'move',
-      hoverCursor: 'move',
-      lockScalingX: true,
-      lockScalingY: true,
-      lockRotation: true,
+      selectable: false,
+      evented: false,
       hasControls: false,
       hasBorders: false,
-      evented: false, // Disable events on the circle itself
     });
 
     canvas.add(cursorCircle);
     setCursor(cursorCircle);
     setFabricCanvas(canvas);
 
-    // Track mouse movement on the canvas itself
-    canvas.on('mouse:move', (e) => {
-      if (cursorCircle && e.pointer) {
-        cursorCircle.set({
-          left: e.pointer.x - cursorCircle.radius,
-          top: e.pointer.y - cursorCircle.radius
-        });
-        
-        canvas.renderAll();
-        checkTextAreaIntersection(cursorCircle);
-      }
-    });
+    // Handle mouse movement over the entire container
+    const handleMouseMove = (e: MouseEvent) => {
+      const canvasRect = canvasRef.current?.getBoundingClientRect();
+      if (!canvasRect || !cursorCircle) return;
 
-    // Handle click to select symptom
-    canvas.on('mouse:up', (e) => {
-      if (currentHoveredArea && e.pointer) {
+      // Get mouse position relative to canvas
+      const mouseX = e.clientX - canvasRect.left;
+      const mouseY = e.clientY - canvasRect.top;
+
+      // Update cursor position
+      cursorCircle.set({
+        left: mouseX - cursorCircle.radius,
+        top: mouseY - cursorCircle.radius
+      });
+      
+      canvas.renderAll();
+      
+      // Check for text area intersection using canvas coordinates
+      checkTextAreaIntersection(cursorCircle);
+    };
+
+    // Handle mouse click
+    const handleMouseClick = (e: MouseEvent) => {
+      if (currentHoveredArea) {
         toggleSymptomSelection(currentHoveredArea);
       }
-    });
+    };
+
+    // Handle mouse leave
+    const handleMouseLeave = () => {
+      setCurrentHoveredArea(null);
+    };
+
+    // Add event listeners to the container
+    if (container) {
+      container.addEventListener('mousemove', handleMouseMove);
+      container.addEventListener('click', handleMouseClick);
+      container.addEventListener('mouseleave', handleMouseLeave);
+      
+      // Store cleanup function
+      canvas.on('canvas:cleared', () => {
+        container.removeEventListener('mousemove', handleMouseMove);
+        container.removeEventListener('click', handleMouseClick);
+        container.removeEventListener('mouseleave', handleMouseLeave);
+      });
+    }
 
     canvas.renderAll();
 
@@ -370,27 +391,27 @@ const InteractiveSymptomSelector = ({ bodyPart, patientData, onBack }: Interacti
                       </div>
                       
                       <div className="relative border border-gray-200 rounded-lg shadow-lg overflow-hidden h-full">
+                        {/* Interactive Canvas Overlay - OUTSIDE transform component */}
+                        <canvas 
+                          ref={canvasRef} 
+                          className="absolute top-0 left-0 w-full h-full z-50 pointer-events-auto" 
+                          style={{ 
+                            background: 'transparent',
+                            position: 'absolute',
+                            top: 0,
+                            left: 0,
+                            pointerEvents: 'auto'
+                          }} 
+                        />
+                        {/* Image with zoom/pan inside TransformComponent */}
                         <TransformComponent>
                           <div className="relative w-full h-full">
-                            {/* Background Image */}
                             <img 
                               src={imageUrl} 
                               alt={`${bodyPart} symptom diagram`}
-                              className="w-full h-auto block relative z-10"
+                              className="w-full h-auto block relative z-10 pointer-events-none"
                               draggable={false}
                               style={{ maxHeight: '100%', objectFit: 'contain' }}
-                            />
-                            {/* Interactive Canvas Overlay - positioned on top */}
-                            <canvas 
-                              ref={canvasRef} 
-                              className="absolute top-0 left-0 w-full h-full z-50 pointer-events-auto" 
-                              style={{ 
-                                background: 'transparent',
-                                position: 'absolute',
-                                top: 0,
-                                left: 0,
-                                pointerEvents: 'auto'
-                              }} 
                             />
                           </div>
                         </TransformComponent>
