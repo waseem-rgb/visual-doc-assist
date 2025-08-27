@@ -2,6 +2,8 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { ChevronDown, ChevronRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -31,6 +33,8 @@ const BodyMap = ({ gender, patientData }: BodyMapProps) => {
   const [selectedBodyParts, setSelectedBodyParts] = useState<string[]>([]);
   const [hoveredPart, setHoveredPart] = useState<string | null>(null);
   const [showSymptomViewer, setShowSymptomViewer] = useState(false);
+  const [leftSideOpen, setLeftSideOpen] = useState(true);
+  const [rightSideOpen, setRightSideOpen] = useState(true);
 
   const { data: allBodyParts, isLoading } = useQuery({
     queryKey: ["bodyParts"],
@@ -77,6 +81,10 @@ const BodyMap = ({ gender, patientData }: BodyMapProps) => {
     
     return matchesView && matchesGender;
   }) || [];
+
+  // Split body parts into left and right sides
+  const leftSideBodyParts = bodyParts.slice(0, Math.ceil(bodyParts.length / 2));
+  const rightSideBodyParts = bodyParts.slice(Math.ceil(bodyParts.length / 2));
 
   const handleBodyPartClick = (bodyPart: string) => {
     // Only allow single selection - replace current selection
@@ -243,88 +251,113 @@ const BodyMap = ({ gender, patientData }: BodyMapProps) => {
       </div>
 
       <div className="flex justify-center">
-        <Card className="w-full max-w-4xl">
-          <CardHeader>
-            <CardTitle className="text-center">
-              {gender === "male" ? "Male" : "Female"} Body - {currentView} View
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="relative mx-auto" style={{ width: "600px", height: "800px" }}>
-              {/* Body diagram background */}
-              <img 
-                src={gender === "male" 
-                  ? (currentView === "Front" ? bodyFrontRealistic : bodyBackRealistic)
-                  : (currentView === "Front" ? bodyFrontFemale : bodyBackFemale)
-                } 
-                alt={`${gender} body diagram - ${currentView} view`}
-                className="w-full h-full object-contain rounded-lg"
-              />
-
-              {/* Interactive body part points */}
-              {bodyParts?.length > 0 ? (
-                bodyParts.map((part, index) => {
-                  const position = getBodyPartPosition(part.Body_part, currentView);
-                  const isSelected = selectedBodyParts.includes(part.Body_part);
-                  const isHovered = hoveredPart === part.Body_part;
-                  
-                  return (
-                  <div
-                    key={`${part.Body_part}-${index}`}
-                    className={`absolute w-3 h-3 rounded-full cursor-pointer transition-all duration-300 border-2 border-white shadow-xl ${
-                      isSelected 
-                        ? "bg-green-500 scale-150 ring-4 ring-green-300 animate-none" 
-                        : "bg-red-500 animate-pulse hover:bg-blue-500 hover:scale-150 hover:animate-none"
-                    }`}
-                    style={{
-                      top: position.top,
-                      left: position.left,
-                      transform: "translate(-50%, -50%)",
-                      zIndex: 30,
-                      boxShadow: isSelected 
-                        ? "0 0 20px rgba(34, 197, 94, 0.8), 0 0 10px rgba(255, 255, 255, 0.5)" 
-                        : "0 0 15px rgba(239, 68, 68, 0.8), 0 0 5px rgba(255, 255, 255, 0.5)"
-                    }}
-                    onClick={() => handleBodyPartClick(part.Body_part)}
-                    onMouseEnter={() => setHoveredPart(part.Body_part)}
-                    onMouseLeave={() => setHoveredPart(null)}
-                  >
-                    {/* Enhanced Tooltip */}
-                    {isHovered && (
-                      <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-4 px-3 py-2 bg-gray-900 text-white border rounded-lg shadow-xl text-sm whitespace-nowrap z-50 font-medium animate-fade-in">
-                        <div className="text-center">{part.Body_part}</div>
-                        <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-3 h-3 bg-gray-900 rotate-45"></div>
+        <div className="w-full max-w-7xl grid grid-cols-1 lg:grid-cols-3 gap-6">
+          
+          {/* Left Side Body Parts */}
+          <div className="space-y-4">
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg">Left Side Body Parts</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <Collapsible open={leftSideOpen} onOpenChange={setLeftSideOpen}>
+                  <CollapsibleTrigger className="flex items-center justify-between w-full p-2 hover:bg-muted rounded">
+                    <span className="font-medium">Body Areas ({leftSideBodyParts.length})</span>
+                    {leftSideOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                  </CollapsibleTrigger>
+                  <CollapsibleContent className="mt-2 space-y-1">
+                    {leftSideBodyParts.map((part, index) => (
+                      <div
+                        key={`left-${part.Body_part}-${index}`}
+                        className={`p-3 rounded-lg cursor-pointer transition-all duration-200 text-sm border ${
+                          selectedBodyParts.includes(part.Body_part)
+                            ? "bg-primary text-primary-foreground border-primary shadow-lg"
+                            : "bg-muted/50 hover:bg-muted border-border hover:shadow-md"
+                        }`}
+                        onClick={() => handleBodyPartClick(part.Body_part)}
+                      >
+                        <div className="font-medium">{part.Body_part}</div>
                       </div>
-                    )}
-                  </div>
-                  );
-                })
-              ) : (
-                <div className="absolute top-4 left-4 bg-yellow-100 border border-yellow-400 text-yellow-700 px-3 py-2 rounded text-sm z-40">
-                  {isLoading ? "Loading body parts..." : "No body parts found for this view"}
+                    ))}
+                  </CollapsibleContent>
+                </Collapsible>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Center - Body Diagram */}
+          <div>
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-center">
+                  {gender === "male" ? "Male" : "Female"} Body - {currentView} View
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="flex justify-center">
+                <div className="relative" style={{ width: "400px", height: "600px" }}>
+                  <img 
+                    src={gender === "male" 
+                      ? (currentView === "Front" ? bodyFrontRealistic : bodyBackRealistic)
+                      : (currentView === "Front" ? bodyFrontFemale : bodyBackFemale)
+                    } 
+                    alt={`${gender} body diagram - ${currentView} view`}
+                    className="w-full h-full object-contain rounded-lg"
+                  />
                 </div>
-              )}
-            </div>
-            
-            {/* Selected body parts display */}
-            {selectedBodyParts.length > 0 && (
-              <div className="mt-6 p-4 bg-muted/50 rounded-lg">
-                <h4 className="font-semibold mb-2">Selected Area:</h4>
-                <div className="flex flex-wrap gap-2">
-                  {selectedBodyParts.map((part) => (
-                    <span
-                      key={part}
-                      className="px-3 py-1 bg-primary/10 text-primary rounded-full text-sm"
-                    >
-                      {part}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Right Side Body Parts */}
+          <div className="space-y-4">
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg">Right Side Body Parts</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <Collapsible open={rightSideOpen} onOpenChange={setRightSideOpen}>
+                  <CollapsibleTrigger className="flex items-center justify-between w-full p-2 hover:bg-muted rounded">
+                    <span className="font-medium">Body Areas ({rightSideBodyParts.length})</span>
+                    {rightSideOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                  </CollapsibleTrigger>
+                  <CollapsibleContent className="mt-2 space-y-1">
+                    {rightSideBodyParts.map((part, index) => (
+                      <div
+                        key={`right-${part.Body_part}-${index}`}
+                        className={`p-3 rounded-lg cursor-pointer transition-all duration-200 text-sm border ${
+                          selectedBodyParts.includes(part.Body_part)
+                            ? "bg-primary text-primary-foreground border-primary shadow-lg"
+                            : "bg-muted/50 hover:bg-muted border-border hover:shadow-md"
+                        }`}
+                        onClick={() => handleBodyPartClick(part.Body_part)}
+                      >
+                        <div className="font-medium">{part.Body_part}</div>
+                      </div>
+                    ))}
+                  </CollapsibleContent>
+                </Collapsible>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
       </div>
+            
+      {/* Selected body parts display */}
+      {selectedBodyParts.length > 0 && (
+        <div className="mt-6 p-4 bg-muted/50 rounded-lg">
+          <h4 className="font-semibold mb-2">Selected Area:</h4>
+          <div className="flex flex-wrap gap-2">
+            {selectedBodyParts.map((part) => (
+              <span
+                key={part}
+                className="px-3 py-1 bg-primary/10 text-primary rounded-full text-sm"
+              >
+                {part}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
 
       {selectedBodyParts.length > 0 && (
         <div className="text-center">
