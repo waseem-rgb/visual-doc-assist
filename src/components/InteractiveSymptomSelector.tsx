@@ -1,12 +1,9 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Info, ZoomIn, ZoomOut } from "lucide-react";
-import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
+import { ArrowLeft } from "lucide-react";
 import { loadImageFromStorage } from "@/lib/storageUtils";
+import FullscreenSymptomLightbox from "./FullscreenSymptomLightbox";
 
 interface InteractiveSymptomSelectorProps {
   bodyPart: string;
@@ -28,16 +25,10 @@ interface TextArea {
 }
 
 const InteractiveSymptomSelector = ({ bodyPart, patientData, onBack }: InteractiveSymptomSelectorProps) => {
-  const containerRef = useRef<HTMLDivElement>(null);
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const [selectedSymptom, setSelectedSymptom] = useState<{id: string, x: number, y: number, text: string} | null>(null);
-  const [availableSymptoms, setAvailableSymptoms] = useState<string[]>([]);
-  const [cursorPosition, setCursorPosition] = useState({ x: 50, y: 50 });
-  const [currentHoveredArea, setCurrentHoveredArea] = useState<string | null>(null);
-  const [showCursor, setShowCursor] = useState(false);
-  const [zoomLevel, setZoomLevel] = useState(1);
-  const [selectionLocked, setSelectionLocked] = useState(false);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [finalSelection, setFinalSelection] = useState<{id: string, text: string} | null>(null);
 
   // Define text areas based on the ear anatomy image analysis
   const textAreas: TextArea[] = [
@@ -73,148 +64,33 @@ const InteractiveSymptomSelector = ({ bodyPart, patientData, onBack }: Interacti
 
   useEffect(() => {
     fetchSymptomImage();
-    fetchSymptomsFromDatabase();
   }, [bodyPart]);
 
   const fetchSymptomImage = async () => {
     try {
       setLoading(true);
       
-      console.log(`🔍 Loading image for body part: "${bodyPart}"`);
-      
       const result = await loadImageFromStorage(bodyPart);
       
       if (result.url && result.filename) {
         setImageUrl(result.url);
-        toast.success(`✅ Loaded: ${result.filename}`);
-        console.log(`✅ Successfully loaded image: ${result.filename}`);
-      } else {
-        console.error(`❌ ${result.error}`);
-        toast.error(result.error || `Image not found for "${bodyPart}"`);
+        // Open lightbox immediately once image is loaded
+        setLightboxOpen(true);
       }
     } catch (err) {
-      console.error("💥 Unexpected error loading image:", err);
-      toast.error("Failed to load symptom diagram");
+      console.error("Error loading image:", err);
     } finally {
       setLoading(false);
     }
   };
 
-  const fetchSymptomsFromDatabase = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('New Master')
-        .select('Symptoms')
-        .ilike('Part of body_and general full body symptom', `%${bodyPart}%`)
-        .not('Symptoms', 'is', null);
-
-      if (error) {
-        console.error("Error fetching symptoms:", error);
-        return;
-      }
-
-      if (data && data.length > 0) {
-        const symptomTexts = data
-          .map(row => row.Symptoms?.trim())
-          .filter(Boolean)
-          .filter((text, index, arr) => arr.indexOf(text) === index);
-        
-        setAvailableSymptoms(symptomTexts);
-      }
-    } catch (err) {
-      console.error("Error fetching symptoms:", err);
-    }
+  const handleSymptomSubmit = (symptom: {id: string, text: string}) => {
+    setFinalSelection(symptom);
+    setLightboxOpen(false);
   };
 
-  // Handle mouse movement with CSS cursor
-  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!containerRef.current || selectionLocked) return;
-    
-    const rect = containerRef.current.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    
-    console.log('Mouse position:', { x, y, zoom: zoomLevel });
-    setCursorPosition({ x, y });
-    
-    // Check text area intersection with original coordinates (not zoom-adjusted)
-    checkTextAreaIntersection(x, y);
-  };
-
-  const handleMouseEnter = () => {
-    setShowCursor(true);
-  };
-
-  const handleMouseLeave = () => {
-    setShowCursor(false);
-    setCurrentHoveredArea(null);
-  };
-
-  const handleClick = () => {
-    if (selectionLocked || !currentHoveredArea) return;
-    
-    const area = textAreas.find(a => a.id === currentHoveredArea);
-    if (!area) return;
-
-    // Single select - set the symptom
-    setSelectedSymptom({
-      id: currentHoveredArea,
-      x: cursorPosition.x,
-      y: cursorPosition.y,
-      text: area.symptomText
-    });
-    setSelectionLocked(true);
-    setShowCursor(false);
-    toast.success("Symptom selected");
-  };
-
-  const changeSelection = () => {
-    setSelectedSymptom(null);
-    setSelectionLocked(false);
-    setShowCursor(true);
-  };
-
-  // Calculate dynamic circle size based on zoom level
-  const getCircleSize = () => {
-    const baseSize = 20; // Slightly smaller base size
-    const minSize = 8;   // Smaller minimum size
-    const maxSize = 32;  // Smaller maximum size
-    
-    // Inverse relationship with zoom - smaller circle when zoomed in
-    const dynamicSize = baseSize / Math.sqrt(zoomLevel);
-    return Math.max(minSize, Math.min(maxSize, dynamicSize));
-  };
-
-  const checkTextAreaIntersection = (x: number, y: number) => {
-    if (selectionLocked) return; // Don't check intersection when locked
-
-    let hoveredArea = null;
-    
-    console.log('Checking intersection at:', { x, y });
-    console.log('Text areas:', textAreas.slice(0, 2)); // Log first 2 areas for debugging
-
-    for (const area of textAreas) {
-      // Check if cursor position is within text area bounds
-      if (
-        x >= area.x && 
-        x <= area.x + area.width &&
-        y >= area.y && 
-        y <= area.y + area.height
-      ) {
-        hoveredArea = area.id;
-        console.log('Found hovering area:', area.id);
-        break;
-      }
-    }
-
-    if (hoveredArea !== currentHoveredArea) {
-      console.log('Hovered area changed from', currentHoveredArea, 'to', hoveredArea);
-      setCurrentHoveredArea(hoveredArea);
-    }
-  };
-
-  const toggleSymptomSelection = () => {
-    // Removed this function as it's not needed for single select
+  const openLightbox = () => {
+    setLightboxOpen(true);
   };
 
   if (loading) {
@@ -261,7 +137,7 @@ const InteractiveSymptomSelector = ({ bodyPart, patientData, onBack }: Interacti
                 Back to Body Map
               </Button>
               <div>
-                <h1 className="text-2xl font-bold">Interactive {bodyPart} Symptoms</h1>
+                <h1 className="text-2xl font-bold">{bodyPart} Symptoms</h1>
                 <p className="text-sm text-muted-foreground">
                   Patient: {patientData.name} | Age: {patientData.age} | Gender: {patientData.gender}
                 </p>
@@ -273,195 +149,78 @@ const InteractiveSymptomSelector = ({ bodyPart, patientData, onBack }: Interacti
 
       {/* Main Content */}
       <div className="container mx-auto px-4 py-6">
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-          {/* Interactive Canvas with Zoom */}
-          <div className="lg:col-span-3">
-            <Card className="h-[90vh]">
-              <CardHeader className="pb-4">
-                <CardTitle className="flex items-center justify-between">
-                  <span>Interactive {bodyPart} Selector</span>
-                  <div className="flex items-center space-x-4">
-                    <div className="flex items-center space-x-2 text-sm text-muted-foreground">
-                      <Info className="h-4 w-4" />
-                      <span>{selectionLocked ? 'Selection locked - use side panel to change' : 'Click to select a symptom'}</span>
-                    </div>
+        <div className="max-w-4xl mx-auto">
+          {!finalSelection ? (
+            <Card className="p-6">
+              <CardContent className="text-center space-y-6">
+                <div>
+                  <h2 className="text-xl font-semibold mb-2">Symptom Selection</h2>
+                  <p className="text-muted-foreground">
+                    Click below to open the interactive symptom selector in fullscreen mode for better visibility.
+                  </p>
+                </div>
+                
+                {imageUrl && (
+                  <div className="space-y-4">
+                    <img 
+                      src={imageUrl} 
+                      alt={`${bodyPart} symptom preview`}
+                      className="w-full max-w-md mx-auto rounded-lg shadow-md"
+                    />
+                    <Button onClick={openLightbox} size="lg" className="w-full max-w-sm">
+                      Open Fullscreen Symptom Selector
+                    </Button>
                   </div>
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="h-full pb-6">
-                <TransformWrapper
-                  initialScale={1}
-                  minScale={0.5}
-                  maxScale={3}
-                  wheel={{ step: 0.1 }}
-                  pinch={{ step: 5 }}
-                  doubleClick={{ disabled: false, mode: "zoomIn", step: 0.3 }}
-                  onTransformed={(ref) => {
-                    if (ref.state.scale) {
-                      setZoomLevel(ref.state.scale);
-                    }
-                  }}
-                >
-                  {({ zoomIn, zoomOut, resetTransform }) => (
-                    <div className="h-full">
-                      {/* Zoom Controls */}
-                      <div className="flex justify-end space-x-2 mb-2">
-                        <Button onClick={() => zoomIn()} size="sm" variant="outline">
-                          <ZoomIn className="h-4 w-4" />
-                        </Button>
-                        <Button onClick={() => zoomOut()} size="sm" variant="outline">
-                          <ZoomOut className="h-4 w-4" />
-                        </Button>
-                        <Button onClick={() => resetTransform()} size="sm" variant="outline">
-                          Reset
-                        </Button>
-                        <div className="text-xs text-muted-foreground flex items-center">
-                          Zoom: {Math.round(zoomLevel * 100)}%
-                        </div>
-                      </div>
-                      
-                      <div 
-                        ref={containerRef}
-                        className="relative border border-gray-200 rounded-lg shadow-lg overflow-hidden h-full cursor-none"
-                        onMouseMove={handleMouseMove}
-                        onMouseEnter={handleMouseEnter}
-                        onMouseLeave={handleMouseLeave}
-                        onClick={handleClick}
-                      >
-                        {/* Fixed green circle for selected symptom */}
-                        {selectedSymptom && (
-                          <div
-                            className="absolute bg-green-500 border-2 border-white rounded-full shadow-lg pointer-events-none z-40 transform -translate-x-1/2 -translate-y-1/2"
-                            style={{
-                              left: selectedSymptom.x,
-                              top: selectedSymptom.y,
-                              width: `${getCircleSize()}px`,
-                              height: `${getCircleSize()}px`,
-                            }}
-                          />
-                        )}
-
-                        {/* Moving blue/green cursor */}
-                        {showCursor && !selectionLocked && (
-                          <div
-                            className="absolute bg-blue-500 border-2 border-white rounded-full shadow-lg pointer-events-none z-50 transform -translate-x-1/2 -translate-y-1/2 transition-all duration-150"
-                            style={{
-                              left: cursorPosition.x,
-                              top: cursorPosition.y,
-                              width: `${getCircleSize()}px`,
-                              height: `${getCircleSize()}px`,
-                              background: currentHoveredArea ? 'rgba(34, 197, 94, 0.8)' : 'rgba(59, 130, 246, 0.8)'
-                            }}
-                          />
-                        )}
-                        
-                        {/* Image with zoom/pan */}
-                        <TransformComponent>
-                          <div className="relative w-full h-full">
-                            <img 
-                              src={imageUrl} 
-                              alt={`${bodyPart} symptom diagram`}
-                              className="w-full h-auto block pointer-events-none"
-                              draggable={false}
-                              style={{ maxHeight: '100%', objectFit: 'contain' }}
-                            />
-                          </div>
-                        </TransformComponent>
-                      </div>
-                    </div>
-                  )}
-                </TransformWrapper>
+                )}
               </CardContent>
             </Card>
-          </div>
-
-          {/* Selection Panel */}
-          <div className="lg:col-span-1 space-y-4">
-            {!selectionLocked && currentHoveredArea && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">Current Hover</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {(() => {
-                    const area = textAreas.find(a => a.id === currentHoveredArea);
-                    return area ? (
-                      <div>
-                        <p className="text-sm font-medium mb-2">{area.id.replace(/-/g, ' ').toUpperCase()}</p>
-                        <p className="text-sm text-muted-foreground">{area.symptomText}</p>
-                        <Button 
-                          className="w-full mt-3" 
-                          size="sm"
-                          onClick={() => handleClick()}
-                        >
-                          Select This Symptom
-                        </Button>
-                      </div>
-                    ) : null;
-                  })()}
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Selected Symptom Display */}
-            {selectedSymptom && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg flex items-center justify-between">
-                    Selected Symptom
-                    <div className="w-3 h-3 bg-green-500 rounded-full border border-white flex-shrink-0"></div>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="p-3 bg-muted/30 rounded-lg border">
-                    <p className="text-sm font-medium mb-2">
-                      {selectedSymptom.id.replace(/-/g, ' ').toUpperCase()}
-                    </p>
-                    <p className="text-xs text-muted-foreground mb-3">{selectedSymptom.text}</p>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Button 
-                      variant="outline" 
-                      className="w-full" 
-                      onClick={changeSelection}
-                    >
-                      Change My Symptom Selection
-                    </Button>
-                    <Button className="w-full" size="lg">
-                      Submit My Selection
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Instructions */}
-            <Card>
+          ) : (
+            <Card className="p-6">
               <CardHeader>
-                <CardTitle className="text-lg">Instructions</CardTitle>
+                <CardTitle className="text-xl text-center">Selected Symptom</CardTitle>
               </CardHeader>
-              <CardContent>
-                <div className="space-y-2 text-sm text-muted-foreground">
-                  {!selectedSymptom ? (
-                    <>
-                      <p>• Move mouse over symptom areas</p>
-                      <p>• Click to select one symptom</p>
-                      <p>• Use zoom controls for better visibility</p>
-                    </>
-                  ) : (
-                    <>
-                      <p>• Your symptom has been selected</p>
-                      <p>• Use "Change" to select different symptom</p>
-                      <p>• Use "Submit" to proceed with current selection</p>
-                    </>
-                  )}
+              <CardContent className="text-center space-y-4">
+                <div className="bg-green-50 p-4 rounded-lg">
+                  <h3 className="font-semibold mb-2">
+                    {finalSelection.id.replace(/-/g, ' ').toUpperCase()}
+                  </h3>
+                  <p className="text-muted-foreground">
+                    {finalSelection.text}
+                  </p>
+                </div>
+                
+                <div className="flex gap-3 justify-center">
+                  <Button 
+                    variant="outline" 
+                    onClick={() => setFinalSelection(null)}
+                  >
+                    Change Selection
+                  </Button>
+                  <Button onClick={() => {
+                    // Here you would save to database or proceed to next step
+                    console.log("Final symptom selection:", finalSelection);
+                  }}>
+                    Continue to Next Step
+                  </Button>
                 </div>
               </CardContent>
             </Card>
-          </div>
+          )}
         </div>
       </div>
+
+      {/* Fullscreen Lightbox */}
+      {imageUrl && (
+        <FullscreenSymptomLightbox
+          open={lightboxOpen}
+          onClose={() => setLightboxOpen(false)}
+          imageUrl={imageUrl}
+          bodyPart={bodyPart}
+          patientData={patientData}
+          textAreas={textAreas}
+          onSymptomSubmit={handleSymptomSubmit}
+        />
+      )}
     </div>
   );
 };
