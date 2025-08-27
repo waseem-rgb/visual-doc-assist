@@ -31,13 +31,13 @@ const InteractiveSymptomSelector = ({ bodyPart, patientData, onBack }: Interacti
   const containerRef = useRef<HTMLDivElement>(null);
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const [selectedSymptoms, setSelectedSymptoms] = useState<string[]>([]);
-  const [selectedSymptomPositions, setSelectedSymptomPositions] = useState<Array<{id: string, x: number, y: number, text: string}>>([]);
+  const [selectedSymptom, setSelectedSymptom] = useState<{id: string, x: number, y: number, text: string} | null>(null);
   const [availableSymptoms, setAvailableSymptoms] = useState<string[]>([]);
   const [cursorPosition, setCursorPosition] = useState({ x: 50, y: 50 });
   const [currentHoveredArea, setCurrentHoveredArea] = useState<string | null>(null);
   const [showCursor, setShowCursor] = useState(false);
   const [zoomLevel, setZoomLevel] = useState(1);
+  const [selectionLocked, setSelectionLocked] = useState(false);
 
   // Define text areas based on the ear anatomy image analysis
   const textAreas: TextArea[] = [
@@ -150,36 +150,34 @@ const InteractiveSymptomSelector = ({ bodyPart, patientData, onBack }: Interacti
   };
 
   const handleClick = () => {
-    if (currentHoveredArea) {
-      const area = textAreas.find(a => a.id === currentHoveredArea);
-      if (!area) return;
+    if (selectionLocked || !currentHoveredArea) return;
+    
+    const area = textAreas.find(a => a.id === currentHoveredArea);
+    if (!area) return;
 
-      const isAlreadySelected = selectedSymptomPositions.some(pos => pos.id === currentHoveredArea);
-      
-      if (isAlreadySelected) {
-        // Deselect - remove from both arrays
-        setSelectedSymptoms(prev => prev.filter(symptom => symptom !== area.symptomText));
-        setSelectedSymptomPositions(prev => prev.filter(pos => pos.id !== currentHoveredArea));
-      } else {
-        // Select - add to both arrays
-        setSelectedSymptoms(prev => [...prev, area.symptomText]);
-        setSelectedSymptomPositions(prev => [...prev, {
-          id: currentHoveredArea,
-          x: cursorPosition.x,
-          y: cursorPosition.y,
-          text: area.symptomText
-        }]);
-      }
-      
-      toggleSymptomSelection(currentHoveredArea);
-    }
+    // Single select - set the symptom
+    setSelectedSymptom({
+      id: currentHoveredArea,
+      x: cursorPosition.x,
+      y: cursorPosition.y,
+      text: area.symptomText
+    });
+    setSelectionLocked(true);
+    setShowCursor(false);
+    toast.success("Symptom selected");
+  };
+
+  const changeSelection = () => {
+    setSelectedSymptom(null);
+    setSelectionLocked(false);
+    setShowCursor(true);
   };
 
   // Calculate dynamic circle size based on zoom level
   const getCircleSize = () => {
-    const baseSize = 24; // Base size in pixels
-    const minSize = 12;  // Minimum size
-    const maxSize = 48;  // Maximum size
+    const baseSize = 20; // Slightly smaller base size
+    const minSize = 8;   // Smaller minimum size
+    const maxSize = 32;  // Smaller maximum size
     
     // Inverse relationship with zoom - smaller circle when zoomed in
     const dynamicSize = baseSize / Math.sqrt(zoomLevel);
@@ -187,6 +185,8 @@ const InteractiveSymptomSelector = ({ bodyPart, patientData, onBack }: Interacti
   };
 
   const checkTextAreaIntersection = (x: number, y: number) => {
+    if (selectionLocked) return; // Don't check intersection when locked
+
     let hoveredArea = null;
 
     for (const area of textAreas) {
@@ -202,29 +202,12 @@ const InteractiveSymptomSelector = ({ bodyPart, patientData, onBack }: Interacti
       }
     }
 
-    if (hoveredArea !== currentHoveredArea) {
-      setCurrentHoveredArea(hoveredArea);
-      
-      if (hoveredArea) {
-        const area = textAreas.find(a => a.id === hoveredArea);
-        if (area) {
-          toast.info(`Hovering: ${area.symptomText.substring(0, 50)}...`);
-        }
-      }
-    }
+    setCurrentHoveredArea(hoveredArea);
+    // Removed toast notification for hover
   };
 
-  const toggleSymptomSelection = (areaId: string) => {
-    const area = textAreas.find(a => a.id === areaId);
-    if (!area) return;
-
-    const isSelected = selectedSymptoms.includes(area.symptomText);
-    
-    if (isSelected) {
-      toast.success("Symptom deselected");
-    } else {
-      toast.success("Symptom selected");  
-    }
+  const toggleSymptomSelection = () => {
+    // Removed this function as it's not needed for single select
   };
 
   if (loading) {
@@ -286,14 +269,14 @@ const InteractiveSymptomSelector = ({ bodyPart, patientData, onBack }: Interacti
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           {/* Interactive Canvas with Zoom */}
           <div className="lg:col-span-3">
-            <Card className="h-[80vh]">
+            <Card className="h-[90vh]">
               <CardHeader className="pb-4">
                 <CardTitle className="flex items-center justify-between">
                   <span>Interactive {bodyPart} Selector</span>
                   <div className="flex items-center space-x-4">
                     <div className="flex items-center space-x-2 text-sm text-muted-foreground">
                       <Info className="h-4 w-4" />
-                      <span>Move your mouse to position the blue circle, click to select symptoms</span>
+                      <span>{selectionLocked ? 'Selection locked - use side panel to change' : 'Click to select a symptom'}</span>
                     </div>
                   </div>
                 </CardTitle>
@@ -338,22 +321,21 @@ const InteractiveSymptomSelector = ({ bodyPart, patientData, onBack }: Interacti
                         onMouseLeave={handleMouseLeave}
                         onClick={handleClick}
                       >
-                        {/* Fixed green circles for selected symptoms */}
-                        {selectedSymptomPositions.map((selectedPos, index) => (
+                        {/* Fixed green circle for selected symptom */}
+                        {selectedSymptom && (
                           <div
-                            key={`selected-${selectedPos.id}-${index}`}
                             className="absolute bg-green-500 border-2 border-white rounded-full shadow-lg pointer-events-none z-40 transform -translate-x-1/2 -translate-y-1/2"
                             style={{
-                              left: selectedPos.x,
-                              top: selectedPos.y,
+                              left: selectedSymptom.x,
+                              top: selectedSymptom.y,
                               width: `${getCircleSize()}px`,
                               height: `${getCircleSize()}px`,
                             }}
                           />
-                        ))}
+                        )}
 
                         {/* Moving blue/green cursor */}
-                        {showCursor && (
+                        {showCursor && !selectionLocked && (
                           <div
                             className="absolute bg-blue-500 border-2 border-white rounded-full shadow-lg pointer-events-none z-50 transform -translate-x-1/2 -translate-y-1/2 transition-all duration-150"
                             style={{
@@ -388,10 +370,10 @@ const InteractiveSymptomSelector = ({ bodyPart, patientData, onBack }: Interacti
 
           {/* Selection Panel */}
           <div className="lg:col-span-1 space-y-4">
-            {currentHoveredArea && (
+            {!selectionLocked && currentHoveredArea && (
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-lg">Current Selection</CardTitle>
+                  <CardTitle className="text-lg">Current Hover</CardTitle>
                 </CardHeader>
                 <CardContent>
                   {(() => {
@@ -405,7 +387,7 @@ const InteractiveSymptomSelector = ({ bodyPart, patientData, onBack }: Interacti
                           size="sm"
                           onClick={() => handleClick()}
                         >
-                          {selectedSymptomPositions.some(pos => pos.id === currentHoveredArea) ? 'Deselect' : 'Select'} Symptom
+                          Select This Symptom
                         </Button>
                       </div>
                     ) : null;
@@ -414,43 +396,35 @@ const InteractiveSymptomSelector = ({ bodyPart, patientData, onBack }: Interacti
               </Card>
             )}
 
-            {/* Selected Symptoms Summary */}
-            {selectedSymptomPositions.length > 0 && (
+            {/* Selected Symptom Display */}
+            {selectedSymptom && (
               <Card>
                 <CardHeader>
                   <CardTitle className="text-lg flex items-center justify-between">
-                    Selected Symptoms
-                    <Badge variant="secondary">{selectedSymptomPositions.length}</Badge>
+                    Selected Symptom
+                    <div className="w-3 h-3 bg-green-500 rounded-full border border-white flex-shrink-0"></div>
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="space-y-3 max-h-60 overflow-y-auto">
-                    {selectedSymptomPositions.map((selectedPos, index) => (
-                      <div key={`symptom-${selectedPos.id}-${index}`} className="p-3 bg-muted/30 rounded-lg border">
-                        <div className="flex items-start justify-between mb-2">
-                          <p className="text-sm font-medium">
-                            {selectedPos.id.replace(/-/g, ' ').toUpperCase()}
-                          </p>
-                          <div className="w-3 h-3 bg-green-500 rounded-full border border-white flex-shrink-0"></div>
-                        </div>
-                        <p className="text-xs text-muted-foreground mb-2">{selectedPos.text}</p>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="h-6 px-2 text-xs"
-                          onClick={() => {
-                            setSelectedSymptoms(prev => prev.filter(s => s !== selectedPos.text));
-                            setSelectedSymptomPositions(prev => prev.filter(pos => pos.id !== selectedPos.id));
-                          }}
-                        >
-                          Remove
-                        </Button>
-                      </div>
-                    ))}
+                  <div className="p-3 bg-muted/30 rounded-lg border">
+                    <p className="text-sm font-medium mb-2">
+                      {selectedSymptom.id.replace(/-/g, ' ').toUpperCase()}
+                    </p>
+                    <p className="text-xs text-muted-foreground mb-3">{selectedSymptom.text}</p>
                   </div>
-                  <Button className="w-full" size="lg">
-                    Continue with {selectedSymptomPositions.length} Symptom{selectedSymptomPositions.length !== 1 ? 's' : ''}
-                  </Button>
+                  
+                  <div className="space-y-2">
+                    <Button 
+                      variant="outline" 
+                      className="w-full" 
+                      onClick={changeSelection}
+                    >
+                      Change My Symptom Selection
+                    </Button>
+                    <Button className="w-full" size="lg">
+                      Submit My Selection
+                    </Button>
+                  </div>
                 </CardContent>
               </Card>
             )}
@@ -462,10 +436,19 @@ const InteractiveSymptomSelector = ({ bodyPart, patientData, onBack }: Interacti
               </CardHeader>
               <CardContent>
                 <div className="space-y-2 text-sm text-muted-foreground">
-                  <p>• Drag the blue circle over symptom paragraphs</p>
-                  <p>• Click when hovering over a symptom to select it</p>
-                  <p>• Selected symptoms appear in the panel</p>
-                  <p>• Continue when you've selected all relevant symptoms</p>
+                  {!selectedSymptom ? (
+                    <>
+                      <p>• Move mouse over symptom areas</p>
+                      <p>• Click to select one symptom</p>
+                      <p>• Use zoom controls for better visibility</p>
+                    </>
+                  ) : (
+                    <>
+                      <p>• Your symptom has been selected</p>
+                      <p>• Use "Change" to select different symptom</p>
+                      <p>• Use "Submit" to proceed with current selection</p>
+                    </>
+                  )}
                 </div>
               </CardContent>
             </Card>
