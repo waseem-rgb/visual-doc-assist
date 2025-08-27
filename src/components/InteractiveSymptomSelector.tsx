@@ -6,6 +6,7 @@ import { Canvas as FabricCanvas, Circle } from "fabric";
 import { ArrowLeft, Info } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { loadImageFromStorage } from "@/lib/storageUtils";
 
 interface InteractiveSymptomSelectorProps {
   bodyPart: string;
@@ -83,43 +84,22 @@ const InteractiveSymptomSelector = ({ bodyPart, patientData, onBack }: Interacti
     try {
       setLoading(true);
       
-      // Try multiple naming conventions for the image
-      const possibleNames = [
-        `${bodyPart.toLowerCase().replace(/\s+/g, '_')}.png`,
-        `${bodyPart.toLowerCase().replace(/\s+/g, '-')}.png`,
-        `${bodyPart.toLowerCase().replace(/\s+/g, '_')}.jpg`,
-        `${bodyPart.toLowerCase().replace(/\s+/g, '-')}.jpg`,
-        `${bodyPart.toLowerCase()}.png`,
-        `${bodyPart}.png`,
-        `ear.png`, // Fallback for ear-related searches
-        `hearing.png` // Another fallback
-      ];
+      console.log(`🔍 Loading image for body part: "${bodyPart}"`);
       
-      console.log(`Searching for image files for: ${bodyPart}`);
-      console.log('Trying these filenames:', possibleNames);
+      const result = await loadImageFromStorage(bodyPart);
       
-      for (const fileName of possibleNames) {
-        const { data, error } = await supabase.storage
-          .from('Symptom_Images')
-          .download(fileName);
-
-        if (!error && data) {
-          const url = URL.createObjectURL(data);
-          setImageUrl(url);
-          toast.success(`Symptom diagram loaded: ${fileName}`);
-          setLoading(false);
-          return;
-        }
-        console.log(`File not found: ${fileName}`);
+      if (result.url && result.filename) {
+        setImageUrl(result.url);
+        toast.success(`✅ Loaded: ${result.filename}`);
+        console.log(`✅ Successfully loaded image: ${result.filename}`);
+      } else {
+        console.error(`❌ ${result.error}`);
+        toast.error(result.error || `Image not found for "${bodyPart}"`);
       }
-
-      // If no image found, show error
-      console.error("No image found for any naming convention");
-      toast.error(`Image not found for ${bodyPart}. Please upload the image to Supabase storage.`);
-      setLoading(false);
     } catch (err) {
-      console.error("Unexpected error:", err);
+      console.error("💥 Unexpected error loading image:", err);
       toast.error("Failed to load symptom diagram");
+    } finally {
       setLoading(false);
     }
   };
