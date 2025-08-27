@@ -209,25 +209,28 @@ const BodyMap = ({ gender, patientData }: BodyMapProps) => {
               />
 
               {/* Interactive body part points */}
-              {bodyParts?.map((part, index) => {
-                const position = getBodyPartPosition(part.Body_part, currentView);
-                const isSelected = selectedBodyParts.includes(part.Body_part);
-                const isHovered = hoveredPart === part.Body_part;
-                
-                return (
+              {bodyParts?.length > 0 ? (
+                bodyParts.map((part, index) => {
+                  const position = getBodyPartPosition(part.Body_part, currentView);
+                  const isSelected = selectedBodyParts.includes(part.Body_part);
+                  const isHovered = hoveredPart === part.Body_part;
+                  
+                  return (
                   <div
                     key={`${part.Body_part}-${index}`}
-                    className={`absolute w-2 h-2 rounded-full cursor-pointer transition-all duration-300 border border-white shadow-lg ${
+                    className={`absolute w-4 h-4 rounded-full cursor-pointer transition-all duration-300 border-2 border-white shadow-xl ${
                       isSelected 
-                        ? "bg-green-500 scale-150 animate-pulse ring-2 ring-green-300" 
-                        : "bg-red-500 animate-pulse hover:bg-primary hover:scale-125 hover:animate-none"
+                        ? "bg-green-500 scale-150 ring-4 ring-green-300 animate-none" 
+                        : "bg-red-500 animate-pulse hover:bg-blue-500 hover:scale-150 hover:animate-none"
                     }`}
                     style={{
                       top: position.top,
                       left: position.left,
                       transform: "translate(-50%, -50%)",
-                      zIndex: 20,
-                      animation: isSelected ? "none" : "pulse 2s infinite"
+                      zIndex: 30,
+                      boxShadow: isSelected 
+                        ? "0 0 20px rgba(34, 197, 94, 0.8), 0 0 10px rgba(255, 255, 255, 0.5)" 
+                        : "0 0 15px rgba(239, 68, 68, 0.8), 0 0 5px rgba(255, 255, 255, 0.5)"
                     }}
                     onClick={() => handleBodyPartClick(part.Body_part)}
                     onMouseEnter={() => setHoveredPart(part.Body_part)}
@@ -235,14 +238,19 @@ const BodyMap = ({ gender, patientData }: BodyMapProps) => {
                   >
                     {/* Enhanced Tooltip */}
                     {isHovered && (
-                      <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-3 px-3 py-2 bg-gray-900 text-white border rounded-lg shadow-xl text-xs whitespace-nowrap z-40 font-medium animate-fade-in">
+                      <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-4 px-3 py-2 bg-gray-900 text-white border rounded-lg shadow-xl text-sm whitespace-nowrap z-50 font-medium animate-fade-in">
                         <div className="text-center">{part.Body_part}</div>
-                        <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-2 h-2 bg-gray-900 rotate-45"></div>
+                        <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-3 h-3 bg-gray-900 rotate-45"></div>
                       </div>
                     )}
                   </div>
-                );
-              })}
+                  );
+                })
+              ) : (
+                <div className="absolute top-4 left-4 bg-yellow-100 border border-yellow-400 text-yellow-700 px-3 py-2 rounded text-sm z-40">
+                  {isLoading ? "Loading body parts..." : "No body parts found for this view"}
+                </div>
+              )}
             </div>
             
             {/* Selected body parts display */}
