@@ -62,6 +62,8 @@ const SimpleBodySelector = ({
   );
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!imageLoaded) return;
+    
     const rect = e.currentTarget.getBoundingClientRect();
     const x = (e.clientX - rect.left) / rect.width;
     const y = (e.clientY - rect.top) / rect.height;
@@ -117,25 +119,38 @@ const SimpleBodySelector = ({
             {imageLoaded && regions.map((region) => (
               <div
                 key={region.name}
-                className="absolute border-2 border-red-500/30 pointer-events-none"
+                className="absolute border-2 border-red-500/50 pointer-events-none text-xs bg-red-100/20"
                 style={{
                   left: `${region.x1 * 100}%`,
                   top: `${region.y1 * 100}%`,
                   width: `${(region.x2 - region.x1) * 100}%`,
                   height: `${(region.y2 - region.y1) * 100}%`,
-                  backgroundColor: hoveredPart === region.name ? 'rgba(59, 130, 246, 0.3)' : 
-                                  selectedBodyParts.includes(region.name) ? 'rgba(16, 185, 129, 0.3)' : 
-                                  'transparent'
+                  backgroundColor: hoveredPart === region.name ? 'rgba(59, 130, 246, 0.4)' : 
+                                  selectedBodyParts.includes(region.name) ? 'rgba(16, 185, 129, 0.4)' : 
+                                  'rgba(255, 0, 0, 0.1)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '8px',
+                  color: 'red',
+                  fontWeight: 'bold'
                 }}
-              />
+              >
+                {region.name}
+              </div>
             ))}
             
-            {/* Body part label */}
+            {/* Body part label with mouse position */}
             {hoveredPart && (
               <div className="absolute top-4 left-4 bg-primary text-primary-foreground px-3 py-1 rounded-md text-sm font-medium shadow-lg border border-white/20 pointer-events-none z-10">
-                {hoveredPart}
+                {hoveredPart} ✓
               </div>
             )}
+            
+            {/* Always show mouse coordinates for debugging */}
+            <div className="absolute top-4 right-4 bg-black/70 text-white px-2 py-1 rounded text-xs pointer-events-none z-10">
+              Ready to detect
+            </div>
           </div>
           
           <div className="mt-4 text-center">
