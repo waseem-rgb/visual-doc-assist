@@ -24,47 +24,90 @@ interface SymptomArea {
   selected: boolean;
 }
 
+interface DatabaseSymptom {
+  "Part of body_and general full body symptom": string;
+  "Symptoms": string;
+}
+
 const SymptomViewer = ({ bodyPart, patientData, onBack }: SymptomViewerProps) => {
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedSymptoms, setSelectedSymptoms] = useState<string[]>([]);
-  const [symptomAreas] = useState<SymptomArea[]>([
-    // Example symptom areas for ankle - these would be dynamically loaded based on body part
-    {
-      id: "ankle-pain",
-      text: "Pain, swelling, bruising, and tenderness, difficulty moving the ankle, and limping.",
-      position: { x: 10, y: 15, width: 45, height: 25 },
-      selected: false
-    },
-    {
-      id: "joint-conditions", 
-      text: "Joint conditions affecting ankle movement and stability.",
-      position: { x: 10, y: 45, width: 45, height: 30 },
-      selected: false
-    },
-    {
-      id: "swollen-ankles",
-      text: "Swelling caused by excess fluid in tissues. Often affects feet.",
-      position: { x: 55, y: 25, width: 40, height: 15 },
-      selected: false
-    },
-    {
-      id: "tibial-issues",
-      text: "Progressive burning pain from buttock, down back of thigh, into the leg and foot.",
-      position: { x: 55, y: 45, width: 40, height: 20 },
-      selected: false
-    },
-    {
-      id: "heel-bone",
-      text: "Pain, stiffness, swelling at back of heel, worse in morning and with activity.",
-      position: { x: 55, y: 70, width: 40, height: 15 },
-      selected: false
-    }
-  ]);
+  const [symptomAreas, setSymptomAreas] = useState<SymptomArea[]>([]);
+  const [fetchingSymptoms, setFetchingSymptoms] = useState(false);
 
   useEffect(() => {
     fetchSymptomImage();
+    fetchSymptomsFromDatabase();
   }, [bodyPart]);
+
+  const fetchSymptomsFromDatabase = async () => {
+    try {
+      setFetchingSymptoms(true);
+      
+      const { data, error } = await supabase
+        .from('New Master')
+        .select('*')
+        .ilike('Part of body_and general full body symptom', `%${bodyPart}%`);
+
+      if (error) {
+        console.error("Error fetching symptoms:", error);
+        toast.error("Failed to load symptoms from database");
+        return;
+      }
+
+      if (data && data.length > 0) {
+        // Create symptom areas from database data
+        const areas: SymptomArea[] = data.map((item, index) => {
+          // Create smaller, dynamic positioning for symptoms
+          const positions = generateDynamicPositions(data.length);
+          
+          return {
+            id: `symptom-${index}`,
+            text: item.Symptoms || "No symptom description available",
+            position: positions[index],
+            selected: false
+          };
+        }).filter(area => area.text && area.text.trim() !== "No symptom description available");
+
+        setSymptomAreas(areas);
+        
+        if (areas.length > 0) {
+          toast.success(`Loaded ${areas.length} symptoms for ${bodyPart}`);
+        } else {
+          toast.info(`No specific symptoms found for ${bodyPart}`);
+        }
+      } else {
+        toast.info(`No symptoms found for ${bodyPart} in database`);
+      }
+    } catch (err) {
+      console.error("Unexpected error fetching symptoms:", err);
+      toast.error("Failed to fetch symptoms");
+    } finally {
+      setFetchingSymptoms(false);
+    }
+  };
+
+  const generateDynamicPositions = (count: number) => {
+    const positions = [];
+    const cols = Math.ceil(Math.sqrt(count));
+    const rows = Math.ceil(count / cols);
+    
+    for (let i = 0; i < count; i++) {
+      const row = Math.floor(i / cols);
+      const col = i % cols;
+      
+      // Make selection boxes smaller and more distributed
+      const x = 10 + (col * (80 / cols));
+      const y = 15 + (row * (70 / rows));
+      const width = Math.min(25, 80 / cols - 2); // Smaller, dynamic width
+      const height = Math.min(15, 70 / rows - 2); // Smaller, dynamic height
+      
+      positions.push({ x, y, width, height });
+    }
+    
+    return positions;
+  };
 
   const fetchSymptomImage = async () => {
     try {
@@ -131,12 +174,14 @@ const SymptomViewer = ({ bodyPart, patientData, onBack }: SymptomViewerProps) =>
     );
   };
 
-  if (loading) {
+  if (loading || fetchingSymptoms) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center space-y-4">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-          <p className="text-muted-foreground">Loading symptom diagram for {bodyPart}...</p>
+          <p className="text-muted-foreground">
+            {loading ? `Loading symptom diagram for ${bodyPart}...` : `Fetching symptoms from database...`}
+          </p>
         </div>
       </div>
     );
