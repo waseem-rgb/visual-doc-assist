@@ -282,8 +282,8 @@ const BodyMap = ({ gender, patientData }: BodyMapProps) => {
             </ToggleGroupItem>
           </ToggleGroup>
           
-          {/* Debug controls - only show in detailed view for testing */}
-          {selectionStep === "detailed" && (
+          {/* Debug controls - hidden as requested */}
+          {/* {selectionStep === "detailed" && (
             <div className="flex justify-center gap-4 mb-4">
               <Button
                 variant={debugMode ? "default" : "outline"}
@@ -300,7 +300,7 @@ const BodyMap = ({ gender, patientData }: BodyMapProps) => {
                 {useMaskSelector ? "Switch to Simple" : "Simple Mode (Active)"}
               </Button>
             </div>
-          )}
+          )} */}
         </div>
 
         <div className="flex justify-center">
