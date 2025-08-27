@@ -3,17 +3,27 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 
-// Import dedicated images for each body part
-import headFrontImage from "@/assets/head-front-detailed.jpg";
-import headBackImage from "@/assets/head-back-detailed.jpg";
-import chestFrontImage from "@/assets/chest-front-detailed.jpg";
-import chestBackImage from "@/assets/chest-back-detailed.jpg";
-import abdomenFrontImage from "@/assets/abdomen-front-detailed.jpg";
-import abdomenBackImage from "@/assets/abdomen-back-detailed.jpg";
-import armsFrontImage from "@/assets/arms-front-detailed.jpg";
-import armsBackImage from "@/assets/arms-back-detailed.jpg";
-import legsFrontImage from "@/assets/legs-front-detailed.jpg";
-import legsBackImage from "@/assets/legs-back-detailed.jpg";
+// Import gender-specific dedicated images for each body part
+import headFrontMale from "@/assets/head-front-male.jpg";
+import headFrontFemale from "@/assets/head-front-female.jpg";
+import headBackMale from "@/assets/head-back-male.jpg";
+import headBackFemale from "@/assets/head-back-female.jpg";
+import chestFrontMale from "@/assets/chest-front-male.jpg";
+import chestFrontFemale from "@/assets/chest-front-female.jpg";
+import chestBackMale from "@/assets/chest-back-male.jpg";
+import chestBackFemale from "@/assets/chest-back-female.jpg";
+import abdomenFrontMale from "@/assets/abdomen-front-male.jpg";
+import abdomenFrontFemale from "@/assets/abdomen-front-female.jpg";
+import abdomenBackMale from "@/assets/abdomen-back-male.jpg";
+import abdomenBackFemale from "@/assets/abdomen-back-female.jpg";
+import armsFrontMale from "@/assets/arms-front-male.jpg";
+import armsFrontFemale from "@/assets/arms-front-female.jpg";
+import armsBackMale from "@/assets/arms-back-male.jpg";
+import armsBackFemale from "@/assets/arms-back-female.jpg";
+import legsFrontMale from "@/assets/legs-front-male.jpg";
+import legsFrontFemale from "@/assets/legs-front-female.jpg";
+import legsBackMale from "@/assets/legs-back-male.jpg";
+import legsBackFemale from "@/assets/legs-back-female.jpg";
 
 interface DetailedBodyViewProps {
   quadrant: string;
@@ -28,38 +38,38 @@ interface DetailedBodyViewProps {
   bodyParts: Array<{ Body_part: string; View: string; "Specific rules": string }>;
 }
 
-// Get the correct dedicated image for each quadrant and view
-const getQuadrantImage = (quadrant: string, view: string) => {
-  const imageMap: Record<string, Record<string, string>> = {
+// Get the correct gender-specific dedicated image for each quadrant and view
+const getQuadrantImage = (quadrant: string, view: string, gender: "male" | "female") => {
+  const imageMap: Record<string, Record<string, Record<string, string>>> = {
     head: {
-      Front: headFrontImage,
-      "Back view": headBackImage,
+      Front: { male: headFrontMale, female: headFrontFemale },
+      "Back view": { male: headBackMale, female: headBackFemale },
     },
     chest: {
-      Front: chestFrontImage,
-      "Back view": chestBackImage,
+      Front: { male: chestFrontMale, female: chestFrontFemale },
+      "Back view": { male: chestBackMale, female: chestBackFemale },
     },
     abdomen: {
-      Front: abdomenFrontImage,
-      "Back view": abdomenBackImage,
+      Front: { male: abdomenFrontMale, female: abdomenFrontFemale },
+      "Back view": { male: abdomenBackMale, female: abdomenBackFemale },
     },
     back: {
-      "Back view": chestBackImage, // Use chest back for back quadrant
+      "Back view": { male: chestBackMale, female: chestBackFemale }, // Use chest back for back quadrant
     },
     buttocks: {
-      "Back view": abdomenBackImage, // Use abdomen back for buttocks
+      "Back view": { male: abdomenBackMale, female: abdomenBackFemale }, // Use abdomen back for buttocks
     },
     arms: {
-      Front: armsFrontImage,
-      "Back view": armsBackImage,
+      Front: { male: armsFrontMale, female: armsFrontFemale },
+      "Back view": { male: armsBackMale, female: armsBackFemale },
     },
     legs: {
-      Front: legsFrontImage,
-      "Back view": legsBackImage,
+      Front: { male: legsFrontMale, female: legsFrontFemale },
+      "Back view": { male: legsBackMale, female: legsBackFemale },
     }
   };
   
-  return imageMap[quadrant]?.[view] || headFrontImage;
+  return imageMap[quadrant]?.[view]?.[gender] || headFrontMale;
 };
 
 // Define detailed body parts for each quadrant with precise positioning on dedicated images
@@ -197,7 +207,7 @@ const DetailedBodyView = ({
   );
   
   const title = getQuadrantTitle(quadrant, currentView);
-  const dedicatedImage = getQuadrantImage(quadrant, currentView);
+  const dedicatedImage = getQuadrantImage(quadrant, currentView, gender);
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
