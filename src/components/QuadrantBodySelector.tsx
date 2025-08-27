@@ -22,14 +22,14 @@ const getQuadrants = (view: string) => {
         id: "chest", 
         name: "Chest & Upper Body",
         description: "Chest, Shoulders, Upper Back, Neck",
-        x1: 0.25, y1: 0.20, x2: 0.75, y2: 0.42,
+        x1: 0.25, y1: 0.18, x2: 0.75, y2: 0.40,
         color: "rgba(16, 185, 129, 0.2)", // Green
       },
       {
         id: "abdomen",
         name: "Abdomen & Core", 
         description: "Stomach, Bowels, Groin, Lower Back",
-        x1: 0.32, y1: 0.40, x2: 0.68, y2: 0.65,
+        x1: 0.32, y1: 0.38, x2: 0.68, y2: 0.62,
         color: "rgba(245, 101, 101, 0.2)", // Red
       },
       {
@@ -60,14 +60,14 @@ const getQuadrants = (view: string) => {
         id: "back",
         name: "Back & Shoulders", 
         description: "Upper Back, Lower Back, Shoulders",
-        x1: 0.25, y1: 0.16, x2: 0.75, y2: 0.62,
+        x1: 0.25, y1: 0.14, x2: 0.75, y2: 0.58,
         color: "rgba(16, 185, 129, 0.2)",
       },
       {
         id: "buttocks",
         name: "Buttocks & Hip",
         description: "Buttocks, Anus, Hip Back",
-        x1: 0.32, y1: 0.60, x2: 0.68, y2: 0.75,
+        x1: 0.32, y1: 0.56, x2: 0.68, y2: 0.72,
         color: "rgba(245, 101, 101, 0.2)",
       },
       {
