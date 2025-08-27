@@ -21,105 +21,182 @@ const getQuadrantParts = (quadrant: string, view: string) => {
   const parts: Record<string, any> = {
     head: {
       Front: [
-        { name: "HAIR AND SCALP", x1: 0.30, y1: 0.05, x2: 0.70, y2: 0.25 },
-        { name: "HEAD FRONT", x1: 0.35, y1: 0.20, x2: 0.65, y2: 0.45 },
-        { name: "FACE", x1: 0.32, y1: 0.35, x2: 0.68, y2: 0.65 },
-        { name: "EYE VISION", x1: 0.35, y1: 0.40, x2: 0.48, y2: 0.48 },
-        { name: "EYE PHYSICAL", x1: 0.52, y1: 0.40, x2: 0.65, y2: 0.48 },
-        { name: "NOSE", x1: 0.45, y1: 0.48, x2: 0.55, y2: 0.58 },
-        { name: "MOUTH", x1: 0.40, y1: 0.58, x2: 0.60, y2: 0.68 },
-        { name: "EAR PHYSICAL", x1: 0.15, y1: 0.45, x2: 0.25, y2: 0.55 },
-        { name: "EAR HEARING", x1: 0.75, y1: 0.45, x2: 0.85, y2: 0.55 },
-        { name: "NECK", x1: 0.40, y1: 0.75, x2: 0.60, y2: 0.95 },
-        { name: "THROAT", x1: 0.42, y1: 0.80, x2: 0.58, y2: 0.90 },
-        { name: "THROAT VOICE", x1: 0.44, y1: 0.82, x2: 0.56, y2: 0.88 },
+        { name: "HAIR AND SCALP", x1: 0.20, y1: 0.05, x2: 0.80, y2: 0.30 },
+        { name: "HEAD FRONT", x1: 0.25, y1: 0.25, x2: 0.75, y2: 0.55 },
+        { name: "FACE", x1: 0.22, y1: 0.45, x2: 0.78, y2: 0.75 },
+        { name: "EYE VISION", x1: 0.25, y1: 0.50, x2: 0.45, y2: 0.60 },
+        { name: "EYE PHYSICAL", x1: 0.55, y1: 0.50, x2: 0.75, y2: 0.60 },
+        { name: "NOSE", x1: 0.40, y1: 0.60, x2: 0.60, y2: 0.70 },
+        { name: "MOUTH", x1: 0.35, y1: 0.70, x2: 0.65, y2: 0.80 },
+        { name: "EAR PHYSICAL", x1: 0.05, y1: 0.55, x2: 0.20, y2: 0.65 },
+        { name: "EAR HEARING", x1: 0.80, y1: 0.55, x2: 0.95, y2: 0.65 },
+        { name: "NECK", x1: 0.35, y1: 0.85, x2: 0.65, y2: 1.0 },
+        { name: "THROAT", x1: 0.38, y1: 0.88, x2: 0.62, y2: 0.98 },
+        { name: "THROAT VOICE", x1: 0.42, y1: 0.90, x2: 0.58, y2: 0.96 },
       ],
       "Back view": [
-        { name: "HAIR AND SCALP", x1: 0.30, y1: 0.05, x2: 0.70, y2: 0.95 },
+        { name: "HAIR AND SCALP", x1: 0.15, y1: 0.05, x2: 0.85, y2: 0.95 },
       ]
     },
     chest: {
       Front: [
-        { name: "SHOULDER FRONT", x1: 0.10, y1: 0.05, x2: 0.90, y2: 0.25 },
-        { name: "CHEST UPPER", x1: 0.25, y1: 0.25, x2: 0.75, y2: 0.50 },
-        { name: "CHEST CENTRAL", x1: 0.30, y1: 0.45, x2: 0.70, y2: 0.70 },
-        { name: "CHEST SIDE", x1: 0.15, y1: 0.30, x2: 0.85, y2: 0.65 },
-        { name: "BREAST", x1: 0.20, y1: 0.35, x2: 0.80, y2: 0.60 },
-        { name: "UPPER BACK", x1: 0.25, y1: 0.70, x2: 0.75, y2: 0.95 },
+        { name: "SHOULDER FRONT", x1: 0.05, y1: 0.05, x2: 0.95, y2: 0.35 },
+        { name: "CHEST UPPER", x1: 0.20, y1: 0.30, x2: 0.80, y2: 0.65 },
+        { name: "CHEST CENTRAL", x1: 0.25, y1: 0.55, x2: 0.75, y2: 0.85 },
+        { name: "CHEST SIDE", x1: 0.10, y1: 0.40, x2: 0.90, y2: 0.80 },
+        { name: "BREAST", x1: 0.15, y1: 0.45, x2: 0.85, y2: 0.75 },
       ],
       "Back view": [
-        { name: "SHOULDER BACK", x1: 0.10, y1: 0.05, x2: 0.90, y2: 0.25 },
-        { name: "UPPER BACK", x1: 0.20, y1: 0.20, x2: 0.80, y2: 0.95 },
+        { name: "SHOULDER BACK", x1: 0.05, y1: 0.05, x2: 0.95, y2: 0.35 },
+        { name: "UPPER BACK", x1: 0.15, y1: 0.25, x2: 0.85, y2: 0.95 },
       ]
     },
     abdomen: {
       Front: [
-        { name: "UPPER ABDOMEN", x1: 0.25, y1: 0.05, x2: 0.75, y2: 0.30 },
-        { name: "ABDOMEN GENERAL", x1: 0.20, y1: 0.25, x2: 0.80, y2: 0.65 },
-        { name: "LOWER ABDOMEN LEFT", x1: 0.20, y1: 0.60, x2: 0.50, y2: 0.80 },
-        { name: "LOWER ABDOMEN RIGHT", x1: 0.50, y1: 0.60, x2: 0.80, y2: 0.80 },
-        { name: "FEMALE LOWER ABDOMEN", x1: 0.25, y1: 0.65, x2: 0.75, y2: 0.85 },
-        { name: "BOWELS DIARRHOEA", x1: 0.25, y1: 0.40, x2: 0.75, y2: 0.70 },
-        { name: "BOWELS CONSTIPATION", x1: 0.25, y1: 0.40, x2: 0.75, y2: 0.70 },
-        { name: "BOWELS ABNORMAL STOOL", x1: 0.25, y1: 0.40, x2: 0.75, y2: 0.70 },
-        { name: "GROIN MALE AND FEMALE", x1: 0.30, y1: 0.80, x2: 0.70, y2: 0.95 },
-        { name: "MALE GENITALS", x1: 0.35, y1: 0.82, x2: 0.65, y2: 0.92 },
-        { name: "FEMALE GENITALS", x1: 0.35, y1: 0.82, x2: 0.65, y2: 0.92 },
-        { name: "URINARY PROBLEMS MALE", x1: 0.30, y1: 0.80, x2: 0.70, y2: 0.95 },
-        { name: "URINARY PROBLEMS FEMALE", x1: 0.30, y1: 0.80, x2: 0.70, y2: 0.95 },
+        { name: "UPPER ABDOMEN", x1: 0.20, y1: 0.05, x2: 0.80, y2: 0.35 },
+        { name: "ABDOMEN GENERAL", x1: 0.15, y1: 0.25, x2: 0.85, y2: 0.70 },
+        { name: "LOWER ABDOMEN LEFT", x1: 0.15, y1: 0.65, x2: 0.50, y2: 0.85 },
+        { name: "LOWER ABDOMEN RIGHT", x1: 0.50, y1: 0.65, x2: 0.85, y2: 0.85 },
+        { name: "FEMALE LOWER ABDOMEN", x1: 0.20, y1: 0.70, x2: 0.80, y2: 0.90 },
+        { name: "BOWELS DIARRHOEA", x1: 0.20, y1: 0.40, x2: 0.80, y2: 0.75 },
+        { name: "BOWELS CONSTIPATION", x1: 0.20, y1: 0.40, x2: 0.80, y2: 0.75 },
+        { name: "BOWELS ABNORMAL STOOL", x1: 0.20, y1: 0.40, x2: 0.80, y2: 0.75 },
+        { name: "GROIN MALE AND FEMALE", x1: 0.25, y1: 0.85, x2: 0.75, y2: 1.0 },
+        { name: "MALE GENITALS", x1: 0.30, y1: 0.87, x2: 0.70, y2: 0.97 },
+        { name: "FEMALE GENITALS", x1: 0.30, y1: 0.87, x2: 0.70, y2: 0.97 },
+        { name: "URINARY PROBLEMS MALE", x1: 0.25, y1: 0.85, x2: 0.75, y2: 1.0 },
+        { name: "URINARY PROBLEMS FEMALE", x1: 0.25, y1: 0.85, x2: 0.75, y2: 1.0 },
       ],
       "Back view": [
-        { name: "LOWER BACK", x1: 0.25, y1: 0.05, x2: 0.75, y2: 0.60 },
-        { name: "BUTTOCKS AND ANUS", x1: 0.20, y1: 0.55, x2: 0.80, y2: 0.95 },
+        { name: "LOWER BACK", x1: 0.20, y1: 0.05, x2: 0.80, y2: 0.70 },
+        { name: "BUTTOCKS AND ANUS", x1: 0.15, y1: 0.60, x2: 0.85, y2: 1.0 },
       ]
     },
     arms: {
       Front: [
-        { name: "UPPER ARM", x1: 0.10, y1: 0.10, x2: 0.90, y2: 0.50 },
-        { name: "FOREARM AND WRIST", x1: 0.05, y1: 0.45, x2: 0.95, y2: 0.80 },
-        { name: "HAND PALM", x1: 0.00, y1: 0.75, x2: 1.00, y2: 1.00 },
+        { name: "UPPER ARM", x1: 0.10, y1: 0.10, x2: 0.90, y2: 0.55 },
+        { name: "FOREARM AND WRIST", x1: 0.05, y1: 0.50, x2: 0.95, y2: 0.85 },
+        { name: "HAND PALM", x1: 0.00, y1: 0.80, x2: 1.00, y2: 1.00 },
       ],
       "Back view": [
-        { name: "UPPER ARM", x1: 0.10, y1: 0.10, x2: 0.90, y2: 0.50 },
-        { name: "ELBOW", x1: 0.35, y1: 0.45, x2: 0.65, y2: 0.55 },
-        { name: "HAND BACK", x1: 0.00, y1: 0.75, x2: 1.00, y2: 1.00 },
+        { name: "UPPER ARM", x1: 0.10, y1: 0.10, x2: 0.90, y2: 0.55 },
+        { name: "ELBOW", x1: 0.30, y1: 0.50, x2: 0.70, y2: 0.65 },
+        { name: "HAND BACK", x1: 0.00, y1: 0.80, x2: 1.00, y2: 1.00 },
       ]
     },
     legs: {
       Front: [
-        { name: "HIP FRONT", x1: 0.20, y1: 0.05, x2: 0.80, y2: 0.25 },
-        { name: "THIGH FRONT", x1: 0.25, y1: 0.20, x2: 0.75, y2: 0.60 },
-        { name: "KNEE FRONT", x1: 0.30, y1: 0.55, x2: 0.70, y2: 0.70 },
-        { name: "LOWER LEG FRONT", x1: 0.28, y1: 0.65, x2: 0.72, y2: 0.90 },
-        { name: "ANKLE", x1: 0.35, y1: 0.85, x2: 0.65, y2: 0.95 },
-        { name: "FOOT", x1: 0.20, y1: 0.90, x2: 0.80, y2: 1.00 },
-        { name: "FOOT UPPER", x1: 0.25, y1: 0.92, x2: 0.75, y2: 1.00 },
-        { name: "FOOT UNDERSIDE", x1: 0.25, y1: 0.95, x2: 0.75, y2: 1.00 },
+        { name: "HIP FRONT", x1: 0.15, y1: 0.05, x2: 0.85, y2: 0.30 },
+        { name: "THIGH FRONT", x1: 0.20, y1: 0.25, x2: 0.80, y2: 0.65 },
+        { name: "KNEE FRONT", x1: 0.25, y1: 0.60, x2: 0.75, y2: 0.75 },
+        { name: "LOWER LEG FRONT", x1: 0.22, y1: 0.70, x2: 0.78, y2: 0.95 },
+        { name: "ANKLE", x1: 0.30, y1: 0.90, x2: 0.70, y2: 0.98 },
+        { name: "FOOT", x1: 0.15, y1: 0.95, x2: 0.85, y2: 1.00 },
+        { name: "FOOT UPPER", x1: 0.20, y1: 0.97, x2: 0.80, y2: 1.00 },
+        { name: "FOOT UNDERSIDE", x1: 0.20, y1: 0.98, x2: 0.80, y2: 1.00 },
       ],
       "Back view": [
-        { name: "HIP BACK", x1: 0.20, y1: 0.05, x2: 0.80, y2: 0.25 },
-        { name: "THIGH BACK", x1: 0.25, y1: 0.20, x2: 0.75, y2: 0.60 },
-        { name: "KNEE BACK", x1: 0.30, y1: 0.55, x2: 0.70, y2: 0.70 },
-        { name: "LOWER LEG BACK", x1: 0.28, y1: 0.65, x2: 0.72, y2: 0.90 },
-        { name: "FOOT", x1: 0.20, y1: 0.90, x2: 0.80, y2: 1.00 },
-      ]
-    },
-    back: {
-      "Back view": [
-        { name: "SHOULDER BACK", x1: 0.10, y1: 0.05, x2: 0.90, y2: 0.25 },
-        { name: "UPPER BACK", x1: 0.20, y1: 0.20, x2: 0.80, y2: 0.60 },
-        { name: "LOWER BACK", x1: 0.25, y1: 0.55, x2: 0.75, y2: 0.95 },
-      ]
-    },
-    buttocks: {
-      "Back view": [
-        { name: "BUTTOCKS AND ANUS", x1: 0.20, y1: 0.10, x2: 0.80, y2: 0.90 },
-        { name: "HIP BACK", x1: 0.15, y1: 0.05, x2: 0.85, y2: 0.40 },
+        { name: "HIP BACK", x1: 0.15, y1: 0.05, x2: 0.85, y2: 0.30 },
+        { name: "THIGH BACK", x1: 0.20, y1: 0.25, x2: 0.80, y2: 0.65 },
+        { name: "KNEE BACK", x1: 0.25, y1: 0.60, x2: 0.75, y2: 0.75 },
+        { name: "LOWER LEG BACK", x1: 0.22, y1: 0.70, x2: 0.78, y2: 0.95 },
+        { name: "FOOT", x1: 0.15, y1: 0.95, x2: 0.85, y2: 1.00 },
       ]
     }
   };
   
   return parts[quadrant]?.[view] || [];
+};
+
+// Get the cropping style for each quadrant to show zoomed view
+const getQuadrantCropStyle = (quadrant: string, view: string) => {
+  const cropStyles: Record<string, Record<string, any>> = {
+    head: {
+      Front: {
+        objectFit: "cover" as const,
+        objectPosition: "50% 15%", // Focus on head area
+        height: "500px",
+        transform: "scale(2.5)", // Zoom in significantly
+        transformOrigin: "50% 15%"
+      },
+      "Back view": {
+        objectFit: "cover" as const,
+        objectPosition: "50% 10%",
+        height: "500px", 
+        transform: "scale(2.5)",
+        transformOrigin: "50% 10%"
+      }
+    },
+    chest: {
+      Front: {
+        objectFit: "cover" as const,
+        objectPosition: "50% 35%", // Focus on chest area
+        height: "500px",
+        transform: "scale(2.2)",
+        transformOrigin: "50% 35%"
+      },
+      "Back view": {
+        objectFit: "cover" as const,
+        objectPosition: "50% 35%", // Focus on upper back
+        height: "500px",
+        transform: "scale(2.2)", 
+        transformOrigin: "50% 35%"
+      }
+    },
+    abdomen: {
+      Front: {
+        objectFit: "cover" as const,
+        objectPosition: "50% 60%", // Focus on abdomen area
+        height: "500px",
+        transform: "scale(2.0)",
+        transformOrigin: "50% 60%"
+      },
+      "Back view": {
+        objectFit: "cover" as const,
+        objectPosition: "50% 65%", // Focus on lower back/buttocks
+        height: "500px",
+        transform: "scale(2.0)",
+        transformOrigin: "50% 65%"
+      }
+    },
+    arms: {
+      Front: {
+        objectFit: "cover" as const,
+        objectPosition: "15% 50%", // Focus on left arm area
+        height: "600px",
+        transform: "scale(2.5)",
+        transformOrigin: "15% 50%"
+      },
+      "Back view": {
+        objectFit: "cover" as const,
+        objectPosition: "15% 50%", 
+        height: "600px",
+        transform: "scale(2.5)",
+        transformOrigin: "15% 50%"
+      }
+    },
+    legs: {
+      Front: {
+        objectFit: "cover" as const,
+        objectPosition: "50% 85%", // Focus on leg area
+        height: "500px",
+        transform: "scale(2.0)",
+        transformOrigin: "50% 85%"
+      },
+      "Back view": {
+        objectFit: "cover" as const,
+        objectPosition: "50% 85%",
+        height: "500px", 
+        transform: "scale(2.0)",
+        transformOrigin: "50% 85%"
+      }
+    }
+  };
+  
+  return cropStyles[quadrant]?.[view] || {
+    objectFit: "contain" as const,
+    height: "600px"
+  };
 };
 
 const getQuadrantTitle = (quadrant: string, view: string) => {
@@ -153,6 +230,7 @@ const DetailedBodyView = ({
   );
   
   const title = getQuadrantTitle(quadrant, currentView);
+  const cropStyle = getQuadrantCropStyle(quadrant, currentView);
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
@@ -209,16 +287,15 @@ const DetailedBodyView = ({
             onClick={handleClick}
             onMouseLeave={() => onBodyPartHover(null)}
           >
-            {/* Cropped/zoomed body image for this quadrant */}
-            <img 
-              src={imageUrl} 
-              alt={`${gender} body ${quadrant} detail view`}
-              className="w-full h-auto block border rounded-lg"
-              style={{ 
-                maxHeight: '700px',
-                objectFit: 'cover'
-              }}
-            />
+            {/* Zoomed/cropped body image for this specific quadrant */}
+            <div className="overflow-hidden rounded-lg border bg-gradient-to-b from-blue-50 to-purple-50">
+              <img 
+                src={imageUrl} 
+                alt={`${gender} body ${quadrant} detail view`}
+                className="w-full block"
+                style={cropStyle}
+              />
+            </div>
             
             {/* Interactive overlays for each body part */}
             {parts.map((part) => (
