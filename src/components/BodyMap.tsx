@@ -12,6 +12,8 @@ import bodyBackRealistic from "@/assets/body-back-realistic.png";
 import bodyFrontFemale from "@/assets/body-front-female.png";
 import bodyBackFemale from "@/assets/body-back-female.png";
 import SymptomViewer from "./SymptomViewer";
+import QuadrantBodySelector from "./QuadrantBodySelector";
+import DetailedBodyView from "./DetailedBodyView";
 import MaskBodySelector from "./MaskBodySelector";
 import SimpleBodySelector from "./SimpleBodySelector";
 import SVGBodySelector from "./SVGBodySelector";
@@ -40,6 +42,10 @@ const BodyMap = ({ gender, patientData }: BodyMapProps) => {
   const [rightSideOpen, setRightSideOpen] = useState(true);
   const [debugMode, setDebugMode] = useState(false);
   const [useMaskSelector, setUseMaskSelector] = useState(true);
+  
+  // Two-step selection state
+  const [selectionStep, setSelectionStep] = useState<"quadrant" | "detailed">("quadrant");
+  const [selectedQuadrant, setSelectedQuadrant] = useState<string | null>(null);
 
   const { data: allBodyParts, isLoading } = useQuery({
     queryKey: ["bodyParts"],
@@ -100,6 +106,19 @@ const BodyMap = ({ gender, patientData }: BodyMapProps) => {
   const handleBodyPartHover = (bodyPart: string | null) => {
     setHoveredPart(bodyPart);
   };
+  
+  // Quadrant selection handlers
+  const handleQuadrantSelect = (quadrant: string) => {
+    setSelectedQuadrant(quadrant);
+    setSelectionStep("detailed");
+    setSelectedBodyParts([]); // Reset selection when entering detailed view
+  };
+  
+  const handleBackToQuadrants = () => {
+    setSelectionStep("quadrant");
+    setSelectedQuadrant(null);
+    setHoveredPart(null);
+  };
 
   const handleContinue = () => {
     if (selectedBodyParts.length > 0) {
@@ -109,6 +128,7 @@ const BodyMap = ({ gender, patientData }: BodyMapProps) => {
 
   const handleBackToBodyMap = () => {
     setShowSymptomViewer(false);
+    // Stay in the current selection step when returning from symptom viewer
   };
 
   const getBodyPartPosition = (bodyPart: string, view: string) => {
@@ -238,81 +258,86 @@ const BodyMap = ({ gender, patientData }: BodyMapProps) => {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="text-center">
-        <h3 className="text-2xl font-semibold mb-4">Select Affected Body Areas</h3>
-        <p className="text-muted-foreground mb-6">
-          Hover over the body image to see body part names. Click on highlighted areas to select them.
-        </p>
-        
-        <ToggleGroup 
-          type="single" 
-          value={currentView} 
-          onValueChange={(value) => setCurrentView(value as "Front" | "Back view")}
-          className="mb-6"
-        >
-          <ToggleGroupItem value="Front" className="px-8">
-            Front View
-          </ToggleGroupItem>
-          <ToggleGroupItem value="Back view" className="px-8">
-            Back View
-          </ToggleGroupItem>
-        </ToggleGroup>
-        
-        {/* Debug and selector type controls */}
-        <div className="flex justify-center gap-4 mb-4">
-          <Button
-            variant={debugMode ? "default" : "outline"}
-            size="sm"
-            onClick={() => setDebugMode(!debugMode)}
+      <div className="space-y-6">
+        <div className="text-center">
+          <h3 className="text-2xl font-semibold mb-4">Select Affected Body Areas</h3>
+          <p className="text-muted-foreground mb-6">
+            {selectionStep === "quadrant" 
+              ? "First, select the general area of your body where you have symptoms"
+              : "Now, select the specific body part from the detailed view"
+            }
+          </p>
+          
+          <ToggleGroup 
+            type="single" 
+            value={currentView} 
+            onValueChange={(value) => setCurrentView(value as "Front" | "Back view")}
+            className="mb-6"
           >
-            {debugMode ? "Debug: ON" : "Debug: OFF"}
-          </Button>
-          <Button
-            variant={useMaskSelector ? "outline" : "default"}
-            size="sm"
-            onClick={() => setUseMaskSelector(!useMaskSelector)}
-          >
-            {useMaskSelector ? "Switch to Simple" : "Simple Mode (Active)"}
-          </Button>
-        </div>
-      </div>
-
-      <div className="flex justify-center">
-        <div className="w-full max-w-4xl">
-          {/* Body Selector - Mask-based or Simple fallback */}
-          {useMaskSelector ? (
-            <MaskBodySelector
-              imageUrl={gender === "male" 
-                ? (currentView === "Front" ? bodyFrontRealistic : bodyBackRealistic)
-                : (currentView === "Front" ? bodyFrontFemale : bodyBackFemale)
-              }
-              gender={gender}
-              currentView={currentView}
-              selectedBodyParts={selectedBodyParts}
-              hoveredPart={hoveredPart}
-              onBodyPartHover={handleBodyPartHover}
-              onBodyPartClick={handleBodyPartClick}
-              bodyParts={bodyParts}
-              debug={debugMode}
-            />
-          ) : (
-            <SimpleBodySelector
-              imageUrl={gender === "male" 
-                ? (currentView === "Front" ? bodyFrontRealistic : bodyBackRealistic)
-                : (currentView === "Front" ? bodyFrontFemale : bodyBackFemale)
-              }
-              gender={gender}
-              currentView={currentView}
-              selectedBodyParts={selectedBodyParts}
-              hoveredPart={hoveredPart}
-              onBodyPartHover={handleBodyPartHover}
-              onBodyPartClick={handleBodyPartClick}
-              bodyParts={bodyParts}
-            />
+            <ToggleGroupItem value="Front" className="px-8">
+              Front View
+            </ToggleGroupItem>
+            <ToggleGroupItem value="Back view" className="px-8">
+              Back View
+            </ToggleGroupItem>
+          </ToggleGroup>
+          
+          {/* Debug controls - only show in detailed view for testing */}
+          {selectionStep === "detailed" && (
+            <div className="flex justify-center gap-4 mb-4">
+              <Button
+                variant={debugMode ? "default" : "outline"}
+                size="sm"
+                onClick={() => setDebugMode(!debugMode)}
+              >
+                {debugMode ? "Debug: ON" : "Debug: OFF"}
+              </Button>
+              <Button
+                variant={useMaskSelector ? "outline" : "default"}
+                size="sm"
+                onClick={() => setUseMaskSelector(!useMaskSelector)}
+              >
+                {useMaskSelector ? "Switch to Simple" : "Simple Mode (Active)"}
+              </Button>
+            </div>
           )}
         </div>
-      </div>
+
+        <div className="flex justify-center">
+          <div className="w-full max-w-4xl">
+            {/* Step 1: Quadrant Selection */}
+            {selectionStep === "quadrant" && (
+              <QuadrantBodySelector
+                imageUrl={gender === "male" 
+                  ? (currentView === "Front" ? bodyFrontRealistic : bodyBackRealistic)
+                  : (currentView === "Front" ? bodyFrontFemale : bodyBackFemale)
+                }
+                gender={gender}
+                currentView={currentView}
+                onQuadrantSelect={handleQuadrantSelect}
+              />
+            )}
+            
+            {/* Step 2: Detailed Body Part Selection */}
+            {selectionStep === "detailed" && selectedQuadrant && (
+              <DetailedBodyView
+                quadrant={selectedQuadrant}
+                imageUrl={gender === "male" 
+                  ? (currentView === "Front" ? bodyFrontRealistic : bodyBackRealistic)
+                  : (currentView === "Front" ? bodyFrontFemale : bodyBackFemale)
+                }
+                gender={gender}
+                currentView={currentView}
+                selectedBodyParts={selectedBodyParts}
+                hoveredPart={hoveredPart}
+                onBodyPartHover={handleBodyPartHover}
+                onBodyPartClick={handleBodyPartClick}
+                onBack={handleBackToQuadrants}
+                bodyParts={bodyParts}
+              />
+            )}
+          </div>
+        </div>
             
       {/* Selected body parts display */}
       {selectedBodyParts.length > 0 && (
