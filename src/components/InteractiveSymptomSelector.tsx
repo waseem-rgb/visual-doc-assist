@@ -3,7 +3,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Canvas as FabricCanvas, Circle } from "fabric";
-import { ArrowLeft, Info } from "lucide-react";
+import { ArrowLeft, Info, ZoomIn, ZoomOut } from "lucide-react";
+import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { loadImageFromStorage } from "@/lib/storageUtils";
@@ -143,10 +144,10 @@ const InteractiveSymptomSelector = ({ bodyPart, patientData, onBack }: Interacti
     const cursorCircle = new Circle({
       left: 100,
       top: 100,
-      radius: 12,
+      radius: 15,
       fill: "rgba(59, 130, 246, 0.8)",
       stroke: "#1e40af",
-      strokeWidth: 2,
+      strokeWidth: 3,
       selectable: true,
       moveCursor: 'move',
       hoverCursor: 'move',
@@ -155,17 +156,30 @@ const InteractiveSymptomSelector = ({ bodyPart, patientData, onBack }: Interacti
     canvas.add(cursorCircle);
     setCursor(cursorCircle);
 
-    // Handle cursor movement
+    // Handle cursor movement and mouse events
     canvas.on('object:moving', (e) => {
       if (e.target === cursorCircle) {
         checkTextAreaIntersection(e.target as Circle);
       }
     });
 
-    // Handle click to select symptom
-    canvas.on('mouse:down', (e) => {
-      if (currentHoveredArea) {
+    // Handle click to select symptom - improved event handling
+    canvas.on('mouse:up', (e) => {
+      if (currentHoveredArea && e.target === cursorCircle) {
         toggleSymptomSelection(currentHoveredArea);
+      }
+    });
+
+    // Add mouse move tracking for better responsiveness
+    canvas.on('mouse:move', (e) => {
+      if (cursor && e.pointer) {
+        // Update cursor position to follow mouse
+        cursor.set({
+          left: e.pointer.x - 15,
+          top: e.pointer.y - 15
+        });
+        canvas.renderAll();
+        checkTextAreaIntersection(cursor);
       }
     });
 
@@ -282,28 +296,66 @@ const InteractiveSymptomSelector = ({ bodyPart, patientData, onBack }: Interacti
       {/* Main Content */}
       <div className="container mx-auto px-4 py-6">
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-          {/* Interactive Canvas */}
+          {/* Interactive Canvas with Zoom */}
           <div className="lg:col-span-3">
             <Card className="h-[80vh]">
               <CardHeader className="pb-4">
                 <CardTitle className="flex items-center justify-between">
                   <span>Interactive {bodyPart} Selector</span>
-                  <div className="flex items-center space-x-2 text-sm text-muted-foreground">
-                    <Info className="h-4 w-4" />
-                    <span>Drag the blue circle over symptoms to select them</span>
+                  <div className="flex items-center space-x-4">
+                    <div className="flex items-center space-x-2 text-sm text-muted-foreground">
+                      <Info className="h-4 w-4" />
+                      <span>Move your mouse to position the blue circle, click to select symptoms</span>
+                    </div>
                   </div>
                 </CardTitle>
               </CardHeader>
               <CardContent className="h-full pb-6">
-                <div className="relative border border-gray-200 rounded-lg shadow-lg overflow-hidden">
-                  {/* Background Image */}
-                  <div 
-                    className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-                    style={{ backgroundImage: `url(${imageUrl})` }}
-                  />
-                  {/* Interactive Canvas Overlay */}
-                  <canvas ref={canvasRef} className="relative z-10" style={{ background: 'transparent' }} />
-                </div>
+                <TransformWrapper
+                  initialScale={1}
+                  minScale={0.5}
+                  maxScale={3}
+                  wheel={{ step: 0.1 }}
+                  pinch={{ step: 5 }}
+                  doubleClick={{ disabled: false, mode: "zoomIn", step: 0.3 }}
+                >
+                  {({ zoomIn, zoomOut, resetTransform }) => (
+                    <div className="h-full">
+                      {/* Zoom Controls */}
+                      <div className="flex justify-end space-x-2 mb-2">
+                        <Button onClick={() => zoomIn()} size="sm" variant="outline">
+                          <ZoomIn className="h-4 w-4" />
+                        </Button>
+                        <Button onClick={() => zoomOut()} size="sm" variant="outline">
+                          <ZoomOut className="h-4 w-4" />
+                        </Button>
+                        <Button onClick={() => resetTransform()} size="sm" variant="outline">
+                          Reset
+                        </Button>
+                      </div>
+                      
+                      <div className="relative border border-gray-200 rounded-lg shadow-lg overflow-hidden h-full">
+                        <TransformComponent>
+                          <div className="relative">
+                            {/* Background Image */}
+                            <img 
+                              src={imageUrl} 
+                              alt={`${bodyPart} symptom diagram`}
+                              className="w-full h-auto"
+                              draggable={false}
+                            />
+                            {/* Interactive Canvas Overlay */}
+                            <canvas 
+                              ref={canvasRef} 
+                              className="absolute top-0 left-0 z-10 pointer-events-auto" 
+                              style={{ background: 'transparent' }} 
+                            />
+                          </div>
+                        </TransformComponent>
+                      </div>
+                    </div>
+                  )}
+                </TransformWrapper>
               </CardContent>
             </Card>
           </div>
