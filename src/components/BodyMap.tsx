@@ -32,7 +32,7 @@ const BodyMap = ({ gender, patientData }: BodyMapProps) => {
     queryKey: ["bodyParts", currentView, gender],
     queryFn: async () => {
       // First try with gender-specific filtering using exact table values
-      const genderValues = ["shown to Both gender", gender === "male" ? "shown to Male patient" : "shown to Female patient"];
+      const genderValues = ["shown to Both gender", gender === "male" ? "Only to Male patient" : "Only to Female patient"];
       
       let { data, error } = await supabase
         .from("head to Toe sub areas")
