@@ -47,8 +47,9 @@ const SymptomViewer = ({ bodyPart, patientData, onBack }: SymptomViewerProps) =>
       
       const { data, error } = await supabase
         .from('New Master')
-        .select('*')
-        .ilike('Part of body_and general full body symptom', `%${bodyPart}%`);
+        .select('Symptoms')
+        .ilike('Part of body_and general full body symptom', `%${bodyPart}%`)
+        .not('Symptoms', 'is', null);
 
       if (error) {
         console.error("Error fetching symptoms:", error);
@@ -57,23 +58,31 @@ const SymptomViewer = ({ bodyPart, patientData, onBack }: SymptomViewerProps) =>
       }
 
       if (data && data.length > 0) {
-        // Create symptom areas from database data
-        const areas: SymptomArea[] = data.map((item, index) => {
-          // Create smaller, dynamic positioning for symptoms
-          const positions = generateDynamicPositions(data.length);
+        // Extract unique symptoms and remove duplicates
+        const symptomTexts = data
+          .map(row => row.Symptoms?.trim())
+          .filter(Boolean)
+          .filter((text, index, arr) => arr.indexOf(text) === index); // Remove duplicates
+        
+        // Limit to 16 unique symptoms as requested
+        const uniqueSymptoms = symptomTexts.slice(0, 16);
+        
+        // Create symptom areas from unique symptoms
+        const areas: SymptomArea[] = uniqueSymptoms.map((text, index) => {
+          const positions = generateDynamicPositions(uniqueSymptoms.length);
           
           return {
             id: `symptom-${index}`,
-            text: item.Symptoms || "No symptom description available",
+            text: text,
             position: positions[index],
             selected: false
           };
-        }).filter(area => area.text && area.text.trim() !== "No symptom description available");
+        });
 
         setSymptomAreas(areas);
         
         if (areas.length > 0) {
-          toast.success(`Loaded ${areas.length} symptoms for ${bodyPart}`);
+          toast.success(`Loaded ${areas.length} unique symptoms for ${bodyPart}`);
         } else {
           toast.info(`No specific symptoms found for ${bodyPart}`);
         }
@@ -282,29 +291,39 @@ const SymptomViewer = ({ bodyPart, patientData, onBack }: SymptomViewerProps) =>
                             draggable={false}
                           />
                           
-                          {/* Symptom Selection Overlays */}
+                          {/* Symptom Selection Circles */}
                           {symptomAreas.map((area) => (
                             <div
                               key={area.id}
-                              className={`absolute cursor-pointer transition-all duration-300 rounded-lg border-2 ${
-                                selectedSymptoms.includes(area.id)
-                                  ? "bg-primary/20 border-primary shadow-lg"
-                                  : "bg-transparent border-transparent hover:bg-blue-500/10 hover:border-blue-500"
-                              }`}
+                              className="absolute cursor-pointer transition-all duration-300 group"
                               style={{
                                 left: `${area.position.x}%`,
                                 top: `${area.position.y}%`,
-                                width: `${area.position.width}%`,
-                                height: `${area.position.height}%`,
+                                transform: 'translate(-50%, -50%)'
                               }}
                               onClick={() => handleSymptomSelect(area.id)}
                               title={area.text}
                             >
-                              {selectedSymptoms.includes(area.id) && (
-                                <div className="absolute inset-0 flex items-center justify-center">
-                                  <div className="w-4 h-4 bg-primary rounded-full border-2 border-white shadow-md animate-pulse"></div>
+                              {/* Small blue circle for selection */}
+                              <div 
+                                className={`w-4 h-4 rounded-full border-2 transition-all duration-300 ${
+                                  selectedSymptoms.includes(area.id)
+                                    ? "bg-blue-600 border-blue-800 shadow-lg"
+                                    : "bg-blue-400/70 border-blue-500 hover:bg-blue-500 hover:border-blue-600 group-hover:scale-110"
+                                }`}
+                              >
+                                {selectedSymptoms.includes(area.id) && (
+                                  <div className="absolute inset-1 bg-white rounded-full animate-pulse"></div>
+                                )}
+                              </div>
+                              
+                              {/* Hover tooltip */}
+                              <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-50">
+                                <div className="bg-black/90 text-white text-xs rounded-lg px-3 py-2 max-w-xs">
+                                  <p className="truncate">{area.text.split('.')[0]}...</p>
+                                  <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-black/90"></div>
                                 </div>
-                              )}
+                              </div>
                             </div>
                           ))}
                         </div>
@@ -336,12 +355,7 @@ const SymptomViewer = ({ bodyPart, patientData, onBack }: SymptomViewerProps) =>
                     }`}
                     onClick={() => handleSymptomSelect(area.id)}
                   >
-                    <p className="text-sm font-medium mb-1">
-                      {area.text.split(',')[0]}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {area.text}
-                    </p>
+                    <p className="text-sm">{area.text}</p>
                   </div>
                 ))}
               </CardContent>
