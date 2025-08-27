@@ -128,16 +128,17 @@ const InteractiveSymptomSelector = ({ bodyPart, patientData, onBack }: Interacti
 
   // Handle mouse movement with CSS cursor
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!containerRef.current) return;
+    if (!containerRef.current || selectionLocked) return;
     
     const rect = containerRef.current.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
     
+    console.log('Mouse position:', { x, y, zoom: zoomLevel });
     setCursorPosition({ x, y });
     
-    // Check text area intersection with zoom-adjusted coordinates
-    checkTextAreaIntersection(x / zoomLevel, y / zoomLevel);
+    // Check text area intersection with original coordinates (not zoom-adjusted)
+    checkTextAreaIntersection(x, y);
   };
 
   const handleMouseEnter = () => {
@@ -188,6 +189,9 @@ const InteractiveSymptomSelector = ({ bodyPart, patientData, onBack }: Interacti
     if (selectionLocked) return; // Don't check intersection when locked
 
     let hoveredArea = null;
+    
+    console.log('Checking intersection at:', { x, y });
+    console.log('Text areas:', textAreas.slice(0, 2)); // Log first 2 areas for debugging
 
     for (const area of textAreas) {
       // Check if cursor position is within text area bounds
@@ -198,12 +202,15 @@ const InteractiveSymptomSelector = ({ bodyPart, patientData, onBack }: Interacti
         y <= area.y + area.height
       ) {
         hoveredArea = area.id;
+        console.log('Found hovering area:', area.id);
         break;
       }
     }
 
-    setCurrentHoveredArea(hoveredArea);
-    // Removed toast notification for hover
+    if (hoveredArea !== currentHoveredArea) {
+      console.log('Hovered area changed from', currentHoveredArea, 'to', hoveredArea);
+      setCurrentHoveredArea(hoveredArea);
+    }
   };
 
   const toggleSymptomSelection = () => {
