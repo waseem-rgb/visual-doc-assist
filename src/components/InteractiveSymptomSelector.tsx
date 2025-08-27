@@ -157,6 +157,11 @@ const InteractiveSymptomSelector = ({ bodyPart, patientData, onBack }: Interacti
   const initializeFabricCanvas = () => {
     if (!canvasRef.current || !imageUrl) return;
 
+    // Clear any existing canvas
+    if (fabricCanvas) {
+      fabricCanvas.dispose();
+    }
+
     // Get the container dimensions to make canvas responsive
     const container = canvasRef.current.parentElement;
     if (!container) return;
@@ -166,6 +171,8 @@ const InteractiveSymptomSelector = ({ bodyPart, patientData, onBack }: Interacti
       height: container.clientHeight || 600,
       backgroundColor: "transparent",
       selection: false,
+      renderOnAddRemove: true,
+      skipTargetFind: false,
     });
 
     // Create the movable cursor circle with cleaner appearance
@@ -173,8 +180,8 @@ const InteractiveSymptomSelector = ({ bodyPart, patientData, onBack }: Interacti
       left: 100,
       top: 100,
       radius: 12,
-      fill: "rgba(59, 130, 246, 0.7)",
-      stroke: "rgba(255, 255, 255, 0.9)",
+      fill: "rgba(59, 130, 246, 0.8)",
+      stroke: "rgba(255, 255, 255, 1)",
       strokeWidth: 2,
       selectable: true,
       moveCursor: 'move',
@@ -184,10 +191,13 @@ const InteractiveSymptomSelector = ({ bodyPart, patientData, onBack }: Interacti
       lockRotation: true,
       hasControls: false,
       hasBorders: false,
+      evented: true,
     });
 
     canvas.add(cursorCircle);
     setCursor(cursorCircle);
+    setFabricCanvas(canvas);
+    canvas.renderAll();
 
     // Handle cursor movement and mouse events
     canvas.on('object:moving', (e) => {
@@ -215,8 +225,6 @@ const InteractiveSymptomSelector = ({ bodyPart, patientData, onBack }: Interacti
         checkTextAreaIntersection(cursor);
       }
     });
-
-    setFabricCanvas(canvas);
 
     return () => {
       canvas.dispose();
@@ -374,21 +382,24 @@ const InteractiveSymptomSelector = ({ bodyPart, patientData, onBack }: Interacti
                             <img 
                               src={imageUrl} 
                               alt={`${bodyPart} symptom diagram`}
-                              className="w-full h-auto block"
+                              className="w-full h-auto block relative z-10"
                               draggable={false}
                               style={{ maxHeight: '100%', objectFit: 'contain' }}
                             />
-                            {/* Interactive Canvas Overlay */}
-                            <canvas 
-                              ref={canvasRef} 
-                              className="absolute top-0 left-0 w-full h-full z-20 pointer-events-auto" 
-                              style={{ 
-                                background: 'transparent',
-                                position: 'absolute',
-                                top: 0,
-                                left: 0
-                              }} 
-                            />
+                            {/* Interactive Canvas Overlay - positioned absolutely on top */}
+                            <div className="absolute inset-0 z-50 pointer-events-none">
+                              <canvas 
+                                ref={canvasRef} 
+                                className="w-full h-full pointer-events-auto" 
+                                style={{ 
+                                  background: 'transparent',
+                                  position: 'absolute',
+                                  top: 0,
+                                  left: 0,
+                                  zIndex: 100
+                                }} 
+                              />
+                            </div>
                           </div>
                         </TransformComponent>
                       </div>
