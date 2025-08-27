@@ -103,7 +103,7 @@ const QuadrantBodySelector = ({
           Step 1: Select Body Area - {gender === "male" ? "Male" : "Female"} {currentView} View
         </CardTitle>
         <p className="text-center text-muted-foreground text-sm">
-          Click on a colored area to see detailed body parts in that region
+          Click on a body area to see detailed body parts in that region
         </p>
       </CardHeader>
       <CardContent>
@@ -121,21 +121,20 @@ const QuadrantBodySelector = ({
             {quadrants.map((quadrant) => (
               <div
                 key={quadrant.id}
-                className="absolute cursor-pointer transition-all duration-200 hover:opacity-80 border-2 border-transparent hover:border-primary"
+                className="absolute cursor-pointer transition-all duration-200"
                 style={{
                   left: `${quadrant.x1 * 100}%`,
                   top: `${quadrant.y1 * 100}%`,
                   width: `${(quadrant.x2 - quadrant.x1) * 100}%`,
                   height: `${(quadrant.y2 - quadrant.y1) * 100}%`,
-                  backgroundColor: quadrant.color,
                 }}
                 onClick={() => onQuadrantSelect(quadrant.id)}
               >
-                {/* Quadrant label */}
+                {/* Quadrant label - transparent with gradient purple text */}
                 <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-2">
-                  <div className="bg-white/90 backdrop-blur-sm rounded-lg px-3 py-2 shadow-lg">
-                    <h3 className="font-bold text-sm text-gray-800">{quadrant.name}</h3>
-                    <p className="text-xs text-gray-600 mt-1">{quadrant.description}</p>
+                  <div>
+                    <h3 className="font-bold text-sm bg-gradient-to-r from-purple-600 to-purple-400 bg-clip-text text-transparent drop-shadow-lg">{quadrant.name}</h3>
+                    <p className="text-xs bg-gradient-to-r from-purple-500 to-purple-300 bg-clip-text text-transparent mt-1 drop-shadow-md">{quadrant.description}</p>
                   </div>
                 </div>
               </div>
@@ -147,7 +146,7 @@ const QuadrantBodySelector = ({
             <div className="bg-muted/50 rounded-lg px-4 py-3">
               <h4 className="font-semibold text-primary mb-2">How to use:</h4>
               <ol className="text-sm text-muted-foreground space-y-1">
-                <li>1. Click on the colored area that contains your symptoms</li>
+                <li>1. Click on the body area that contains your symptoms</li>
                 <li>2. You'll see a detailed view with specific body parts</li>
                 <li>3. Select the exact body part from the detailed view</li>
               </ol>
