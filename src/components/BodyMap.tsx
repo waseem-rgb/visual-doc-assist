@@ -33,18 +33,33 @@ const BodyMap = ({ gender, patientData }: BodyMapProps) => {
     queryFn: async () => {
       console.log("Fetching all body parts...");
       
-      const { data, error } = await supabase
-        .from("head to Toe sub areas")
-        .select("*");
-      
-      if (error) {
-        console.error("Supabase error:", error);
-        toast.error("Failed to load body parts");
-        throw error;
+      try {
+        // Try with proper table name escaping
+        const { data, error } = await supabase
+          .from('head to Toe sub areas')
+          .select('*');
+        
+        console.log("Supabase query completed:");
+        console.log("- Data:", data);
+        console.log("- Error:", error);
+        console.log("- Data length:", data?.length);
+        
+        if (error) {
+          console.error("Supabase error details:", JSON.stringify(error, null, 2));
+          toast.error(`Failed to load body parts: ${error.message}`);
+          throw error;
+        }
+        
+        if (!data || data.length === 0) {
+          console.warn("No data returned from Supabase - this might be due to RLS policy restrictions");
+        }
+        
+        console.log("Raw data from Supabase:", data);
+        return data as BodyPart[];
+      } catch (err) {
+        console.error("Query error:", err);
+        throw err;
       }
-      
-      console.log("Raw data from Supabase:", data);
-      return data as BodyPart[];
     },
   });
 
