@@ -205,16 +205,17 @@ const BodyMap = ({ gender, patientData }: BodyMapProps) => {
                 return (
                   <div
                     key={`${part.Body_part}-${index}`}
-                    className={`absolute w-3 h-3 rounded-full cursor-pointer transition-all duration-300 border-2 border-white shadow-md ${
+                    className={`absolute w-2 h-2 rounded-full cursor-pointer transition-all duration-300 border border-white shadow-lg ${
                       isSelected 
-                        ? "bg-primary scale-150 shadow-lg ring-2 ring-primary/30" 
-                        : "bg-red-500 hover:bg-primary hover:scale-125 hover:shadow-lg"
+                        ? "bg-green-500 scale-150 animate-pulse ring-2 ring-green-300" 
+                        : "bg-red-500 animate-pulse hover:bg-primary hover:scale-125 hover:animate-none"
                     }`}
                     style={{
                       top: position.top,
                       left: position.left,
                       transform: "translate(-50%, -50%)",
-                      zIndex: 10
+                      zIndex: 20,
+                      animation: isSelected ? "none" : "pulse 2s infinite"
                     }}
                     onClick={() => handleBodyPartClick(part.Body_part)}
                     onMouseEnter={() => setHoveredPart(part.Body_part)}
@@ -222,7 +223,7 @@ const BodyMap = ({ gender, patientData }: BodyMapProps) => {
                   >
                     {/* Enhanced Tooltip */}
                     {isHovered && (
-                      <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-3 px-3 py-2 bg-gray-900 text-white border rounded-lg shadow-xl text-sm whitespace-nowrap z-30 font-medium">
+                      <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-3 px-3 py-2 bg-gray-900 text-white border rounded-lg shadow-xl text-xs whitespace-nowrap z-40 font-medium animate-fade-in">
                         <div className="text-center">{part.Body_part}</div>
                         <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-2 h-2 bg-gray-900 rotate-45"></div>
                       </div>
