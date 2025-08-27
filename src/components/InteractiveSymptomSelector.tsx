@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Stethoscope } from "lucide-react";
 import { loadImageFromStorage } from "@/lib/storageUtils";
+import { supabase } from "@/integrations/supabase/client";
 import FullscreenSymptomLightbox from "./FullscreenSymptomLightbox";
 
 interface InteractiveSymptomSelectorProps {
@@ -29,6 +30,8 @@ const InteractiveSymptomSelector = ({ bodyPart, patientData, onBack }: Interacti
   const [loading, setLoading] = useState(true);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [finalSelection, setFinalSelection] = useState<{id: string, text: string} | null>(null);
+  const [diagnosis, setDiagnosis] = useState<string | null>(null);
+  const [loadingDiagnosis, setLoadingDiagnosis] = useState(false);
 
   // Define text areas based on the ear anatomy image analysis
   const textAreas: TextArea[] = [
@@ -91,6 +94,54 @@ const InteractiveSymptomSelector = ({ bodyPart, patientData, onBack }: Interacti
 
   const openLightbox = () => {
     setLightboxOpen(true);
+  };
+
+  const handleContinueToNextStep = async () => {
+    if (!finalSelection) return;
+    
+    setLoadingDiagnosis(true);
+    try {
+      // Query the "New Master" table to find matching symptom and get probable diagnosis
+      const { data, error } = await supabase
+        .from('New Master')
+        .select('Probable Diagnosis')
+        .ilike('Symptoms', `%${finalSelection.text}%`)
+        .single();
+
+      if (error) {
+        console.error('Error fetching diagnosis:', error);
+        // If exact match fails, try with symptom ID keywords
+        const keywords = finalSelection.id.replace(/-/g, ' ');
+        const { data: fallbackData, error: fallbackError } = await supabase
+          .from('New Master')
+          .select('Probable Diagnosis')
+          .ilike('Symptoms', `%${keywords}%`)
+          .single();
+        
+        if (fallbackError) {
+          console.error('Error fetching fallback diagnosis:', fallbackError);
+          setDiagnosis('Unable to determine diagnosis. Please consult with a healthcare provider.');
+        } else {
+          setDiagnosis(fallbackData['Probable Diagnosis'] || 'No diagnosis information available.');
+        }
+      } else {
+        setDiagnosis(data['Probable Diagnosis'] || 'No diagnosis information available.');
+      }
+    } catch (err) {
+      console.error('Unexpected error:', err);
+      setDiagnosis('Unable to determine diagnosis. Please consult with a healthcare provider.');
+    } finally {
+      setLoadingDiagnosis(false);
+    }
+  };
+
+  const handleRequestPrescription = () => {
+    // TODO: Implement prescription request functionality
+    console.log("Prescription requested for:", {
+      patient: patientData,
+      symptom: finalSelection,
+      diagnosis: diagnosis
+    });
   };
 
   if (loading) {
@@ -192,17 +243,55 @@ const InteractiveSymptomSelector = ({ bodyPart, patientData, onBack }: Interacti
                 <div className="flex gap-3 justify-center">
                   <Button 
                     variant="outline" 
-                    onClick={() => setFinalSelection(null)}
+                    onClick={() => {
+                      setFinalSelection(null);
+                      setDiagnosis(null);
+                    }}
                   >
                     Change Selection
                   </Button>
-                  <Button onClick={() => {
-                    // Here you would save to database or proceed to next step
-                    console.log("Final symptom selection:", finalSelection);
-                  }}>
-                    Continue to Next Step
+                  <Button 
+                    onClick={handleContinueToNextStep}
+                    disabled={loadingDiagnosis}
+                  >
+                    {loadingDiagnosis ? "Analyzing..." : "Continue to Next Step"}
                   </Button>
                 </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Diagnosis Results */}
+          {diagnosis && (
+            <Card className="p-6 mt-6">
+              <CardHeader>
+                <CardTitle className="text-xl text-center gradient-text">Probable Diagnosis</CardTitle>
+              </CardHeader>
+              <CardContent className="text-center space-y-6">
+                <div className="bg-blue-50 p-6 rounded-lg">
+                  <div className="flex items-center justify-center mb-4">
+                    <Stethoscope className="h-8 w-8 text-primary mr-2" />
+                    <h3 className="text-lg font-semibold text-primary">Medical Assessment</h3>
+                  </div>
+                  <p className="text-gray-700 leading-relaxed text-lg">
+                    {diagnosis}
+                  </p>
+                </div>
+                
+                <div className="bg-amber-50 p-4 rounded-lg border border-amber-200">
+                  <p className="text-sm text-amber-800">
+                    <strong>Disclaimer:</strong> This is a preliminary assessment based on your symptoms. 
+                    Please consult with a qualified healthcare provider for proper diagnosis and treatment.
+                  </p>
+                </div>
+
+                <Button 
+                  onClick={handleRequestPrescription}
+                  size="lg"
+                  className="w-full max-w-sm bg-gradient-to-r from-primary to-primary-glow hover:shadow-lg transition-all duration-300"
+                >
+                  Request Prescription
+                </Button>
               </CardContent>
             </Card>
           )}
