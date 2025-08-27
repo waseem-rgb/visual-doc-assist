@@ -5,7 +5,8 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
-import bodyDiagramFront from "@/assets/body-diagram-front.png";
+import bodyFrontRealistic from "@/assets/body-front-realistic.png";
+import bodyBackRealistic from "@/assets/body-back-realistic.png";
 
 interface BodyMapProps {
   gender: "male" | "female";
@@ -23,7 +24,7 @@ interface BodyPart {
 }
 
 const BodyMap = ({ gender, patientData }: BodyMapProps) => {
-  const [currentView, setCurrentView] = useState<"Front" | "Back">("Front");
+  const [currentView, setCurrentView] = useState<"Front" | "Back view">("Front");
   const [selectedBodyParts, setSelectedBodyParts] = useState<string[]>([]);
   const [hoveredPart, setHoveredPart] = useState<string | null>(null);
 
@@ -52,25 +53,96 @@ const BodyMap = ({ gender, patientData }: BodyMapProps) => {
   };
 
   const getBodyPartPosition = (bodyPart: string, view: string) => {
-    // Define positions for body parts based on view
+    // Define positions for body parts based on view - mapped to realistic body proportions
     const positions: { [key: string]: { [key: string]: { top: string; left: string } } } = {
       Front: {
-        "HAIR AND SCALP": { top: "5%", left: "50%" },
-        "HEAD FRONT": { top: "10%", left: "50%" },
-        "HEAD SIDE": { top: "10%", left: "40%" },
-        "FACE": { top: "15%", left: "50%" },
+        // Head and face area
+        "HAIR AND SCALP": { top: "8%", left: "50%" },
+        "HEAD FRONT": { top: "12%", left: "50%" },
+        "HEAD SIDE": { top: "12%", left: "35%" },
+        "FACE": { top: "16%", left: "50%" },
+        "EYE PHYSICAL": { top: "15%", left: "45%" },
+        "EYE VISION": { top: "15%", left: "55%" },
+        "EAR PHYSICAL": { top: "14%", left: "25%" },
+        "EAR HEARING": { top: "14%", left: "75%" },
         "NOSE": { top: "17%", left: "50%" },
-        "MOUTH": { top: "20%", left: "50%" },
-        "NECK": { top: "25%", left: "50%" },
-        "THROAT": { top: "27%", left: "50%" },
-        "THROAT VOICE": { top: "29%", left: "50%" },
-        "CHEST UPPER": { top: "35%", left: "50%" },
+        "MOUTH": { top: "19%", left: "50%" },
+        
+        // Neck and throat
+        "NECK": { top: "22%", left: "50%" },
+        "THROAT": { top: "24%", left: "50%" },
+        "THROAT VOICE": { top: "25%", left: "50%" },
+        
+        // Upper body
+        "SHOULDER FRONT": { top: "27%", left: "25%" },
+        "CHEST UPPER": { top: "32%", left: "50%" },
+        "CHEST CENTRAL": { top: "35%", left: "50%" },
+        "CHEST SIDE": { top: "35%", left: "30%" },
+        "BREAST": { top: "34%", left: "40%" },
+        "UPPER ARM": { top: "35%", left: "15%" },
+        
+        // Abdomen
+        "UPPER ABDOMEN": { top: "42%", left: "50%" },
+        "ABDOMEN GENERAL": { top: "48%", left: "50%" },
+        "LOWER ABDOMEN LEFT": { top: "52%", left: "42%" },
+        "LOWER ABDOMEN RIGHT": { top: "52%", left: "58%" },
+        "FEMALE LOWER ABDOMEN": { top: "54%", left: "50%" },
+        
+        // Genitals and groin
+        "GROIN MALE AND FEMALE": { top: "57%", left: "50%" },
+        "MALE GENITALS": { top: "58%", left: "50%" },
+        "FEMALE GENITALS": { top: "58%", left: "50%" },
+        
+        // Bowel issues (abdomen area)
+        "BOWELS ABNORMAL STOOL": { top: "50%", left: "45%" },
+        "BOWELS CONSTIPATION": { top: "50%", left: "55%" },
+        "BOWELS DIARRHOEA": { top: "52%", left: "50%" },
+        
+        // Urinary
+        "URINARY PROBLEMS MALE": { top: "56%", left: "45%" },
+        "URINARY PROBLEMS FEMALE": { top: "56%", left: "55%" },
+        
+        // Arms and hands
+        "FOREARM AND WRIST": { top: "45%", left: "10%" },
+        "HAND PALM": { top: "55%", left: "8%" },
+        
+        // Hips and legs
+        "HIP FRONT": { top: "60%", left: "35%" },
+        "THIGH FRONT": { top: "68%", left: "40%" },
+        "THIGH BACK": { top: "68%", left: "60%" },
+        "KNEE FRONT": { top: "78%", left: "40%" },
+        "LOWER LEG FRONT": { top: "85%", left: "40%" },
+        
+        // Feet
+        "ANKLE": { top: "92%", left: "40%" },
+        "FOOT": { top: "96%", left: "40%" },
+        "FOOT UPPER": { top: "95%", left: "40%" },
+        "FOOT UNDERSIDE": { top: "97%", left: "40%" },
+        
+        // Back view items that appear in Front view
+        "UPPER BACK": { top: "32%", left: "70%" },
       },
-      Back: {
-        "HAIR AND SCALP": { top: "5%", left: "50%" },
-        "HEAD BACK": { top: "10%", left: "50%" },
-        "NECK BACK": { top: "25%", left: "50%" },
-        "UPPER BACK": { top: "35%", left: "50%" },
+      
+      "Back view": {
+        // Head area
+        "HAIR AND SCALP": { top: "8%", left: "50%" },
+        
+        // Back and shoulders
+        "SHOULDER BACK": { top: "27%", left: "25%" },
+        "UPPER BACK": { top: "32%", left: "50%" },
+        "LOWER BACK": { top: "48%", left: "50%" },
+        
+        // Arms
+        "ELBOW": { top: "42%", left: "15%" },
+        "HAND BACK": { top: "55%", left: "8%" },
+        
+        // Hips and buttocks
+        "HIP BACK": { top: "60%", left: "35%" },
+        "BUTTOCKS AND ANUS": { top: "62%", left: "50%" },
+        
+        // Legs
+        "KNEE BACK": { top: "78%", left: "40%" },
+        "LOWER LEG BACK": { top: "85%", left: "40%" },
       }
     };
 
@@ -96,13 +168,13 @@ const BodyMap = ({ gender, patientData }: BodyMapProps) => {
         <ToggleGroup 
           type="single" 
           value={currentView} 
-          onValueChange={(value) => setCurrentView(value as "Front" | "Back")}
+          onValueChange={(value) => setCurrentView(value as "Front" | "Back view")}
           className="mb-6"
         >
           <ToggleGroupItem value="Front" className="px-8">
             Front View
           </ToggleGroupItem>
-          <ToggleGroupItem value="Back" className="px-8">
+          <ToggleGroupItem value="Back view" className="px-8">
             Back View
           </ToggleGroupItem>
         </ToggleGroup>
@@ -116,13 +188,12 @@ const BodyMap = ({ gender, patientData }: BodyMapProps) => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="relative mx-auto" style={{ width: "400px", height: "550px" }}>
+            <div className="relative mx-auto" style={{ width: "400px", height: "600px" }}>
               {/* Body diagram background */}
               <img 
-                src={bodyDiagramFront} 
+                src={currentView === "Front" ? bodyFrontRealistic : bodyBackRealistic} 
                 alt={`${gender} body diagram - ${currentView} view`}
-                className="w-full h-full object-contain"
-                style={{ filter: "opacity(0.9)" }}
+                className="w-full h-full object-contain rounded-lg"
               />
 
               {/* Interactive body part points */}
@@ -134,10 +205,10 @@ const BodyMap = ({ gender, patientData }: BodyMapProps) => {
                 return (
                   <div
                     key={`${part.Body_part}-${index}`}
-                    className={`absolute w-4 h-4 rounded-full cursor-pointer transition-all duration-200 ${
+                    className={`absolute w-3 h-3 rounded-full cursor-pointer transition-all duration-300 border-2 border-white shadow-md ${
                       isSelected 
-                        ? "bg-primary scale-125 shadow-lg" 
-                        : "bg-primary/60 hover:bg-primary hover:scale-110"
+                        ? "bg-primary scale-150 shadow-lg ring-2 ring-primary/30" 
+                        : "bg-red-500 hover:bg-primary hover:scale-125 hover:shadow-lg"
                     }`}
                     style={{
                       top: position.top,
@@ -149,10 +220,11 @@ const BodyMap = ({ gender, patientData }: BodyMapProps) => {
                     onMouseEnter={() => setHoveredPart(part.Body_part)}
                     onMouseLeave={() => setHoveredPart(null)}
                   >
-                    {/* Tooltip */}
+                    {/* Enhanced Tooltip */}
                     {isHovered && (
-                      <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-background border rounded shadow-lg text-sm whitespace-nowrap z-20">
-                        {part.Body_part}
+                      <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-3 px-3 py-2 bg-gray-900 text-white border rounded-lg shadow-xl text-sm whitespace-nowrap z-30 font-medium">
+                        <div className="text-center">{part.Body_part}</div>
+                        <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-2 h-2 bg-gray-900 rotate-45"></div>
                       </div>
                     )}
                   </div>
