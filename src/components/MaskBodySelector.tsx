@@ -306,6 +306,7 @@ const MaskBodySelector = ({
     setMousePosition({ x, y });
     
     const bodyPart = getBodyPartAtPosition(x, y);
+    console.log(`Mouse at (${Math.round(x)}, ${Math.round(y)}) - Detected: ${bodyPart || 'None'}`);
     onBodyPartHover(bodyPart);
   }, [getBodyPartAtPosition, onBodyPartHover, imageLoaded, maskLoaded]);
 

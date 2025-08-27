@@ -13,6 +13,7 @@ import bodyFrontFemale from "@/assets/body-front-female.png";
 import bodyBackFemale from "@/assets/body-back-female.png";
 import SymptomViewer from "./SymptomViewer";
 import MaskBodySelector from "./MaskBodySelector";
+import SimpleBodySelector from "./SimpleBodySelector";
 import SVGBodySelector from "./SVGBodySelector";
 
 interface BodyMapProps {
@@ -272,14 +273,14 @@ const BodyMap = ({ gender, patientData }: BodyMapProps) => {
             size="sm"
             onClick={() => setUseMaskSelector(!useMaskSelector)}
           >
-            {useMaskSelector ? "Mask Selector" : "SVG Selector"}
+            {useMaskSelector ? "Mask Selector" : "Simple Selector"}
           </Button>
         </div>
       </div>
 
       <div className="flex justify-center">
         <div className="w-full max-w-4xl">
-          {/* Body Selector - Mask-based or SVG fallback */}
+          {/* Body Selector - Mask-based or Simple fallback */}
           {useMaskSelector ? (
             <MaskBodySelector
               imageUrl={gender === "male" 
@@ -296,7 +297,7 @@ const BodyMap = ({ gender, patientData }: BodyMapProps) => {
               debug={debugMode}
             />
           ) : (
-            <SVGBodySelector
+            <SimpleBodySelector
               imageUrl={gender === "male" 
                 ? (currentView === "Front" ? bodyFrontRealistic : bodyBackRealistic)
                 : (currentView === "Front" ? bodyFrontFemale : bodyBackFemale)
