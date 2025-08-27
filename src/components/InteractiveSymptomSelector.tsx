@@ -83,28 +83,43 @@ const InteractiveSymptomSelector = ({ bodyPart, patientData, onBack }: Interacti
     try {
       setLoading(true);
       
-      const fileName = `${bodyPart.toLowerCase().replace(/\s+/g, '_')}.png`;
+      // Try multiple naming conventions for the image
+      const possibleNames = [
+        `${bodyPart.toLowerCase().replace(/\s+/g, '_')}.png`,
+        `${bodyPart.toLowerCase().replace(/\s+/g, '-')}.png`,
+        `${bodyPart.toLowerCase().replace(/\s+/g, '_')}.jpg`,
+        `${bodyPart.toLowerCase().replace(/\s+/g, '-')}.jpg`,
+        `${bodyPart.toLowerCase()}.png`,
+        `${bodyPart}.png`,
+        `ear.png`, // Fallback for ear-related searches
+        `hearing.png` // Another fallback
+      ];
       
-      const { data, error } = await supabase.storage
-        .from('Symptom_Images')
-        .download(fileName);
+      console.log(`Searching for image files for: ${bodyPart}`);
+      console.log('Trying these filenames:', possibleNames);
+      
+      for (const fileName of possibleNames) {
+        const { data, error } = await supabase.storage
+          .from('Symptom_Images')
+          .download(fileName);
 
-      if (error) {
-        console.error("Error fetching image:", error);
-        toast.error(`Image not found for ${bodyPart}`);
-        setLoading(false);
-        return;
+        if (!error && data) {
+          const url = URL.createObjectURL(data);
+          setImageUrl(url);
+          toast.success(`Symptom diagram loaded: ${fileName}`);
+          setLoading(false);
+          return;
+        }
+        console.log(`File not found: ${fileName}`);
       }
 
-      if (data) {
-        const url = URL.createObjectURL(data);
-        setImageUrl(url);
-        toast.success("Symptom diagram loaded successfully!");
-      }
+      // If no image found, show error
+      console.error("No image found for any naming convention");
+      toast.error(`Image not found for ${bodyPart}. Please upload the image to Supabase storage.`);
+      setLoading(false);
     } catch (err) {
       console.error("Unexpected error:", err);
       toast.error("Failed to load symptom diagram");
-    } finally {
       setLoading(false);
     }
   };
