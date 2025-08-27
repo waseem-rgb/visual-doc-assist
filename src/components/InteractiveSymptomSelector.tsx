@@ -232,10 +232,7 @@ const InteractiveSymptomSelector = ({ bodyPart, patientData, onBack }: Interacti
               </CardHeader>
               <CardContent className="text-center space-y-4">
                 <div className="bg-green-50 p-4 rounded-lg">
-                  <h3 className="font-semibold mb-2">
-                    {finalSelection.id.replace(/-/g, ' ').toUpperCase()}
-                  </h3>
-                  <p className="text-muted-foreground">
+                  <p className="text-gray-700 leading-relaxed">
                     {finalSelection.text}
                   </p>
                 </div>

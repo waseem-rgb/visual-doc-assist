@@ -75,7 +75,7 @@ const FullscreenSymptomLightbox = ({
     }
   }, [zoomLevel]);
 
-  // Handle mouse movement with proper coordinate mapping
+  // Handle mouse movement with simplified coordinate mapping
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     if (!imageRef.current || selectedSymptom) return;
     
@@ -83,16 +83,19 @@ const FullscreenSymptomLightbox = ({
     const x = e.clientX - imageRect.left;
     const y = e.clientY - imageRect.top;
     
-    setCursorPosition({ x, y });
-    
-    // Map display coordinates to natural image coordinates
-    const scaleX = imageNaturalSize.width / imageRect.width;
-    const scaleY = imageNaturalSize.height / imageRect.height;
-    
-    const naturalX = x * scaleX;
-    const naturalY = y * scaleY;
-    
-    checkTextAreaIntersection(naturalX, naturalY);
+    // Only update cursor if within image bounds
+    if (x >= 0 && x <= imageRect.width && y >= 0 && y <= imageRect.height) {
+      setCursorPosition({ x, y });
+      
+      // Map display coordinates to natural image coordinates with zoom consideration
+      const scaleX = (imageNaturalSize.width || imageRect.width) / imageRect.width;
+      const scaleY = (imageNaturalSize.height || imageRect.height) / imageRect.height;
+      
+      const naturalX = x * scaleX;
+      const naturalY = y * scaleY;
+      
+      checkTextAreaIntersection(naturalX, naturalY);
+    }
   };
 
   const handleMouseEnter = () => {
@@ -123,7 +126,9 @@ const FullscreenSymptomLightbox = ({
     if (selectedSymptom) return;
 
     let hoveredArea = null;
+    let minDistance = Infinity;
 
+    // Check for exact intersection first
     for (const area of textAreas) {
       if (
         x >= area.x && 
@@ -133,6 +138,21 @@ const FullscreenSymptomLightbox = ({
       ) {
         hoveredArea = area.id;
         break;
+      }
+    }
+
+    // If no exact match, find closest area within a reasonable distance
+    if (!hoveredArea) {
+      for (const area of textAreas) {
+        const centerX = area.x + area.width / 2;
+        const centerY = area.y + area.height / 2;
+        const distance = Math.sqrt(Math.pow(x - centerX, 2) + Math.pow(y - centerY, 2));
+        
+        // Only consider areas within 50 pixels of the cursor
+        if (distance < 50 && distance < minDistance) {
+          minDistance = distance;
+          hoveredArea = area.id;
+        }
       }
     }
 
@@ -244,16 +264,18 @@ const FullscreenSymptomLightbox = ({
                         />
                       )}
 
-                      {/* Hover cursor */}
+                      {/* Hover cursor with improved visibility */}
                       {showCursor && !selectedSymptom && (
                         <div
-                          className="absolute border-2 border-white rounded-full shadow-lg pointer-events-none z-30 transition-all duration-150"
+                          className="absolute rounded-full shadow-lg pointer-events-none z-30 transition-all duration-100 ease-out"
                           style={{
                             left: cursorPosition.x - getCursorSize()/2,
                             top: cursorPosition.y - getCursorSize()/2,
                             width: `${getCursorSize()}px`,
                             height: `${getCursorSize()}px`,
-                            background: currentHoveredArea ? 'rgba(34, 197, 94, 0.8)' : 'rgba(59, 130, 246, 0.8)'
+                            background: currentHoveredArea ? 'rgba(34, 197, 94, 0.9)' : 'rgba(59, 130, 246, 0.7)',
+                            border: currentHoveredArea ? '3px solid #fff' : '2px solid rgba(255, 255, 255, 0.8)',
+                            boxShadow: currentHoveredArea ? '0 0 20px rgba(34, 197, 94, 0.6)' : '0 0 10px rgba(0, 0, 0, 0.3)'
                           }}
                         />
                       )}
@@ -286,7 +308,7 @@ const FullscreenSymptomLightbox = ({
                 <CardContent>
                   {!selectedSymptom ? (
                     <p className="text-sm text-muted-foreground">
-                      Move your cursor over the image to highlight symptoms. Click to select a symptom that matches your condition.
+                      Hover over symptom areas on the image to see descriptions. Click when you find a symptom that matches your condition.
                     </p>
                   ) : (
                     <p className="text-sm text-muted-foreground">
@@ -306,21 +328,18 @@ const FullscreenSymptomLightbox = ({
                     {(() => {
                       const area = textAreas.find(a => a.id === currentHoveredArea);
                       return area ? (
-                        <div>
-                          <h3 className="font-medium mb-2 text-sm">
-                            {area.id.replace(/-/g, ' ').toUpperCase()}
-                          </h3>
-                          <p className="text-sm text-muted-foreground leading-relaxed">
-                            {area.symptomText}
-                          </p>
-                          <Button 
-                            className="w-full mt-4" 
-                            size="sm"
-                            onClick={handleClick}
-                          >
-                            Select This Symptom
-                          </Button>
-                        </div>
+                         <div>
+                           <p className="text-sm text-muted-foreground leading-relaxed">
+                             {area.symptomText}
+                           </p>
+                           <Button 
+                             className="w-full mt-4" 
+                             size="sm"
+                             onClick={handleClick}
+                           >
+                             Select This Symptom
+                           </Button>
+                         </div>
                       ) : null;
                     })()}
                   </CardContent>
@@ -334,14 +353,11 @@ const FullscreenSymptomLightbox = ({
                     <CardTitle className="text-sm text-green-600">Selected Symptom</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div>
-                      <h3 className="font-medium mb-2 text-sm">
-                        {selectedSymptom.id.replace(/-/g, ' ').toUpperCase()}
-                      </h3>
-                      <p className="text-sm text-muted-foreground leading-relaxed">
-                        {selectedSymptom.text}
-                      </p>
-                    </div>
+                     <div>
+                       <p className="text-sm text-muted-foreground leading-relaxed">
+                         {selectedSymptom.text}
+                       </p>
+                     </div>
                   </CardContent>
                 </Card>
               )}
