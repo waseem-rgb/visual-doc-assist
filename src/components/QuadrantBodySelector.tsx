@@ -130,11 +130,11 @@ const QuadrantBodySelector = ({
                 }}
                 onClick={() => onQuadrantSelect(quadrant.id)}
               >
-                {/* Quadrant label - transparent with gradient purple text */}
+                {/* Quadrant label - black text with shadow for visibility */}
                 <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-2">
                   <div>
-                    <h3 className="font-bold text-sm bg-gradient-to-r from-purple-600 to-purple-400 bg-clip-text text-transparent drop-shadow-lg">{quadrant.name}</h3>
-                    <p className="text-xs bg-gradient-to-r from-purple-500 to-purple-300 bg-clip-text text-transparent mt-1 drop-shadow-md">{quadrant.description}</p>
+                    <h3 className="font-bold text-sm text-black drop-shadow-lg">{quadrant.name}</h3>
+                    <p className="text-xs text-gray-800 mt-1 drop-shadow-md">{quadrant.description}</p>
                   </div>
                 </div>
               </div>
