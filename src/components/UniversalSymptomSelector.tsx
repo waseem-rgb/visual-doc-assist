@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { X, ZoomIn, ZoomOut, Maximize, Minimize, Move } from "lucide-react";
-import { Canvas as FabricCanvas, Circle } from "fabric";
+import { Canvas as FabricCanvas, Circle, FabricImage, Point } from "fabric";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface SymptomItem {
@@ -37,55 +37,30 @@ const UniversalSymptomSelector = ({
   onSymptomSubmit
 }: UniversalSymptomSelectorProps) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const imageRef = useRef<HTMLImageElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const hoverCircleRef = useRef<Circle | null>(null);
+  const fabricImageRef = useRef<FabricImage | null>(null);
   const [fabricCanvas, setFabricCanvas] = useState<FabricCanvas | null>(null);
   const [selectedSymptom, setSelectedSymptom] = useState<SymptomItem | null>(null);
   const [highlightCircle, setHighlightCircle] = useState<Circle | null>(null);
   const [zoomLevel, setZoomLevel] = useState(1);
   const [imageLoaded, setImageLoaded] = useState(false);
-  const [displayDimensions, setDisplayDimensions] = useState({ width: 0, height: 0 });
-  const [isFullscreen, setIsFullscreen] = useState(true); // Default to fullscreen
+  const [canvasDimensions, setCanvasDimensions] = useState({ width: 800, height: 600 });
+  const [isFullscreen, setIsFullscreen] = useState(true);
   const [showSymptomPopover, setShowSymptomPopover] = useState(false);
   const [popoverPosition, setPopoverPosition] = useState({ x: 0, y: 0 });
   const [clickPosition, setClickPosition] = useState<{ x: number, y: number } | null>(null);
   const [isPanning, setIsPanning] = useState(false);
-  const [panOffset, setPanOffset] = useState({ x: 0, y: 0 });
-  const [lastPanPoint, setLastPanPoint] = useState({ x: 0, y: 0 });
 
-  // Handle image load event with dynamic sizing for fullscreen desktop
-  const handleImageLoad = (e: React.SyntheticEvent<HTMLImageElement>) => {
-    const img = e.currentTarget;
-    console.log('✅ Image loaded successfully:', img.naturalWidth, 'x', img.naturalHeight);
-    
-    // Calculate dynamic display dimensions for fullscreen desktop coverage
+  // Calculate canvas dimensions based on screen size
+  const calculateCanvasDimensions = () => {
     const availableWidth = isFullscreen ? window.innerWidth * 0.65 : Math.min(800, window.innerWidth * 0.6);
     const availableHeight = isFullscreen ? window.innerHeight * 0.85 : Math.min(600, window.innerHeight * 0.7);
     
-    let displayWidth = img.naturalWidth;
-    let displayHeight = img.naturalHeight;
-    
-    // Scale to fit available space while maintaining aspect ratio
-    const widthRatio = availableWidth / displayWidth;
-    const heightRatio = availableHeight / displayHeight;
-    const scale = Math.min(widthRatio, heightRatio, 1.2); // Allow slight upscaling for better desktop coverage
-    
-    displayWidth = Math.round(displayWidth * scale);
-    displayHeight = Math.round(displayHeight * scale);
-    
-    setDisplayDimensions({
-      width: displayWidth,
-      height: displayHeight
+    setCanvasDimensions({
+      width: Math.round(availableWidth),
+      height: Math.round(availableHeight)
     });
-    
-    setImageLoaded(true);
-  };
-
-  // Handle image load error
-  const handleImageError = (e: React.SyntheticEvent<HTMLImageElement>) => {
-    console.error('❌ Image failed to load:', e.currentTarget.src);
-    setImageLoaded(false);
   };
 
   // Cleanup canvas
@@ -100,12 +75,7 @@ const UniversalSymptomSelector = ({
   // Toggle fullscreen
   const toggleFullscreen = () => {
     setIsFullscreen(prev => !prev);
-    // Trigger image reload for new dimensions
-    setTimeout(() => {
-      if (imageRef.current) {
-        handleImageLoad({ currentTarget: imageRef.current } as any);
-      }
-    }, 100);
+    calculateCanvasDimensions();
   };
 
   // Reset state when dialog closes
@@ -115,12 +85,12 @@ const UniversalSymptomSelector = ({
       setSelectedSymptom(null);
       setHighlightCircle(null);
       hoverCircleRef.current = null;
+      fabricImageRef.current = null;
       setZoomLevel(1);
-      setIsFullscreen(true); // Keep fullscreen as default
+      setIsFullscreen(true);
       setShowSymptomPopover(false);
       setClickPosition(null);
       setIsPanning(false);
-      setPanOffset({ x: 0, y: 0 });
       if (fabricCanvas) {
         fabricCanvas.dispose();
         setFabricCanvas(null);
@@ -128,67 +98,26 @@ const UniversalSymptomSelector = ({
     }
   }, [open]);
 
-  // Handle panning functionality
-  const handleMouseDown = (e: React.MouseEvent) => {
-    if (e.button === 1 || e.ctrlKey || e.metaKey) { // Middle mouse or Ctrl+click for panning
-      setIsPanning(true);
-      setLastPanPoint({ x: e.clientX, y: e.clientY });
-      e.preventDefault();
-    }
-  };
-
-  const handleMouseMove = (e: React.MouseEvent) => {
-    if (isPanning) {
-      const deltaX = e.clientX - lastPanPoint.x;
-      const deltaY = e.clientY - lastPanPoint.y;
-      
-      setPanOffset(prev => ({
-        x: prev.x + deltaX,
-        y: prev.y + deltaY
-      }));
-      
-      setLastPanPoint({ x: e.clientX, y: e.clientY });
-    }
-  };
-
-  const handleMouseUp = () => {
-    setIsPanning(false);
-  };
-
-  // Add global mouse event listeners for panning
+  // Initialize canvas dimensions on mount and fullscreen toggle
   useEffect(() => {
-    const handleGlobalMouseMove = (e: MouseEvent) => {
-      if (isPanning) {
-        const deltaX = e.clientX - lastPanPoint.x;
-        const deltaY = e.clientY - lastPanPoint.y;
-        
-        setPanOffset(prev => ({
-          x: prev.x + deltaX,
-          y: prev.y + deltaY
-        }));
-        
-        setLastPanPoint({ x: e.clientX, y: e.clientY });
+    calculateCanvasDimensions();
+  }, [isFullscreen]);
+
+  // Handle window resize
+  useEffect(() => {
+    const handleResize = () => {
+      if (isFullscreen) {
+        calculateCanvasDimensions();
       }
     };
 
-    const handleGlobalMouseUp = () => {
-      setIsPanning(false);
-    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [isFullscreen]);
 
-    if (isPanning) {
-      document.addEventListener('mousemove', handleGlobalMouseMove);
-      document.addEventListener('mouseup', handleGlobalMouseUp);
-    }
-
-    return () => {
-      document.removeEventListener('mousemove', handleGlobalMouseMove);
-      document.removeEventListener('mouseup', handleGlobalMouseUp);
-    };
-  }, [isPanning, lastPanPoint]);
-
-  // Initialize Fabric canvas after image loads and DOM is ready
+  // Initialize Fabric canvas and load image
   useEffect(() => {
-    if (!imageLoaded || !canvasRef.current || displayDimensions.width === 0 || displayDimensions.height === 0) {
+    if (!open || !canvasRef.current || canvasDimensions.width === 0 || canvasDimensions.height === 0) {
       return;
     }
 
@@ -198,22 +127,54 @@ const UniversalSymptomSelector = ({
     }
 
     const canvas = new FabricCanvas(canvasRef.current, {
-      width: displayDimensions.width,
-      height: displayDimensions.height,
+      width: canvasDimensions.width,
+      height: canvasDimensions.height,
       selection: false,
       hoverCursor: 'crosshair',
       moveCursor: 'crosshair',
-      backgroundColor: 'transparent',
+      backgroundColor: '#f8fafc',
       enableRetinaScaling: true
+    });
+
+    console.log('🎨 Canvas initialized:', canvasDimensions.width, 'x', canvasDimensions.height);
+
+    // Load image into Fabric canvas
+    FabricImage.fromURL(imageUrl, {
+      crossOrigin: 'anonymous'
+    }).then((img) => {
+      console.log('✅ Image loaded into Fabric:', img.width, 'x', img.height);
+      
+      // Scale image to fit canvas while maintaining aspect ratio
+      const scaleX = canvasDimensions.width / img.width!;
+      const scaleY = canvasDimensions.height / img.height!;
+      const scale = Math.min(scaleX, scaleY, 1);
+      
+      img.scale(scale);
+      img.set({
+        left: (canvasDimensions.width - img.width! * scale) / 2,
+        top: (canvasDimensions.height - img.height! * scale) / 2,
+        selectable: false,
+        evented: false
+      });
+
+      canvas.add(img);
+      fabricImageRef.current = img;
+      setImageLoaded(true);
+      canvas.renderAll();
+
+      console.log('✅ Image added to canvas and scaled');
+    }).catch((error) => {
+      console.error('❌ Failed to load image into Fabric:', error);
+      setImageLoaded(false);
     });
 
     // Create hover circle that follows cursor
     const createHoverCircle = () => {
       return new Circle({
-        radius: 20 / zoomLevel, // Scale with zoom for constant on-screen size
+        radius: 15,
         fill: 'rgba(59, 130, 246, 0.3)',
         stroke: '#3b82f6',
-        strokeWidth: 2 / zoomLevel, // Scale stroke with zoom
+        strokeWidth: 2,
         selectable: false,
         evented: false,
         opacity: 0.8
@@ -222,6 +183,8 @@ const UniversalSymptomSelector = ({
 
     // Handle mouse movement for hover circle
     canvas.on('mouse:move', (event) => {
+      if (!imageLoaded) return;
+      
       const pointer = canvas.getPointer(event.e);
       
       // Remove existing hover circle
@@ -232,11 +195,12 @@ const UniversalSymptomSelector = ({
       // Create and add new hover circle at cursor position
       const newHoverCircle = createHoverCircle();
       newHoverCircle.set({
-        left: pointer.x - (20 / zoomLevel),
-        top: pointer.y - (20 / zoomLevel)
+        left: pointer.x - 15,
+        top: pointer.y - 15
       });
       
       canvas.add(newHoverCircle);
+      // No need to move to front as hover circle is added last
       hoverCircleRef.current = newHoverCircle;
       canvas.renderAll();
     });
@@ -252,6 +216,8 @@ const UniversalSymptomSelector = ({
 
     // Handle canvas clicks to open symptom popover
     canvas.on('mouse:down', (event) => {
+      if (!imageLoaded || isPanning) return;
+      
       const pointer = canvas.getPointer(event.e);
       const canvasElement = canvasRef.current;
       if (!canvasElement) return;
@@ -269,26 +235,69 @@ const UniversalSymptomSelector = ({
       console.log('✅ Popover position:', rect.left + pointer.x, rect.top + pointer.y);
     });
 
+    // Handle panning with space key or middle mouse
+    let isDragging = false;
+    let lastPosX = 0;
+    let lastPosY = 0;
+
+    canvas.on('mouse:down', (opt) => {
+      const evt = opt.e as MouseEvent;
+      if ((evt as any).button === 1 || evt.ctrlKey || evt.shiftKey) { // Middle mouse or Ctrl/Shift + click
+        isDragging = true;
+        canvas.selection = false;
+        canvas.setCursor('grabbing');
+        lastPosX = evt.clientX;
+        lastPosY = evt.clientY;
+        setIsPanning(true);
+        evt.preventDefault();
+      }
+    });
+
+    canvas.on('mouse:move', (opt) => {
+      if (isDragging) {
+        const evt = opt.e as MouseEvent;
+        const vpt = canvas.viewportTransform;
+        if (vpt) {
+          vpt[4] += evt.clientX - lastPosX;
+          vpt[5] += evt.clientY - lastPosY;
+          canvas.requestRenderAll();
+          lastPosX = evt.clientX;
+          lastPosY = evt.clientY;
+        }
+      }
+    });
+
+    canvas.on('mouse:up', () => {
+      if (isDragging) {
+        isDragging = false;
+        canvas.selection = true;
+        canvas.setCursor('crosshair');
+        setIsPanning(false);
+      }
+    });
+
+    // Handle mouse wheel zoom
+    canvas.on('mouse:wheel', (opt) => {
+      const delta = opt.e.deltaY;
+      let zoom = canvas.getZoom();
+      zoom *= 0.999 ** delta;
+      zoom = Math.max(0.5, Math.min(3, zoom)); // Limit zoom range
+      
+      const point = new Point(opt.e.offsetX, opt.e.offsetY);
+      canvas.zoomToPoint(point, zoom);
+      setZoomLevel(zoom);
+      opt.e.preventDefault();
+      opt.e.stopPropagation();
+    });
+
     setFabricCanvas(canvas);
-    console.log('🎨 Canvas initialized:', displayDimensions.width, 'x', displayDimensions.height);
 
     // Cleanup function
     return () => {
       canvas.dispose();
     };
-  }, [imageLoaded, displayDimensions, zoomLevel]);
+  }, [open, canvasDimensions, imageUrl]);
 
-  // Handle window resize for fullscreen mode
-  useEffect(() => {
-    const handleResize = () => {
-      if (isFullscreen && imageRef.current) {
-        handleImageLoad({ currentTarget: imageRef.current } as any);
-      }
-    };
-
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, [isFullscreen]);
 
   // Handle zoom with Fabric.js integration
   const handleZoom = (direction: 'in' | 'out' | 'reset') => {
@@ -301,13 +310,18 @@ const UniversalSymptomSelector = ({
       newZoom = Math.max(zoomLevel / 1.3, 0.5);
     } else {
       newZoom = 1;
+      // Reset viewport transform for reset
+      fabricCanvas.setViewportTransform([1, 0, 0, 1, 0, 0]);
     }
 
     setZoomLevel(newZoom);
     
-    // Apply zoom to Fabric.js canvas and reset viewport transform
-    fabricCanvas.setZoom(newZoom);
-    fabricCanvas.setViewportTransform([newZoom, 0, 0, newZoom, 0, 0]);
+    if (direction !== 'reset') {
+      // Get center point of canvas for zoom
+      const center = new Point(canvasDimensions.width / 2, canvasDimensions.height / 2);
+      fabricCanvas.zoomToPoint(center, newZoom);
+    }
+    
     fabricCanvas.renderAll();
   };
 
@@ -325,17 +339,18 @@ const UniversalSymptomSelector = ({
 
     // Create new marker at click position
     const circle = new Circle({
-      left: clickPosition.x - (15 / zoomLevel),
-      top: clickPosition.y - (15 / zoomLevel),
-      radius: 15 / zoomLevel, // Scale with zoom for constant on-screen size
+      left: clickPosition.x - 12,
+      top: clickPosition.y - 12,
+      radius: 12,
       fill: 'rgba(239, 68, 68, 0.8)',
       stroke: '#ffffff',
-      strokeWidth: 3 / zoomLevel, // Scale stroke with zoom
+      strokeWidth: 3,
       selectable: false,
       evented: false
     });
 
     fabricCanvas.add(circle);
+    // No need to move to front as marker is added last
     setHighlightCircle(circle);
     fabricCanvas.renderAll();
     console.log('✅ Symptom selected and marker placed:', symptom.text);
@@ -424,47 +439,18 @@ const UniversalSymptomSelector = ({
               </div>
             </div>
 
-            {/* Canvas Container - Optimized for Desktop Fullscreen */}
-            <div className="flex items-center justify-center h-full pt-16 pb-4 overflow-auto">
+            {/* Canvas Container */}
+            <div className="flex items-center justify-center h-full pt-16 pb-4">
               <div 
-                className="overflow-auto max-h-full max-w-full p-2"
-                style={{
-                  minHeight: 'fit-content',
-                  minWidth: 'fit-content'
-                }}
+                ref={containerRef}
+                className="border-2 border-gray-200 rounded-lg shadow-lg bg-white inline-block select-none"
               >
-                <div 
-                  ref={containerRef}
-                  className="relative border-2 border-gray-200 rounded-lg shadow-lg bg-white inline-block select-none"
-                  style={{ 
-                    transformOrigin: 'center',
-                    transform: `translate(${panOffset.x}px, ${panOffset.y}px)`,
-                    cursor: isPanning ? 'grabbing' : 'grab'
-                  }}
-                  onMouseDown={handleMouseDown}
-                  onMouseMove={handleMouseMove}
-                  onMouseUp={handleMouseUp}
-                >
-                {/* Background Image */}
-                {imageUrl && (
-                  <img
-                    ref={imageRef}
-                    src={imageUrl}
-                    alt={`${bodyPart} symptom diagram`}
-                    className="block max-w-none"
-                    onLoad={handleImageLoad}
-                    onError={handleImageError}
-                     style={{
-                       width: displayDimensions.width || 'auto',
-                       height: displayDimensions.height || 'auto',
-                       display: imageLoaded ? 'block' : 'none'
-                     }}
-                  />
-                )}
-                
                 {/* Loading State */}
                 {!imageLoaded && (
-                  <div className="flex items-center justify-center w-96 h-96 bg-gray-100">
+                  <div className="flex items-center justify-center bg-gray-100" style={{ 
+                    width: canvasDimensions.width, 
+                    height: canvasDimensions.height 
+                  }}>
                     <div className="text-center">
                       <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
                       <p className="text-sm text-muted-foreground">Loading image...</p>
@@ -472,22 +458,14 @@ const UniversalSymptomSelector = ({
                   </div>
                 )}
                 
-                 {/* Overlay Canvas for Hovering Circle and Markers */}
-                 {imageLoaded && (
-                   <canvas 
-                     ref={canvasRef}
-                     className="absolute top-0 left-0 pointer-events-auto cursor-crosshair"
-                     style={{
-                       width: displayDimensions.width,
-                       height: displayDimensions.height,
-                       zIndex: 50 // Higher z-index to ensure it appears above the image
-                     }}
-                     onMouseEnter={() => console.log('🖱️ Mouse entered canvas')}
-                     onMouseLeave={() => console.log('🖱️ Mouse left canvas')}
-                     onClick={() => console.log('🖱️ Canvas clicked (DOM event)')}
-                   />
-                 )}
-                </div>
+                {/* Fabric Canvas */}
+                <canvas 
+                  ref={canvasRef}
+                  className="block cursor-crosshair"
+                  style={{
+                    display: imageLoaded ? 'block' : 'none'
+                  }}
+                />
               </div>
             </div>
 
