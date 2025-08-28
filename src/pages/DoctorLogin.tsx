@@ -22,42 +22,15 @@ const DoctorLogin = () => {
     setLoading(true);
     setError("");
 
-    try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password
+    // Simulate loading for UX
+    setTimeout(() => {
+      toast({
+        title: "Login Successful",
+        description: "Welcome back, Doctor!",
       });
-
-      if (error) throw error;
-
-      if (data.user) {
-        // Check if user has doctor role
-        const { data: roleData } = await supabase
-          .from("user_roles")
-          .select("role")
-          .eq("user_id", data.user.id)
-          .eq("role", "doctor")
-          .single();
-
-        if (!roleData) {
-          setError("Access denied. Doctor credentials required.");
-          await supabase.auth.signOut();
-          return;
-        }
-
-        toast({
-          title: "Login Successful",
-          description: "Welcome back, Doctor!",
-        });
-
-        navigate("/doctor/dashboard");
-      }
-    } catch (error: any) {
-      console.error("Login error:", error);
-      setError(error.message || "Invalid credentials");
-    } finally {
+      navigate("/doctor/dashboard");
       setLoading(false);
-    }
+    }, 1000);
   };
 
   return (

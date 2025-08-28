@@ -466,13 +466,6 @@ const InteractiveSymptomSelector = ({ bodyPart, patientData, onBack }: Interacti
         </div>
       </div>
 
-      {/* Debug Info - Remove after fixing */}
-      {process.env.NODE_ENV === 'development' && (
-        <div className="fixed top-4 right-4 bg-red-100 p-2 rounded text-xs z-[999]">
-          <div>showClinicalForm: {showClinicalForm.toString()}</div>
-          <div>prescriptionSubmitted: {prescriptionSubmitted.toString()}</div>
-        </div>
-      )}
 
       {/* Clinical History Form Modal */}
       {showClinicalForm ? (
