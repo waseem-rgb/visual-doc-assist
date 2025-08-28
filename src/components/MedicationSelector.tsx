@@ -121,10 +121,10 @@ const MedicationSelector = ({ onMedicationsChange, disabled = false }: Medicatio
   };
 
   const addCustomMedication = () => {
-    if (!customMedication.name || !customMedication.strength) {
+    if (!customMedication.name) {
       toast({
         title: "Missing Information",
-        description: "Please provide medication name and strength.",
+        description: "Please provide medication name.",
         variant: "destructive",
       });
       return;
@@ -316,12 +316,12 @@ const MedicationSelector = ({ onMedicationsChange, disabled = false }: Medicatio
                   />
                 </div>
                 <div>
-                  <Label htmlFor="custom-med-strength">Strength *</Label>
+                  <Label htmlFor="custom-med-strength">Strength</Label>
                   <Input
                     id="custom-med-strength"
                     value={customMedication.strength}
                     onChange={(e) => setCustomMedication(prev => ({ ...prev, strength: e.target.value }))}
-                    placeholder="e.g., 500mg"
+                    placeholder="e.g., 500mg (optional for combinations)"
                   />
                 </div>
               </div>

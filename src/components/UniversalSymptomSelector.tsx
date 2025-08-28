@@ -606,8 +606,7 @@ const UniversalSymptomSelector = ({
           </div>
 
           {/* Right Side - Symptom List */}
-          <div className={`${isFullscreen ? 'w-1/6' : 'w-1/5'} bg-background border-l border-border flex flex-col`} 
-               style={{ height: '100%', maxHeight: '100%' }}>
+          <div className={`${isFullscreen ? 'w-1/6' : 'w-1/5'} bg-background border-l border-border flex flex-col h-full`}>
             <div className="p-4 border-b border-border flex-shrink-0">
               <h3 className="text-lg font-semibold text-foreground mb-2">Available Symptoms</h3>
               <p className="text-sm text-muted-foreground">
@@ -615,7 +614,7 @@ const UniversalSymptomSelector = ({
               </p>
             </div>
 
-            <div className="flex-1 overflow-y-auto" style={{ height: '1px' }}>
+            <div className="flex-1 min-h-0 overflow-y-scroll overscroll-contain" style={{ scrollBehavior: 'smooth' }}>
               <div className="p-4 space-y-3">
                 {isLoadingSymptoms ? (
                   <div className="flex items-center justify-center py-8">
