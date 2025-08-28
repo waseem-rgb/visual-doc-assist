@@ -3,7 +3,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { X, ZoomIn, ZoomOut, Maximize, Minimize, Move } from "lucide-react";
+import { X, ZoomIn, ZoomOut, Maximize, Minimize, Move, FileText } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 import { Canvas as FabricCanvas, Circle, FabricImage, Point } from "fabric";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { getSymptomContentForBodyPart, type SymptomContent } from "@/services/symptomService";
@@ -12,6 +13,8 @@ interface SymptomItem {
   id: string;
   text: string;
   category?: string;
+  diagnosis?: string;
+  summary?: string;
 }
 
 interface TextRegion {
@@ -69,6 +72,7 @@ const UniversalSymptomSelector = ({
   const [detectedText, setDetectedText] = useState<string | null>(null);
   const [symptomContentData, setSymptomContentData] = useState<SymptomContent | null>(null);
   const [isLoadingSymptoms, setIsLoadingSymptoms] = useState(false);
+  const { toast } = useToast();
 
   // Get symptom content for current body part
   const textRegions = symptomContentData?.regions || [];
@@ -433,8 +437,13 @@ const UniversalSymptomSelector = ({
             selectionMarkerRef.current = null;
           }
           
-          // Directly select the detected text
-          setSelectedSymptom({ id: clickedRegion.id, text: clickedRegion.text });
+          // Directly select the detected text with diagnosis and summary
+          setSelectedSymptom({ 
+            id: clickedRegion.id, 
+            text: clickedRegion.text,
+            diagnosis: clickedRegion.diagnosis,
+            summary: clickedRegion.summary
+          });
           setDetectedText(clickedRegion.text);
           setClickPosition({ x: pointer.x, y: pointer.y });
           
@@ -563,6 +572,15 @@ const UniversalSymptomSelector = ({
     fabricCanvas.add(circle);
     selectionMarkerRef.current = circle;
     fabricCanvas.renderAll();
+  };
+
+  // Handle prescription request
+  const handleRequestPrescription = () => {
+    toast({
+      title: "Prescription Request Submitted",
+      description: "Your prescription will be generated within 15 minutes. You will be notified once it's ready.",
+      duration: 5000,
+    });
   };
 
   // Handle symptom selection from fallback list (when no regions)
@@ -736,13 +754,34 @@ const UniversalSymptomSelector = ({
                   <div className="text-sm text-center text-green-600">
                     <p><strong>Perfect!</strong> You've selected a symptom and placed a marker.</p>
                   </div>
-                  <div className="bg-primary/5 p-3 rounded-lg">
-                    <h4 className="text-sm font-semibold mb-2 text-primary">Selected Symptom:</h4>
-                    <p className="text-xs text-muted-foreground leading-relaxed">
-                      {selectedSymptom.text}
-                    </p>
+                  <div className="bg-primary/5 p-3 rounded-lg space-y-3">
+                    <div>
+                      <h4 className="text-sm font-semibold mb-2 text-primary">Selected Symptom:</h4>
+                      <p className="text-xs text-muted-foreground leading-relaxed">
+                        {selectedSymptom.text}
+                      </p>
+                    </div>
+                    
+                    {selectedSymptom.diagnosis && (
+                      <div className="border-t pt-2">
+                        <h5 className="text-xs font-semibold mb-1 text-primary">Probable Diagnosis:</h5>
+                        <p className="text-xs text-muted-foreground leading-relaxed">
+                          {selectedSymptom.diagnosis}
+                        </p>
+                      </div>
+                    )}
+                    
+                    {selectedSymptom.summary && (
+                      <div className="border-t pt-2">
+                        <h5 className="text-xs font-semibold mb-1 text-primary">Summary:</h5>
+                        <p className="text-xs text-muted-foreground leading-relaxed">
+                          {selectedSymptom.summary}
+                        </p>
+                      </div>
+                    )}
+                    
                     {detectedText && detectedText !== selectedSymptom.text && (
-                      <div className="mt-2 pt-2 border-t">
+                      <div className="border-t pt-2">
                         <p className="text-xs font-medium text-primary">Full Description:</p>
                         <p className="text-xs text-muted-foreground leading-relaxed mt-1">
                           {detectedText}
@@ -750,23 +789,34 @@ const UniversalSymptomSelector = ({
                       </div>
                     )}
                   </div>
-                  <div className="flex space-x-2">
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      className="flex-1"
-                      onClick={handleClearSelection}
-                    >
-                      Clear Selection
-                    </Button>
+                  <div className="space-y-2">
                     <Button 
                       size="sm"
-                      className="flex-1"
-                      onClick={handleSubmit}
+                      className="w-full bg-green-600 hover:bg-green-700 text-white"
+                      onClick={handleRequestPrescription}
                       disabled={!selectedSymptom}
                     >
-                      Submit Selection
+                      <FileText className="w-3 h-3 mr-2" />
+                      Request Prescription
                     </Button>
+                    <div className="flex space-x-2">
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        className="flex-1"
+                        onClick={handleClearSelection}
+                      >
+                        Clear Selection
+                      </Button>
+                      <Button 
+                        size="sm"
+                        className="flex-1"
+                        onClick={handleSubmit}
+                        disabled={!selectedSymptom}
+                      >
+                        Submit Selection
+                      </Button>
+                    </div>
                   </div>
                 </div>
               )}
@@ -841,7 +891,12 @@ const UniversalSymptomSelector = ({
                         key={region.id}
                         variant="ghost"
                         className="w-full h-auto p-2 text-left justify-start whitespace-normal hover:bg-primary/5 text-xs"
-                        onClick={() => handleFallbackSymptomClick({ id: region.id, text: region.text })}
+                        onClick={() => handleFallbackSymptomClick({ 
+                          id: region.id, 
+                          text: region.text,
+                          diagnosis: region.diagnosis,
+                          summary: region.summary
+                        })}
                       >
                         <span className="leading-relaxed">{region.text}</span>
                       </Button>
