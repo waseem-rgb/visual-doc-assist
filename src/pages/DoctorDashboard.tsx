@@ -58,46 +58,53 @@ const DoctorDashboard = () => {
 
   const checkAuthAndFetchData = async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      console.log("Dashboard loading - bypassing auth checks");
       
-      if (!user) {
-        navigate("/doctor/login");
-        return;
-      }
+      // Skip auth checks for now - set mock doctor profile
+      setDoctorProfile({
+        full_name: "Dr. Waseem Ahmed", 
+        specialization: "General Medicine",
+        license_number: "MD12345"
+      });
 
-      // Check doctor role
-      const { data: roleData } = await supabase
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", user.id)
-        .eq("role", "doctor")
-        .single();
-
-      if (!roleData) {
-        navigate("/doctor/login");
-        return;
-      }
-
-      // Fetch doctor profile
-      const { data: profile } = await supabase
-        .from("doctor_profiles")
-        .select("*")
-        .eq("id", user.id)
-        .single();
-
-      if (profile) {
-        setDoctorProfile(profile);
-      }
-
-      // Fetch prescription requests
-      const { data: requestsData } = await supabase
-        .from("prescription_requests")
-        .select("*")
-        .order("created_at", { ascending: false });
-
-      if (requestsData) {
-        setRequests(requestsData);
-      }
+      // Mock some sample prescription requests for testing
+      const mockRequests: PrescriptionRequest[] = [
+        {
+          id: "1",
+          patient_name: "John Doe",
+          patient_age: "35",
+          patient_gender: "male",
+          body_part: "chest",
+          symptoms: "Chest pain and shortness of breath",
+          probable_diagnosis: "Possible angina",
+          short_summary: "Patient reports chest pain during physical activity",
+          basic_investigations: "ECG, Chest X-ray, Cardiac enzymes",
+          common_treatments: "Rest, Nitrates, Beta-blockers",
+          prescription_required: true,
+          status: 'pending' as const,
+          created_at: new Date().toISOString(),
+          assigned_doctor_id: null
+        },
+        {
+          id: "2", 
+          patient_name: "Jane Smith",
+          patient_age: "28",
+          patient_gender: "female",
+          body_part: "head",
+          symptoms: "Severe headache and nausea",
+          probable_diagnosis: "Migraine",
+          short_summary: "Recurring headaches with photophobia",
+          basic_investigations: "Neurological examination",
+          common_treatments: "Sumatriptan, Rest in dark room",
+          prescription_required: true,
+          status: 'in_progress' as const,
+          created_at: new Date().toISOString(),
+          assigned_doctor_id: "doc1"
+        }
+      ];
+      
+      setRequests(mockRequests);
+      
     } catch (error) {
       console.error("Error fetching data:", error);
       toast({
@@ -111,7 +118,7 @@ const DoctorDashboard = () => {
   };
 
   const handleSignOut = async () => {
-    await supabase.auth.signOut();
+    // Simple navigation back to login without auth
     navigate("/doctor/login");
   };
 
