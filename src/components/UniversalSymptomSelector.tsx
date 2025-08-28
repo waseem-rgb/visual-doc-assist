@@ -484,36 +484,47 @@ const UniversalSymptomSelector = ({
           setDetectedText(clickedRegion.text);
           setClickPosition({ x: pointer.x, y: pointer.y });
           
-          // Show confirmation popover
+          // Show confirmation popover with improved positioning
           const rect = canvasRef.current?.getBoundingClientRect();
+          console.log('Canvas rect:', rect);
+          console.log('Pointer position:', { x: pointer.x, y: pointer.y });
+          
           if (rect) {
-            setPopoverPosition({ 
-              x: rect.left + pointer.x + window.scrollX, 
-              y: rect.top + pointer.y + window.scrollY
-            });
+            const popoverX = Math.max(20, Math.min(rect.left + pointer.x + window.scrollX, window.innerWidth - 340));
+            const popoverY = Math.max(20, Math.min(rect.top + pointer.y + window.scrollY, window.innerHeight - 220));
+            
+            console.log('Setting popover position:', { x: popoverX, y: popoverY });
+            setPopoverPosition({ x: popoverX, y: popoverY });
+            setShowConfirmationPopover(true);
+            console.log('Popover should be visible now');
+          } else {
+            console.warn('Canvas rect not found, using fallback positioning');
+            setPopoverPosition({ x: 100, y: 100 });
+            setShowConfirmationPopover(true);
           }
-          setShowConfirmationPopover(true);
           
         } else if (hasRegions) {
           // No specific region detected but regions exist - show available regions
+          console.log('No specific region clicked, showing available regions');
           const rect = canvasRef.current?.getBoundingClientRect();
           if (rect) {
+            const popoverX = Math.max(20, Math.min(rect.left + pointer.x + window.scrollX, window.innerWidth - 340));
+            const popoverY = Math.max(20, Math.min(rect.top + pointer.y + window.scrollY, window.innerHeight - 220));
+            
             setClickPosition({ x: pointer.x, y: pointer.y });
-            setPopoverPosition({ 
-              x: rect.left + pointer.x + window.scrollX, 
-              y: rect.top + pointer.y + window.scrollY
-            });
+            setPopoverPosition({ x: popoverX, y: popoverY });
             setShowConfirmationPopover(true);
           }
         } else {
           // No regions exist, show fallback options
+          console.log('No regions exist, showing fallback options');
           const rect = canvasRef.current?.getBoundingClientRect();
           if (rect) {
+            const popoverX = Math.max(20, Math.min(rect.left + pointer.x + window.scrollX, window.innerWidth - 340));
+            const popoverY = Math.max(20, Math.min(rect.top + pointer.y + window.scrollY, window.innerHeight - 220));
+            
             setClickPosition({ x: pointer.x, y: pointer.y });
-            setPopoverPosition({ 
-              x: rect.left + pointer.x + window.scrollX, 
-              y: rect.top + pointer.y + window.scrollY
-            });
+            setPopoverPosition({ x: popoverX, y: popoverY });
             setShowConfirmationPopover(true);
           }
         }
@@ -859,10 +870,11 @@ const UniversalSymptomSelector = ({
         {/* Confirmation Popover - Show only the selected paragraph or fallback options */}
         {showConfirmationPopover && (
           <div 
-            className="fixed z-50 w-80 bg-popover border rounded-md shadow-md p-4"
+            className="fixed z-[100] w-80 bg-popover border border-border rounded-md shadow-lg p-4"
             style={{
-              left: Math.min(popoverPosition.x, window.innerWidth - 320),
-              top: Math.min(popoverPosition.y, window.innerHeight - 200)
+              left: popoverPosition.x,
+              top: popoverPosition.y,
+              maxWidth: '90vw'
             }}
           >
             {selectedSymptom ? (
