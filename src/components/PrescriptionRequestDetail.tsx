@@ -62,17 +62,25 @@ const PrescriptionRequestDetail = ({ request, onBack, onUpdate }: PrescriptionRe
     try {
       const { data: { user } } = await supabase.auth.getUser();
       
+      if (!user) {
+        throw new Error("You must be logged in to claim a case");
+      }
+      
       const { data, error } = await supabase
         .from("prescription_requests")
         .update({
           status: 'in_progress',
-          assigned_doctor_id: user?.id
+          assigned_doctor_id: user.id
         })
         .eq("id", request.id)
         .select()
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
+
+      if (!data) {
+        throw new Error("Case not found or could not be updated");
+      }
 
       toast({
         title: "Case Claimed",
