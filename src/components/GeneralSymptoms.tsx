@@ -21,26 +21,20 @@ const GeneralSymptoms = ({ patientData }: GeneralSymptomsProps) => {
   const [showSelector, setShowSelector] = useState(false);
 
   const commonSymptoms = [
-    "Fever",
-    "Headache", 
-    "Fatigue",
-    "Nausea",
-    "Vomiting",
-    "Diarrhea",
-    "Constipation",
-    "Dizziness",
-    "Shortness of breath",
-    "Chest pain",
-    "Abdominal pain",
-    "Joint pain",
-    "Muscle aches",
-    "Sleep problems",
-    "Loss of appetite",
-    "Weight loss",
-    "Weight gain",
-    "Anxiety",
-    "Depression",
-    "Skin rash"
+    "BEHAVIOUR PROBLEMS",
+    "FEVER",
+    "GENERAL PAIN", 
+    "MOBILITY",
+    "MOOD CHANGE",
+    "NAUSEA AND VOMITING",
+    "WEIGHT LOSS",
+    "SEIZURES",
+    "WEIGHT GAIN",
+    "SKIN LUMPS AND BUMPS",
+    "SKIN MOLES AND DISCOLOURATION",
+    "SKIN RASHES",
+    "DIZZINESS AND FAINTING",
+    "FATIGUE"
   ];
 
   const handleSymptomToggle = (symptom: string) => {
