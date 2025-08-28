@@ -62,6 +62,7 @@ const UniversalSymptomSelector = ({
   const [fabricCanvas, setFabricCanvas] = useState<FabricCanvas | null>(null);
   const [selectedSymptom, setSelectedSymptom] = useState<SymptomItem | null>(null);
   const [zoomLevel, setZoomLevel] = useState(1);
+  const blobUrlRef = useRef<string | null>(null);
   const [imageLoaded, setImageLoaded] = useState(false);
   const [canvasDimensions, setCanvasDimensions] = useState({ width: 800, height: 600 });
   const [isFullscreen, setIsFullscreen] = useState(true);
@@ -98,6 +99,14 @@ const UniversalSymptomSelector = ({
           fabricCanvas.dispose();
         } catch (error) {
           console.warn('Canvas disposal error:', error);
+        }
+      }
+      // Cleanup blob URL on unmount
+      if (blobUrlRef.current && blobUrlRef.current.startsWith('blob:')) {
+        try {
+          URL.revokeObjectURL(blobUrlRef.current);
+        } catch (error) {
+          console.warn('Failed to revoke blob URL on unmount:', error);
         }
       }
     };
@@ -152,6 +161,20 @@ const UniversalSymptomSelector = ({
         }
         setFabricCanvas(null);
       }
+      // Clean up blob URL when dialog closes or URL changes
+      if (blobUrlRef.current && blobUrlRef.current.startsWith('blob:')) {
+        try {
+          URL.revokeObjectURL(blobUrlRef.current);
+        } catch (error) {
+          console.warn('Failed to revoke blob URL:', error);
+        }
+        blobUrlRef.current = null;
+      }
+    }
+    
+    // Track the current blob URL for cleanup
+    if (imageUrl && imageUrl.startsWith('blob:')) {
+      blobUrlRef.current = imageUrl;
     }
   }, [open, imageUrl, bodyPart]);
 
@@ -229,9 +252,28 @@ const UniversalSymptomSelector = ({
 
       // Load image into Fabric canvas
       try {
-        const img = await FabricImage.fromURL(imageUrl, {
-          crossOrigin: 'anonymous'
-        });
+        console.log('Attempting to load image:', imageUrl);
+        
+        // Add timeout and retry logic for blob URLs
+        const loadWithTimeout = (url: string, timeout: number = 10000): Promise<FabricImage> => {
+          return new Promise((resolve, reject) => {
+            const timer = setTimeout(() => {
+              reject(new Error(`Image loading timeout after ${timeout}ms`));
+            }, timeout);
+            
+            FabricImage.fromURL(url, {
+              crossOrigin: 'anonymous'
+            }).then((img) => {
+              clearTimeout(timer);
+              resolve(img);
+            }).catch((error) => {
+              clearTimeout(timer);
+              reject(error);
+            });
+          });
+        };
+        
+        const img = await loadWithTimeout(imageUrl);
         
         if (isCleanedUp) {
           canvas.dispose();
@@ -278,6 +320,12 @@ const UniversalSymptomSelector = ({
         if (!isCleanedUp) {
           setImageLoaded(false);
           imageReadyRef.current = false;
+          // Show fallback state - allow users to proceed without image
+          toast({
+            title: "Image Loading Error",
+            description: "The image couldn't be loaded, but you can still select symptoms from the list.",
+            variant: "destructive"
+          });
         }
       }
 
