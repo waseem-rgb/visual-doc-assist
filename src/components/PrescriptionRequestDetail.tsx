@@ -17,6 +17,7 @@ import {
   AlertCircle
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import MedicationSelector from "./MedicationSelector";
 
 interface PrescriptionRequest {
   id: string;
@@ -43,7 +44,7 @@ interface PrescriptionRequestDetailProps {
 
 const PrescriptionRequestDetail = ({ request, onBack, onUpdate }: PrescriptionRequestDetailProps) => {
   const [loading, setLoading] = useState(false);
-  const [medications, setMedications] = useState("");
+  const [prescribedMedications, setPrescribedMedications] = useState<any[]>([]);
   const [instructions, setInstructions] = useState("");
   const [followUpNotes, setFollowUpNotes] = useState("");
   const [updatedInvestigations, setUpdatedInvestigations] = useState(request.basic_investigations || "");
@@ -99,7 +100,7 @@ const PrescriptionRequestDetail = ({ request, onBack, onUpdate }: PrescriptionRe
           patient_age: request.patient_age,
           patient_gender: request.patient_gender,
           diagnosis: request.probable_diagnosis,
-          medications,
+          medications: JSON.stringify(prescribedMedications),
           instructions,
           follow_up_notes: followUpNotes
         })
@@ -323,40 +324,43 @@ const PrescriptionRequestDetail = ({ request, onBack, onUpdate }: PrescriptionRe
                   />
                 </div>
 
-                {!isReferral && request.status === 'in_progress' && (
+                {!isReferral && (
                   <>
                     <div>
-                      <Label htmlFor="medications">Prescription Medications</Label>
-                      <Textarea
-                        id="medications"
-                        value={medications}
-                        onChange={(e) => setMedications(e.target.value)}
-                        placeholder="List medications with dosage and frequency..."
-                        className="mt-1"
-                      />
+                      <Label>Prescription Medications</Label>
+                      <div className="mt-2">
+                        <MedicationSelector
+                          onMedicationsChange={setPrescribedMedications}
+                          disabled={request.status === 'completed'}
+                        />
+                      </div>
                     </div>
 
-                    <div>
-                      <Label htmlFor="instructions">Patient Instructions</Label>
-                      <Textarea
-                        id="instructions"
-                        value={instructions}
-                        onChange={(e) => setInstructions(e.target.value)}
-                        placeholder="Special instructions for the patient..."
-                        className="mt-1"
-                      />
-                    </div>
+                    {request.status === 'in_progress' && (
+                      <>
+                        <div>
+                          <Label htmlFor="instructions">Patient Instructions</Label>
+                          <Textarea
+                            id="instructions"
+                            value={instructions}
+                            onChange={(e) => setInstructions(e.target.value)}
+                            placeholder="Special instructions for the patient..."
+                            className="mt-1"
+                          />
+                        </div>
 
-                    <div>
-                      <Label htmlFor="followUp">Follow-up Notes</Label>
-                      <Textarea
-                        id="followUp"
-                        value={followUpNotes}
-                        onChange={(e) => setFollowUpNotes(e.target.value)}
-                        placeholder="When to return, warning signs to watch for..."
-                        className="mt-1"
-                      />
-                    </div>
+                        <div>
+                          <Label htmlFor="followUp">Follow-up Notes</Label>
+                          <Textarea
+                            id="followUp"
+                            value={followUpNotes}
+                            onChange={(e) => setFollowUpNotes(e.target.value)}
+                            placeholder="When to return, warning signs to watch for..."
+                            className="mt-1"
+                          />
+                        </div>
+                      </>
+                    )}
                   </>
                 )}
 
