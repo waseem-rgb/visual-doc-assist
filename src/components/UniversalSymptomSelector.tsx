@@ -44,7 +44,9 @@ const UniversalSymptomSelector = ({
 
   // Initialize Fabric.js canvas
   useEffect(() => {
-    if (!canvasRef.current || !open) return;
+    if (!canvasRef.current || !open || !imageUrl) return;
+
+    console.log('Initializing Fabric canvas with imageUrl:', imageUrl);
 
     const canvas = new FabricCanvas(canvasRef.current, {
       width: Math.min(window.innerWidth * 0.7, 1000),
@@ -54,29 +56,56 @@ const UniversalSymptomSelector = ({
       moveCursor: 'pointer'
     });
 
-    // Load background image
-    if (imageUrl) {
-      // Create Fabric Image object for background
-      FabricImage.fromURL(imageUrl).then((img) => {
-        // Scale image to fit canvas
-        const scaleX = canvas.width! / img.width!;
-        const scaleY = canvas.height! / img.height!;
-        const scale = Math.min(scaleX, scaleY);
+    // Load background image with better error handling
+    const loadBackgroundImage = async () => {
+      try {
+        console.log('Loading image from URL:', imageUrl);
         
-        img.scale(scale);
-        img.set({
-          left: 0,
-          top: 0,
-          selectable: false,
-          evented: false
-        });
+        // Create a regular Image element first to ensure it loads
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
         
-        canvas.backgroundImage = img;
-        canvas.renderAll();
-      }).catch((error) => {
-        console.error('Error loading background image:', error);
-      });
-    }
+        img.onload = () => {
+          console.log('Image loaded successfully, creating Fabric image');
+          // Now create Fabric Image from the loaded image
+          FabricImage.fromURL(imageUrl, {
+            crossOrigin: 'anonymous'
+          }).then((fabricImg) => {
+            console.log('Fabric image created, dimensions:', fabricImg.width, 'x', fabricImg.height);
+            
+            // Scale image to fit canvas while maintaining aspect ratio
+            const scaleX = canvas.width! / fabricImg.width!;
+            const scaleY = canvas.height! / fabricImg.height!;
+            const scale = Math.min(scaleX, scaleY) * 0.9; // 90% to leave some margin
+            
+            fabricImg.scale(scale);
+            fabricImg.set({
+              left: (canvas.width! - fabricImg.width! * scale) / 2,
+              top: (canvas.height! - fabricImg.height! * scale) / 2,
+              selectable: false,
+              evented: false
+            });
+            
+            canvas.backgroundImage = fabricImg;
+            canvas.renderAll();
+            console.log('Background image set successfully');
+          }).catch((error) => {
+            console.error('Error creating Fabric image:', error);
+          });
+        };
+        
+        img.onerror = (error) => {
+          console.error('Error loading image element:', error);
+        };
+        
+        img.src = imageUrl;
+        
+      } catch (error) {
+        console.error('Error in loadBackgroundImage:', error);
+      }
+    };
+
+    loadBackgroundImage();
 
     // Handle canvas clicks to place markers
     canvas.on('mouse:down', (event) => {
