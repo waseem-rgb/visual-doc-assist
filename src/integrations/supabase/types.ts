@@ -220,6 +220,7 @@ export type Database = {
           patient_age: string
           patient_gender: string
           patient_name: string
+          pdf_bucket: string | null
           pdf_url: string | null
           prescription_date: string | null
           request_id: string | null
@@ -237,6 +238,7 @@ export type Database = {
           patient_age: string
           patient_gender: string
           patient_name: string
+          pdf_bucket?: string | null
           pdf_url?: string | null
           prescription_date?: string | null
           request_id?: string | null
@@ -254,6 +256,7 @@ export type Database = {
           patient_age?: string
           patient_gender?: string
           patient_name?: string
+          pdf_bucket?: string | null
           pdf_url?: string | null
           prescription_date?: string | null
           request_id?: string | null
