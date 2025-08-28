@@ -1,6 +1,6 @@
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { fabric } from 'fabric';
+import { Canvas as FabricCanvas, FabricImage, Point } from 'fabric';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -39,9 +39,9 @@ const UniversalSymptomSelector = ({
   initialSymptoms = []
 }: UniversalSymptomSelectorProps) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const fabricCanvasRef = useRef<fabric.Canvas | null>(null);
+  const fabricCanvasRef = useRef<FabricCanvas | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const imageRef = useRef<fabric.Image | null>(null);
+  const imageRef = useRef<FabricImage | null>(null);
   const symptomListRef = useRef<HTMLDivElement>(null);
   const symptomRailRef = useRef<HTMLDivElement>(null);
 
@@ -105,7 +105,7 @@ const UniversalSymptomSelector = ({
       fabricCanvasRef.current.dispose();
     }
 
-    const canvas = new fabric.Canvas(canvasRef.current, {
+    const canvas = new FabricCanvas(canvasRef.current, {
       selection: false,
       preserveObjectStacking: true,
       allowTouchScrolling: false,
@@ -117,15 +117,13 @@ const UniversalSymptomSelector = ({
 
     // Disable text selection on canvas
     canvas.getElement().style.userSelect = 'none';
-    canvas.getElement().style.webkitUserSelect = 'none';
-    canvas.getElement().style.msUserSelect = 'none';
-    canvas.getElement().style.mozUserSelect = 'none';
+    (canvas.getElement().style as any).webkitUserSelect = 'none';
 
     fabricCanvasRef.current = canvas;
 
     // Load the body image
     const imagePath = getImagePath();
-    fabric.Image.fromURL(imagePath, (img) => {
+    FabricImage.fromURL(imagePath, { crossOrigin: 'anonymous' }).then((img) => {
       if (!canvas || !containerRef.current) return;
 
       const containerWidth = containerRef.current.offsetWidth * 0.75;
@@ -143,30 +141,16 @@ const UniversalSymptomSelector = ({
         scaleY: scale,
         selectable: false,
         evented: false,
-        hoverCursor: 'crosshair',
-        moveCursor: 'crosshair'
+        hoverCursor: 'default',
+        moveCursor: 'default'
       });
 
       imageRef.current = img;
       canvas.add(img);
       canvas.renderAll();
-    }, { crossOrigin: 'anonymous' });
-
-    // Handle canvas clicks
-    canvas.on('mouse:down', (event) => {
-      if (!event.e || !imageRef.current) return;
-
-      const pointer = canvas.getPointer(event.e);
-      console.log('Canvas clicked at:', pointer);
-      
-      // For now, just select the first available symptom as an example
-      if (availableSymptoms.length > 0 && !selectedSymptom) {
-        const firstSymptom = availableSymptoms[0].Symptoms;
-        setSelectedSymptom(firstSymptom);
-        scrollToSymptom(firstSymptom);
-        setShowConfirmation(true);
-      }
     });
+
+    // Disable canvas interactions - no click handlers
 
     // Enable zoom with mouse wheel
     canvas.on('mouse:wheel', (opt) => {
@@ -177,7 +161,7 @@ const UniversalSymptomSelector = ({
       if (zoom > 3) zoom = 3;
       if (zoom < 0.3) zoom = 0.3;
       
-      canvas.zoomToPoint({ x: opt.e.offsetX, y: opt.e.offsetY }, zoom);
+      canvas.zoomToPoint(new Point(opt.e.offsetX, opt.e.offsetY), zoom);
       setZoomLevel(zoom);
       opt.e.preventDefault();
       opt.e.stopPropagation();
@@ -260,7 +244,7 @@ const UniversalSymptomSelector = ({
   const resetZoom = () => {
     if (fabricCanvasRef.current) {
       fabricCanvasRef.current.setZoom(1);
-      fabricCanvasRef.current.absolutePan({ x: 0, y: 0 });
+      fabricCanvasRef.current.absolutePan(new Point(0, 0));
       setZoomLevel(1);
     }
   };
@@ -321,12 +305,10 @@ const UniversalSymptomSelector = ({
           <div className={`${viewMode === 'column' ? (isFullscreen ? 'w-5/6' : 'w-4/5') : 'w-full'} relative bg-gray-50 select-none`} ref={containerRef}>
             <canvas
               ref={canvasRef}
-              className="w-full h-full cursor-crosshair select-none"
+              className="w-full h-full cursor-default select-none"
               style={{ 
                 userSelect: 'none',
-                WebkitUserSelect: 'none',
-                msUserSelect: 'none',
-                MozUserSelect: 'none'
+                WebkitUserSelect: 'none'
               }}
             />
             

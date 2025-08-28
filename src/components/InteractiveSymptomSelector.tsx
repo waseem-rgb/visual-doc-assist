@@ -733,24 +733,17 @@ const InteractiveSymptomSelector = ({ bodyPart, patientData, onBack }: Interacti
       {/* Fullscreen Universal Selector */}
       {imageUrl && !showClinicalForm ? (
         <UniversalSymptomSelector
-          open={lightboxOpen}
+          isOpen={lightboxOpen}
           onClose={() => setLightboxOpen(false)}
-          imageUrl={imageUrl}
           bodyPart={bodyPart}
-          patientData={patientData}
-          symptoms={symptoms}
-          onSymptomSubmit={handleSymptomSubmit}
+          gender={patientData.gender as 'male' | 'female'}
+          view="front"
+          onSymptomsSelected={(symptoms) => {
+            console.log('Selected symptoms:', symptoms);
+            setLightboxOpen(false);
+          }}
         />
-      ) : (
-        (() => {
-          console.log('🚫 [PARENT DEBUG] UniversalSymptomSelector NOT rendered:', {
-            imageUrl: !!imageUrl,
-            showClinicalForm,
-            renderCondition: !!(imageUrl && !showClinicalForm)
-          });
-          return null;
-        })()
-      )}
+      ) : null}
     </div>
   );
 };
