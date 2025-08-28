@@ -1,6 +1,6 @@
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { fabric } from 'fabric';
+import { Canvas as FabricCanvas, util, FabricImage, Point } from 'fabric';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -39,9 +39,9 @@ const UniversalSymptomSelector = ({
   initialSymptoms = []
 }: UniversalSymptomSelectorProps) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const fabricCanvasRef = useRef<fabric.Canvas | null>(null);
+  const fabricCanvasRef = useRef<FabricCanvas | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const imageRef = useRef<fabric.Image | null>(null);
+  const imageRef = useRef<FabricImage | null>(null);
   const symptomListRef = useRef<HTMLDivElement>(null);
   const symptomRailRef = useRef<HTMLDivElement>(null);
 
@@ -105,7 +105,7 @@ const UniversalSymptomSelector = ({
       fabricCanvasRef.current.dispose();
     }
 
-    const canvas = new fabric.Canvas(canvasRef.current, {
+    const canvas = new FabricCanvas(canvasRef.current, {
       selection: false,
       preserveObjectStacking: true,
       allowTouchScrolling: false,
@@ -116,18 +116,24 @@ const UniversalSymptomSelector = ({
     });
 
     // Disable text selection on canvas
-    canvas.getElement().style.userSelect = 'none';
-    canvas.getElement().style.webkitUserSelect = 'none';
-    canvas.getElement().style.msUserSelect = 'none';
-    canvas.getElement().style.mozUserSelect = 'none';
+    const canvasElement = canvas.getElement() as any;
+    canvasElement.style.userSelect = 'none';
+    canvasElement.style.webkitUserSelect = 'none';
+    if ('msUserSelect' in canvasElement.style) {
+      canvasElement.style.msUserSelect = 'none';
+    }
+    if ('mozUserSelect' in canvasElement.style) {
+      canvasElement.style.mozUserSelect = 'none';
+    }
 
     fabricCanvasRef.current = canvas;
 
     // Load the body image
     const imagePath = getImagePath();
-    fabric.Image.fromURL(imagePath, (img) => {
+    util.loadImage(imagePath, { crossOrigin: 'anonymous' }).then((imgElement) => {
       if (!canvas || !containerRef.current) return;
 
+      const img = new FabricImage(imgElement);
       const containerWidth = containerRef.current.offsetWidth * 0.75;
       const containerHeight = containerRef.current.offsetHeight * 0.9;
       
@@ -150,7 +156,9 @@ const UniversalSymptomSelector = ({
       imageRef.current = img;
       canvas.add(img);
       canvas.renderAll();
-    }, { crossOrigin: 'anonymous' });
+    }).catch((error) => {
+      console.error('Failed to load image:', error);
+    });
 
     // Handle canvas clicks
     canvas.on('mouse:down', (event) => {
@@ -177,7 +185,7 @@ const UniversalSymptomSelector = ({
       if (zoom > 3) zoom = 3;
       if (zoom < 0.3) zoom = 0.3;
       
-      canvas.zoomToPoint({ x: opt.e.offsetX, y: opt.e.offsetY }, zoom);
+      canvas.zoomToPoint(new Point(opt.e.offsetX, opt.e.offsetY), zoom);
       setZoomLevel(zoom);
       opt.e.preventDefault();
       opt.e.stopPropagation();
@@ -260,7 +268,7 @@ const UniversalSymptomSelector = ({
   const resetZoom = () => {
     if (fabricCanvasRef.current) {
       fabricCanvasRef.current.setZoom(1);
-      fabricCanvasRef.current.absolutePan({ x: 0, y: 0 });
+      fabricCanvasRef.current.absolutePan(new Point(0, 0));
       setZoomLevel(1);
     }
   };
