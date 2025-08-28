@@ -172,78 +172,112 @@ const UniversalSymptomSelector = ({
       return;
     }
 
-    // Dispose existing canvas if any
-    if (fabricCanvas && !fabricCanvas.disposed) {
-      try {
-        fabricCanvas.dispose();
-      } catch (error) {
-        console.warn('Canvas disposal error:', error);
+    // Add cleanup flag to prevent race conditions
+    let isCleanedUp = false;
+    let canvas: FabricCanvas | null = null;
+    
+    // Dispose existing canvas if any with proper timing
+    const initializeCanvas = async () => {
+      if (fabricCanvas && !fabricCanvas.disposed) {
+        try {
+          // Set flag first to prevent new operations
+          const oldCanvas = fabricCanvas;
+          setFabricCanvas(null);
+          
+          // Allow React to process the state change
+          await new Promise(resolve => setTimeout(resolve, 0));
+          
+          if (!isCleanedUp) {
+            oldCanvas.dispose();
+          }
+        } catch (error) {
+          console.warn('Canvas disposal error:', error);
+        }
       }
-    }
 
-    const canvas = new FabricCanvas(canvasRef.current, {
-      width: canvasDimensions.width,
-      height: canvasDimensions.height,
-      selection: false,
-      hoverCursor: 'grab',
-      moveCursor: 'grab',
-      defaultCursor: 'grab',
-      backgroundColor: '#f8fafc',
-      enableRetinaScaling: true,
-      interactive: true,
-      allowTouchScrolling: false
-    });
+      if (isCleanedUp) return;
 
-    // Load image into Fabric canvas
-    FabricImage.fromURL(imageUrl, {
-      crossOrigin: 'anonymous'
-    }).then((img) => {
-      // Scale image to fit canvas while maintaining aspect ratio
-      const scaleX = canvasDimensions.width / img.width!;
-      const scaleY = canvasDimensions.height / img.height!;
-      const scale = Math.min(scaleX, scaleY, 1);
-      
-      img.scale(scale);
-      img.set({
-        left: (canvasDimensions.width - img.width! * scale) / 2,
-        top: (canvasDimensions.height - img.height! * scale) / 2,
-        selectable: false,
-        evented: false
+      canvas = new FabricCanvas(canvasRef.current!, {
+        width: canvasDimensions.width,
+        height: canvasDimensions.height,
+        selection: false,
+        hoverCursor: 'grab',
+        moveCursor: 'grab',
+        defaultCursor: 'grab',
+        backgroundColor: '#f8fafc',
+        enableRetinaScaling: true,
+        interactive: true,
+        allowTouchScrolling: false
       });
 
-      canvas.add(img);
-      fabricImageRef.current = img;
-      setImageLoaded(true);
-      imageReadyRef.current = true;
-      
-      // Create the reusable hover circle now that image is ready
-      const hoverCircle = new Circle({
-        radius: 3,
-        fill: 'rgba(59, 130, 246, 0.4)',
-        stroke: '#3b82f6',
-        strokeWidth: 1,
-        selectable: false,
-        evented: false,
-        opacity: 0.9,
-        visible: false
-      });
-      canvas.add(hoverCircle);
-      hoverCircleRef.current = hoverCircle;
-      
-      canvas.renderAll();
-    }).catch((error) => {
-      console.error('Failed to load image:', error);
-      setImageLoaded(false);
-      imageReadyRef.current = false;
-    });
+      if (isCleanedUp) {
+        canvas.dispose();
+        return;
+      }
+
+      // Load image into Fabric canvas
+      try {
+        const img = await FabricImage.fromURL(imageUrl, {
+          crossOrigin: 'anonymous'
+        });
+        
+        if (isCleanedUp) {
+          canvas.dispose();
+          return;
+        }
+
+        // Scale image to fit canvas while maintaining aspect ratio
+        const scaleX = canvasDimensions.width / img.width!;
+        const scaleY = canvasDimensions.height / img.height!;
+        const scale = Math.min(scaleX, scaleY, 1);
+        
+        img.scale(scale);
+        img.set({
+          left: (canvasDimensions.width - img.width! * scale) / 2,
+          top: (canvasDimensions.height - img.height! * scale) / 2,
+          selectable: false,
+          evented: false
+        });
+
+        if (!isCleanedUp) {
+          canvas.add(img);
+          fabricImageRef.current = img;
+          setImageLoaded(true);
+          imageReadyRef.current = true;
+          
+          // Create the reusable hover circle now that image is ready
+          const hoverCircle = new Circle({
+            radius: 3,
+            fill: 'rgba(59, 130, 246, 0.4)',
+            stroke: '#3b82f6',
+            strokeWidth: 1,
+            selectable: false,
+            evented: false,
+            opacity: 0.9,
+            visible: false
+          });
+          canvas.add(hoverCircle);
+          hoverCircleRef.current = hoverCircle;
+          
+          canvas.renderAll();
+        }
+      } catch (error) {
+        console.error('Failed to load image:', error);
+        if (!isCleanedUp) {
+          setImageLoaded(false);
+          imageReadyRef.current = false;
+        }
+      }
+
+      if (isCleanedUp || !canvas) return;
 
     // Handle mouse movement for hover circle
     canvas.on('mouse:move', (event) => {
-      if (!imageReadyRef.current || !fabricImageRef.current || !hoverCircleRef.current || isDragging) {
+      if (!imageReadyRef.current || !fabricImageRef.current || !hoverCircleRef.current || isDragging || isCleanedUp) {
         return;
       }
       
-      const pointer = canvas.getPointer(event.e);
+      const pointer = canvas!.getPointer(event.e);
       
       // Check if pointer is within the image bounds
       const img = fabricImageRef.current;
@@ -268,14 +302,16 @@ const UniversalSymptomSelector = ({
         hoverCircleRef.current.set({ visible: false });
       }
       
-      canvas.renderAll();
+      if (!isCleanedUp) {
+        canvas!.renderAll();
+      }
     });
 
     // Handle mouse leave to hide hover circle
     canvas.on('mouse:out', () => {
-      if (hoverCircleRef.current) {
+      if (hoverCircleRef.current && !isCleanedUp) {
         hoverCircleRef.current.set({ visible: false });
-        canvas.renderAll();
+        canvas!.renderAll();
       }
     });
 
@@ -289,7 +325,7 @@ const UniversalSymptomSelector = ({
     canvas.on('mouse:down', (event) => {
       if (!imageReadyRef.current) return;
       
-      const pointer = canvas.getPointer(event.e);
+      const pointer = canvas!.getPointer(event.e);
       const evt = event.e as MouseEvent;
       
       // Always start potential dragging on left mouse button
@@ -298,7 +334,7 @@ const UniversalSymptomSelector = ({
         dragStartTimeRef.current = Date.now();
         lastPosX = evt.clientX;
         lastPosY = evt.clientY;
-        canvas.setCursor('grab');
+        canvas!.setCursor('grab');
         evt.preventDefault();
       }
     });
@@ -309,7 +345,7 @@ const UniversalSymptomSelector = ({
       
       // Start dragging if mouse is down and moved more than threshold
       if (mouseDown && !isDragging) {
-        const pointer = canvas.getPointer(opt.e);
+        const pointer = canvas!.getPointer(opt.e);
         const movement = Math.sqrt(
           Math.pow(pointer.x - mouseDown.x, 2) + Math.pow(pointer.y - mouseDown.y, 2)
         );
@@ -317,8 +353,8 @@ const UniversalSymptomSelector = ({
         // Start panning if moved more than 5px
         if (movement > 5) {
           isDragging = true;
-          canvas.selection = false;
-          canvas.setCursor('grabbing');
+          canvas!.selection = false;
+          canvas!.setCursor('grabbing');
           setIsPanning(true);
           
           // Close any open popovers when starting to drag
@@ -327,11 +363,11 @@ const UniversalSymptomSelector = ({
       }
       
       if (isDragging) {
-        const vpt = canvas.viewportTransform;
+        const vpt = canvas!.viewportTransform;
         if (vpt) {
           vpt[4] += evt.clientX - lastPosX;
           vpt[5] += evt.clientY - lastPosY;
-          canvas.requestRenderAll();
+          canvas!.requestRenderAll();
           lastPosX = evt.clientX;
           lastPosY = evt.clientY;
         }
@@ -339,12 +375,12 @@ const UniversalSymptomSelector = ({
     });
 
     canvas.on('mouse:up', (event) => {
-      const pointer = canvas.getPointer(event.e);
+      const pointer = canvas!.getPointer(event.e);
       
       if (isDragging) {
         isDragging = false;
-        canvas.selection = true;
-        canvas.setCursor('grab');
+        canvas!.selection = true;
+        canvas!.setCursor('grab');
         setIsPanning(false);
         mouseDownPositionRef.current = null;
         return;
@@ -384,7 +420,7 @@ const UniversalSymptomSelector = ({
         if (clickedRegion) {
           // Remove any existing marker
           if (selectionMarkerRef.current) {
-            canvas.remove(selectionMarkerRef.current);
+            canvas!.remove(selectionMarkerRef.current);
             selectionMarkerRef.current = null;
           }
           
@@ -427,21 +463,25 @@ const UniversalSymptomSelector = ({
     // Handle mouse wheel zoom
     canvas.on('mouse:wheel', (opt) => {
       const delta = opt.e.deltaY;
-      let zoom = canvas.getZoom();
+      let zoom = canvas!.getZoom();
       zoom *= 0.999 ** delta;
       zoom = Math.max(0.5, Math.min(3, zoom)); // Limit zoom range
       
       const point = new Point(opt.e.offsetX, opt.e.offsetY);
-      canvas.zoomToPoint(point, zoom);
+      canvas!.zoomToPoint(point, zoom);
       setZoomLevel(zoom);
       opt.e.preventDefault();
       opt.e.stopPropagation();
     });
 
-    setFabricCanvas(canvas);
+      setFabricCanvas(canvas);
+    };
+
+    initializeCanvas();
 
     // Cleanup function
     return () => {
+      isCleanedUp = true;
       if (canvas && !canvas.disposed) {
         try {
           canvas.dispose();
