@@ -219,13 +219,6 @@ const CustomerDashboard = () => {
             </div>
             
             <div className="flex items-center gap-4">
-              <Button
-                variant="outline"
-                onClick={() => navigate("/consultation")}
-                className="hidden md:flex"
-              >
-                New Consultation
-              </Button>
               <Avatar>
                 <AvatarFallback>
                   <User className="h-4 w-4" />
