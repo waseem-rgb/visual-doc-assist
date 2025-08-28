@@ -18,10 +18,10 @@ interface TextRegion {
   id: string;
   text: string;
   coordinates: {
-    x: number;
-    y: number;
-    width: number;
-    height: number;
+    xPct: number;
+    yPct: number;
+    wPct: number;
+    hPct: number;
   };
 }
 
@@ -97,7 +97,7 @@ const UniversalSymptomSelector = ({
     calculateCanvasDimensions();
   };
 
-  // Reset state when dialog closes
+  // Reset state when dialog closes, imageUrl changes, or bodyPart changes
   useEffect(() => {
     if (!open) {
       setImageLoaded(false);
@@ -111,12 +111,13 @@ const UniversalSymptomSelector = ({
       setShowSymptomPopover(false);
       setClickPosition(null);
       setIsPanning(false);
+      setDetectedText(null);
       if (fabricCanvas) {
         fabricCanvas.dispose();
         setFabricCanvas(null);
       }
     }
-  }, [open]);
+  }, [open, imageUrl, bodyPart]);
 
   // Initialize canvas dimensions on mount and fullscreen toggle
   useEffect(() => {
@@ -183,7 +184,7 @@ const UniversalSymptomSelector = ({
       
       // Create the reusable hover circle now that image is ready
       const hoverCircle = new Circle({
-        radius: 6,
+        radius: 3,
         fill: 'rgba(59, 130, 246, 0.4)',
         stroke: '#3b82f6',
         strokeWidth: 1,
@@ -212,8 +213,8 @@ const UniversalSymptomSelector = ({
       
       // Move the existing hover circle to cursor position
       hoverCircleRef.current.set({
-        left: pointer.x - 6,
-        top: pointer.y - 6,
+        left: pointer.x - 3,
+        top: pointer.y - 3,
         visible: true
       });
       
@@ -236,9 +237,22 @@ const UniversalSymptomSelector = ({
       const canvasElement = canvasRef.current;
       if (!canvasElement) return;
       
-      // Check if click is within any text region
+      // Check if click is within any text region using normalized coordinates
       const clickedRegion = textRegions.find(region => {
-        const { x, y, width, height } = region.coordinates;
+        if (!fabricImageRef.current) return false;
+        
+        const img = fabricImageRef.current;
+        const imgLeft = img.left!;
+        const imgTop = img.top!;
+        const imgWidth = img.width! * img.scaleX!;
+        const imgHeight = img.height! * img.scaleY!;
+        
+        // Convert normalized coordinates to canvas coordinates
+        const x = imgLeft + (region.coordinates.xPct / 100) * imgWidth;
+        const y = imgTop + (region.coordinates.yPct / 100) * imgHeight;
+        const width = (region.coordinates.wPct / 100) * imgWidth;
+        const height = (region.coordinates.hPct / 100) * imgHeight;
+        
         return pointer.x >= x && pointer.x <= x + width && 
                pointer.y >= y && pointer.y <= y + height;
       });
@@ -561,60 +575,6 @@ const UniversalSymptomSelector = ({
             </div>
           </div>
 
-          {/* Right Side - Selected Symptom Display - Hidden to prevent overlay */}
-          <div className={`${isFullscreen ? 'w-0 overflow-hidden' : 'w-0 overflow-hidden'} bg-background border-l flex flex-col`}>
-            {selectedSymptom ? (
-              /* Always show selected symptom with action buttons */
-              <div className="flex-1 p-4 flex flex-col">
-                <Card className="border-primary/50 flex-1">
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-sm text-primary">Selected Symptom</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    <div className="bg-primary/5 p-3 rounded-lg">
-                      <p className="text-sm text-muted-foreground leading-relaxed">
-                        {selectedSymptom.text}
-                      </p>
-                    </div>
-                    
-                    <div className="bg-green-50 p-2 rounded-lg">
-                      <p className="text-xs text-green-700 text-center">
-                        ✓ Location marked on image
-                      </p>
-                    </div>
-                  </CardContent>
-                </Card>
-                
-                {/* Action Buttons - Always Visible */}
-                <div className="mt-4 space-y-2">
-                  <Button 
-                    variant="outline" 
-                    className="w-full"
-                    onClick={handleClearSelection}
-                  >
-                    Clear Selection
-                  </Button>
-                  <Button 
-                    className="w-full"
-                    onClick={handleSubmit}
-                    disabled={!selectedSymptom}
-                  >
-                    Submit Selection to Know Possible Condition
-                  </Button>
-                </div>
-              </div>
-            ) : (
-              /* Placeholder when no symptom selected */
-              <div className="flex-1 p-4 flex items-center justify-center">
-                <div className="text-center text-muted-foreground">
-                  <div className="w-16 h-16 mx-auto mb-4 bg-primary/10 rounded-full flex items-center justify-center">
-                    <div className="w-8 h-8 bg-primary/20 rounded-full"></div>
-                  </div>
-                  <p className="text-sm">Click on the image to select a symptom</p>
-                </div>
-              </div>
-            )}
-          </div>
         </div>
 
         {/* Symptom Selection Popover - Show only if no regions or generic fallback needed */}
