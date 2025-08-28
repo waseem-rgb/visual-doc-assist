@@ -295,7 +295,17 @@ const UniversalSymptomSelector = ({
       }, 100);
       return () => clearTimeout(timer);
     }
-  }, [isOpen, initializeCanvas, isFullscreen]);
+  }, [isOpen, initializeCanvas, isFullscreen, bodyPart, gender, view]);
+
+  // Also reinitialize when fullscreen mode changes
+  useEffect(() => {
+    if (isOpen && fabricCanvasRef.current) {
+      const timer = setTimeout(() => {
+        initializeCanvas();
+      }, 200); // Longer delay for fullscreen transitions
+      return () => clearTimeout(timer);
+    }
+  }, [isFullscreen]);
 
   const handleSymptomClick = (symptom: string) => {
     if (!selectedSymptoms.includes(symptom)) {
