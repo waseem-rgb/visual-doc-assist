@@ -80,11 +80,26 @@ export const fetchSymptomData = async (bodyPart: string): Promise<SymptomContent
       });
     });
 
-    // Create fallback symptoms from the database data
-    const fallbackSymptoms = data.map((item, index) => ({
-      id: `fallback_${index}`,
-      text: item['Short Summary'] || item.Symptoms || 'General symptom'
-    }));
+    // Create fallback symptoms from the database data - prioritize actual symptoms
+    const fallbackSymptoms = data
+      .map((item, index) => {
+        // Prioritize Symptoms column over Short Summary
+        const symptomText = item.Symptoms?.trim() || item['Short Summary']?.trim() || '';
+        console.log(`Fallback symptom ${index}:`, { 
+          symptoms: item.Symptoms, 
+          shortSummary: item['Short Summary'], 
+          finalText: symptomText 
+        });
+        
+        return {
+          id: `fallback_${index}`,
+          text: symptomText || 'General symptom'
+        };
+      })
+      .filter(symptom => symptom.text && symptom.text !== 'General symptom') // Remove empty entries
+      .filter((symptom, index, self) => 
+        index === self.findIndex(s => s.text === symptom.text) // Remove duplicates
+      );
 
     return {
       regions,
