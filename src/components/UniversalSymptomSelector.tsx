@@ -46,12 +46,10 @@ const UniversalSymptomSelector = ({
   ...otherProps
 }: UniversalSymptomSelectorProps) => {
   const isDialogOpen = isOpen || open || false;
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const fabricCanvasRef = useRef<FabricCanvas | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const imageRef = useRef<FabricImage | null>(null);
   const symptomListRef = useRef<HTMLDivElement>(null);
   const symptomRailRef = useRef<HTMLDivElement>(null);
+  const imageRef = useRef<HTMLImageElement>(null);
 
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [selectedSymptoms, setSelectedSymptoms] = useState<string[]>(initialSymptoms);
@@ -59,9 +57,9 @@ const UniversalSymptomSelector = ({
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [isLoadingSymptoms, setIsLoadingSymptoms] = useState(false);
   const [availableSymptoms, setAvailableSymptoms] = useState<SymptomData[]>([]);
-  const [zoomLevel, setZoomLevel] = useState(1);
   const [showOverlays, setShowOverlays] = useState(true);
   const [viewMode, setViewMode] = useState<'column' | 'rail'>('column');
+  const [staticMode] = useState(true); // Static image mode
 
   const { toast } = useToast();
 
@@ -105,97 +103,19 @@ const UniversalSymptomSelector = ({
     }
   }, [isDialogOpen, fetchSymptoms]);
 
-  const initializeCanvas = useCallback(() => {
-    if (!canvasRef.current || !containerRef.current) return;
-
-    // Clean up existing canvas
-    if (fabricCanvasRef.current) {
-      fabricCanvasRef.current.dispose();
+  const handleImageClick = useCallback((event: React.MouseEvent) => {
+    if (!staticMode) return;
+    
+    console.log('Static image clicked');
+    
+    // For now, just select the first available symptom as an example
+    if (availableSymptoms.length > 0 && !selectedSymptom) {
+      const firstSymptom = availableSymptoms[0].Symptoms;
+      setSelectedSymptom(firstSymptom);
+      scrollToSymptom(firstSymptom);
+      setShowConfirmation(true);
     }
-
-    const canvas = new FabricCanvas(canvasRef.current, {
-      selection: false,
-      preserveObjectStacking: true,
-      allowTouchScrolling: false,
-      stopContextMenu: true,
-      fireRightClick: true,
-      controlsAboveOverlay: true,
-      imageSmoothingEnabled: true,
-    });
-
-    // Disable text selection on canvas
-    const canvasElement = canvas.getElement();
-    canvasElement.style.userSelect = 'none';
-    canvasElement.style.webkitUserSelect = 'none';
-    (canvasElement.style as any).msUserSelect = 'none';
-    (canvasElement.style as any).mozUserSelect = 'none';
-
-    fabricCanvasRef.current = canvas;
-
-    // Load the body image
-    const imagePath = getImagePath();
-    FabricImage.fromURL(imagePath).then((img) => {
-      if (!canvas || !containerRef.current) return;
-
-      const containerWidth = containerRef.current.offsetWidth * 0.75;
-      const containerHeight = containerRef.current.offsetHeight * 0.9;
-      
-      const scale = Math.min(
-        containerWidth / (img.width || 1),
-        containerHeight / (img.height || 1)
-      ) * 0.8;
-
-      img.set({
-        left: (containerWidth - (img.width || 0) * scale) / 2,
-        top: (containerHeight - (img.height || 0) * scale) / 2,
-        scaleX: scale,
-        scaleY: scale,
-        selectable: false,
-        evented: false,
-        hoverCursor: 'crosshair',
-        moveCursor: 'crosshair'
-      });
-
-      imageRef.current = img;
-      canvas.add(img);
-      canvas.renderAll();
-    }).catch((error) => {
-      console.error('Failed to load image:', error);
-    });
-
-    // Handle canvas clicks
-    canvas.on('mouse:down', (event) => {
-      if (!event.e || !imageRef.current) return;
-
-      const pointer = canvas.getPointer(event.e);
-      console.log('Canvas clicked at:', pointer);
-      
-      // For now, just select the first available symptom as an example
-      if (availableSymptoms.length > 0 && !selectedSymptom) {
-        const firstSymptom = availableSymptoms[0].Symptoms;
-        setSelectedSymptom(firstSymptom);
-        scrollToSymptom(firstSymptom);
-        setShowConfirmation(true);
-      }
-    });
-
-    // Enable zoom with mouse wheel
-    canvas.on('mouse:wheel', (opt) => {
-      const delta = opt.e.deltaY;
-      let zoom = canvas.getZoom();
-      zoom *= 0.999 ** delta;
-      
-      if (zoom > 3) zoom = 3;
-      if (zoom < 0.3) zoom = 0.3;
-      
-      canvas.zoomToPoint(new Point(opt.e.offsetX, opt.e.offsetY), zoom);
-      setZoomLevel(zoom);
-      opt.e.preventDefault();
-      opt.e.stopPropagation();
-    });
-
-    return canvas;
-  }, [getImagePath, availableSymptoms, selectedSymptom]);
+  }, [staticMode, availableSymptoms, selectedSymptom]);
 
   const scrollToSymptom = (symptom: string) => {
     // Scroll in column view
@@ -215,14 +135,7 @@ const UniversalSymptomSelector = ({
     }
   };
 
-  useEffect(() => {
-    if (isDialogOpen && canvasRef.current) {
-      const timer = setTimeout(() => {
-        initializeCanvas();
-      }, 100);
-      return () => clearTimeout(timer);
-    }
-  }, [isDialogOpen, initializeCanvas, isFullscreen]);
+  // No canvas initialization needed in static mode
 
   const handleSymptomClick = (symptom: string) => {
     setSelectedSymptom(symptom);
@@ -252,35 +165,9 @@ const UniversalSymptomSelector = ({
     });
   };
 
-  const handleZoomIn = () => {
-    if (fabricCanvasRef.current) {
-      const newZoom = Math.min(zoomLevel * 1.2, 3);
-      fabricCanvasRef.current.setZoom(newZoom);
-      setZoomLevel(newZoom);
-    }
-  };
-
-  const handleZoomOut = () => {
-    if (fabricCanvasRef.current) {
-      const newZoom = Math.max(zoomLevel * 0.8, 0.3);
-      fabricCanvasRef.current.setZoom(newZoom);
-      setZoomLevel(newZoom);
-    }
-  };
-
-  const resetZoom = () => {
-    if (fabricCanvasRef.current) {
-      fabricCanvasRef.current.setZoom(1);
-      fabricCanvasRef.current.absolutePan(new Point(0, 0));
-      setZoomLevel(1);
-    }
-  };
+  // Zoom controls removed for static mode
 
   const handleClose = () => {
-    if (fabricCanvasRef.current) {
-      fabricCanvasRef.current.dispose();
-      fabricCanvasRef.current = null;
-    }
     onClose();
   };
 
@@ -328,35 +215,22 @@ const UniversalSymptomSelector = ({
         </DialogHeader>
 
         <div className="flex-1 flex min-h-0 overflow-hidden">
-          {/* Left Side - Canvas */}
-          <div className={`${viewMode === 'column' ? (isFullscreen ? 'w-5/6' : 'w-4/5') : 'w-full'} relative bg-gray-50 select-none`} ref={containerRef}>
-            <canvas
-              ref={canvasRef}
-              className="w-full h-full cursor-crosshair select-none"
-              style={{ 
-                userSelect: 'none',
-                WebkitUserSelect: 'none',
-                msUserSelect: 'none',
-                MozUserSelect: 'none'
-              }}
-            />
-            
-            {/* Canvas Controls */}
-            <div className="absolute top-4 left-4 flex flex-col gap-2 bg-white/90 backdrop-blur-sm rounded-lg p-2 shadow-lg">
-              <Button variant="outline" size="sm" onClick={handleZoomIn}>
-                <ZoomIn className="h-4 w-4" />
-              </Button>
-              <Button variant="outline" size="sm" onClick={handleZoomOut}>
-                <ZoomOut className="h-4 w-4" />
-              </Button>
-              <Button variant="outline" size="sm" onClick={resetZoom}>
-                <RotateCcw className="h-4 w-4" />
-              </Button>
-            </div>
-
-            {/* Zoom Level Indicator */}
-            <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm rounded-lg px-3 py-1 text-sm font-medium shadow-lg">
-              {Math.round(zoomLevel * 100)}%
+          {/* Left Side - Static Image */}
+          <div className={`${viewMode === 'column' ? (isFullscreen ? 'w-3/4' : 'w-3/4') : 'w-full'} relative bg-gray-50 select-none h-full`} ref={containerRef}>
+            <div className="w-full h-full flex items-center justify-center p-4">
+              <img
+                ref={imageRef}
+                src={getImagePath()}
+                alt={`${bodyPart} ${view} view`}
+                className="max-w-full max-h-full object-contain cursor-crosshair select-none"
+                onClick={handleImageClick}
+                style={{ 
+                  userSelect: 'none',
+                  WebkitUserSelect: 'none',
+                  msUserSelect: 'none',
+                  MozUserSelect: 'none'
+                }}
+              />
             </div>
 
             {/* Confirmation Popup */}
@@ -394,7 +268,7 @@ const UniversalSymptomSelector = ({
 
           {/* Right Side - Symptom List (Column View) */}
           {viewMode === 'column' && (
-            <div className={`${isFullscreen ? 'w-1/6' : 'w-1/5'} bg-background border-l border-border flex flex-col min-h-0`}>
+            <div className={`${isFullscreen ? 'w-1/4' : 'w-1/4'} bg-background border-l border-border flex flex-col h-full`}>
               <div className="p-4 border-b border-border flex-shrink-0">
                 <h3 className="text-lg font-semibold text-foreground mb-2">Available Symptoms</h3>
                 <p className="text-sm text-muted-foreground">
