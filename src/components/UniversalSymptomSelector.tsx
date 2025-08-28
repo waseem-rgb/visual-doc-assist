@@ -77,12 +77,6 @@ const UniversalSymptomSelector = ({
   const textRegions = symptomContentData?.regions || [];
   const hasRegions = textRegions.length > 0;
 
-  // Toggle fullscreen
-  const toggleFullscreen = () => {
-    setIsFullscreen(prev => !prev);
-    calculateCanvasDimensions();
-  };
-
   // Calculate canvas dimensions based on screen size
   const calculateCanvasDimensions = () => {
     const availableWidth = isFullscreen ? window.innerWidth * 0.65 : Math.min(800, window.innerWidth * 0.6);
@@ -92,6 +86,12 @@ const UniversalSymptomSelector = ({
       width: Math.round(availableWidth),
       height: Math.round(availableHeight)
     });
+  };
+
+  // Toggle fullscreen
+  const toggleFullscreen = () => {
+    setIsFullscreen(prev => !prev);
+    calculateCanvasDimensions();
   };
 
   // Reset state when dialog closes
