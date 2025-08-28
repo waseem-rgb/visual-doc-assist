@@ -9,20 +9,22 @@ export const generateImageFilenames = (bodyPart: string): string[] => {
   const bodyPartLower = bodyPart.toLowerCase().trim();
   
   return [
-    // Exact match format as seen in storage: "EAR HEARING.png"
+    // Exact match format as seen in storage: "EYE VISION.png"
     `${bodyPartUpper}.png`,
     `${bodyPartUpper}.jpg`,
     
-    // Alternative formats just in case
-    `${bodyPart}.png`, // Original case
+    // Handle spaces in body part names (this was missing!)
+    `${bodyPart}.png`, // Original case with spaces
     `${bodyPart}.jpg`,
+    
+    // Alternative formats
     `${bodyPartLower}.png`,
     `${bodyPartLower}.jpg`,
-    `${bodyPartLower.replace(/\s+/g, '_')}.png`, // ear_hearing.png
+    `${bodyPartLower.replace(/\s+/g, '_')}.png`, // eye_vision.png
     `${bodyPartLower.replace(/\s+/g, '_')}.jpg`,
-    `${bodyPartLower.replace(/\s+/g, '-')}.png`, // ear-hearing.png  
+    `${bodyPartLower.replace(/\s+/g, '-')}.png`, // eye-vision.png  
     `${bodyPartLower.replace(/\s+/g, '-')}.jpg`,
-    `${bodyPartUpper.replace(/\s+/g, '_')}.png`, // EAR_HEARING.png
+    `${bodyPartUpper.replace(/\s+/g, '_')}.png`, // EYE_VISION.png
     `${bodyPartUpper.replace(/\s+/g, '_')}.jpg`,
   ];
 };
