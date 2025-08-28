@@ -165,13 +165,13 @@ const UniversalSymptomSelector = ({
       
       // Create the reusable hover circle now that image is ready
       const hoverCircle = new Circle({
-        radius: 15,
-        fill: 'rgba(59, 130, 246, 0.3)',
+        radius: 6,
+        fill: 'rgba(59, 130, 246, 0.4)',
         stroke: '#3b82f6',
-        strokeWidth: 2,
+        strokeWidth: 1,
         selectable: false,
         evented: false,
-        opacity: 0.8,
+        opacity: 0.9,
         visible: false
       });
       canvas.add(hoverCircle);
@@ -194,8 +194,8 @@ const UniversalSymptomSelector = ({
       
       // Move the existing hover circle to cursor position
       hoverCircleRef.current.set({
-        left: pointer.x - 15,
-        top: pointer.y - 15,
+        left: pointer.x - 6,
+        top: pointer.y - 6,
         visible: true
       });
       
@@ -475,7 +475,7 @@ const UniversalSymptomSelector = ({
           </div>
 
           {/* Right Side - Selected Symptom Display */}
-          <div className={`${isFullscreen ? 'w-1/3' : 'w-96'} bg-background border-l flex flex-col`}>
+          <div className={`${isFullscreen ? 'w-80' : 'w-80'} bg-background border-l flex flex-col`}>
             {selectedSymptom ? (
               /* Always show selected symptom with action buttons */
               <div className="flex-1 p-4 flex flex-col">
