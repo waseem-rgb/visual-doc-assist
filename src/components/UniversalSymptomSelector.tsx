@@ -36,130 +36,95 @@ const UniversalSymptomSelector = ({
   onSymptomSubmit
 }: UniversalSymptomSelectorProps) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const imageRef = useRef<HTMLImageElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const [fabricCanvas, setFabricCanvas] = useState<FabricCanvas | null>(null);
   const [selectedSymptom, setSelectedSymptom] = useState<SymptomItem | null>(null);
   const [hoveredSymptom, setHoveredSymptom] = useState<string | null>(null);
   const [highlightCircle, setHighlightCircle] = useState<Circle | null>(null);
   const [zoomLevel, setZoomLevel] = useState(1);
+  const [imageLoaded, setImageLoaded] = useState(false);
+  const [imageDimensions, setImageDimensions] = useState({ width: 0, height: 0 });
 
-  // Initialize Fabric.js canvas
+  // Initialize image and overlay canvas
   useEffect(() => {
-    if (!canvasRef.current || !open || !imageUrl) {
-      console.log('Canvas initialization skipped:', { canvasRef: !!canvasRef.current, open, imageUrl });
+    if (!open || !imageUrl || !containerRef.current) {
+      console.log('Image initialization skipped:', { open, imageUrl, container: !!containerRef.current });
       return;
     }
 
-    console.log('🎨 Initializing Fabric canvas with imageUrl:', imageUrl);
+    console.log('🖼️ Loading image:', imageUrl);
+    setImageLoaded(false);
 
-    const canvas = new FabricCanvas(canvasRef.current, {
-      width: Math.min(window.innerWidth * 0.7, 1000),
-      height: Math.min(window.innerHeight * 0.8, 700),
-      selection: false,
-      hoverCursor: 'pointer',
-      moveCursor: 'pointer',
-      backgroundColor: '#f8f9fa'
-    });
-
-    console.log('📏 Canvas created with dimensions:', canvas.width, 'x', canvas.height);
-
-    // Simple direct image loading approach
-    const loadImage = async () => {
-      try {
-        console.log('🔄 Starting image load from:', imageUrl);
-        
-        // Create Fabric Image directly from the blob URL
-        const fabricImg = await FabricImage.fromURL(imageUrl);
-        console.log('✅ Fabric image created successfully, original dimensions:', fabricImg.width, 'x', fabricImg.height);
-        
-        // Calculate scaling to fit canvas
-        const canvasWidth = canvas.width!;
-        const canvasHeight = canvas.height!;
-        const imgWidth = fabricImg.width!;
-        const imgHeight = fabricImg.height!;
-        
-        const scaleX = canvasWidth / imgWidth;
-        const scaleY = canvasHeight / imgHeight;
-        const scale = Math.min(scaleX, scaleY) * 0.95; // Leave 5% margin
-        
-        console.log('📐 Scaling factor:', scale);
-        
-        // Apply scaling and positioning
-        fabricImg.set({
-          scaleX: scale,
-          scaleY: scale,
-          left: (canvasWidth - imgWidth * scale) / 2,
-          top: (canvasHeight - imgHeight * scale) / 2,
-          selectable: false,
-          evented: false
+    // Create and load the image
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    
+    img.onload = () => {
+      console.log('✅ Image loaded successfully:', img.naturalWidth, 'x', img.naturalHeight);
+      setImageDimensions({ width: img.naturalWidth, height: img.naturalHeight });
+      setImageLoaded(true);
+      
+      // Initialize canvas after image is loaded
+      if (canvasRef.current) {
+        const canvas = new FabricCanvas(canvasRef.current, {
+          width: img.naturalWidth,
+          height: img.naturalHeight,
+          selection: false,
+          hoverCursor: 'pointer',
+          moveCursor: 'pointer',
+          backgroundColor: 'transparent'
         });
-        
-        // Set as background
-        canvas.backgroundImage = fabricImg;
-        canvas.renderAll();
-        console.log('🖼️ Background image set and rendered successfully');
-        
-      } catch (error) {
-        console.error('❌ Error loading image into Fabric:', error);
-        
-        // Fallback: try adding as regular object instead of background
-        try {
-          console.log('🔄 Trying fallback approach...');
-          const fabricImg = await FabricImage.fromURL(imageUrl);
-          fabricImg.set({
-            left: 0,
-            top: 0,
+
+        // Handle canvas clicks to place markers
+        canvas.on('mouse:down', (event) => {
+          if (!selectedSymptom) return;
+
+          const pointer = canvas.getPointer(event.e);
+          
+          // Remove existing highlight circle
+          if (highlightCircle) {
+            canvas.remove(highlightCircle);
+          }
+
+          // Create selection marker
+          const circle = new Circle({
+            left: pointer.x - 12,
+            top: pointer.y - 12,
+            radius: 12,
+            fill: 'rgba(34, 197, 94, 0.8)',
+            stroke: '#ffffff',
+            strokeWidth: 3,
             selectable: false,
             evented: false
           });
-          canvas.add(fabricImg);
+
+          canvas.add(circle);
+          setHighlightCircle(circle);
           canvas.renderAll();
-          console.log('✅ Fallback image load successful');
-        } catch (fallbackError) {
-          console.error('❌ Fallback also failed:', fallbackError);
-        }
+        });
+
+        setFabricCanvas(canvas);
       }
     };
-
-    loadImage();
-
-    // Handle canvas clicks to place markers
-    canvas.on('mouse:down', (event) => {
-      if (!selectedSymptom) return;
-
-      const pointer = canvas.getPointer(event.e);
-      
-      // Remove existing highlight circle
-      if (highlightCircle) {
-        canvas.remove(highlightCircle);
-      }
-
-      // Create selection marker
-      const circle = new Circle({
-        left: pointer.x - 10,
-        top: pointer.y - 10,
-        radius: 12,
-        fill: 'rgba(34, 197, 94, 0.8)',
-        stroke: '#ffffff',
-        strokeWidth: 3,
-        selectable: false,
-        evented: false
-      });
-
-      canvas.add(circle);
-      setHighlightCircle(circle);
-      canvas.renderAll();
-    });
-
-    setFabricCanvas(canvas);
+    
+    img.onerror = (error) => {
+      console.error('❌ Failed to load image:', error);
+      setImageLoaded(false);
+    };
+    
+    img.src = imageUrl;
 
     return () => {
-      canvas.dispose();
+      if (fabricCanvas) {
+        fabricCanvas.dispose();
+      }
     };
   }, [open, imageUrl]);
 
   // Handle zoom controls
   const handleZoom = (direction: 'in' | 'out' | 'reset') => {
-    if (!fabricCanvas) return;
+    if (!containerRef.current) return;
 
     let newZoom = zoomLevel;
     if (direction === 'in') {
@@ -170,9 +135,11 @@ const UniversalSymptomSelector = ({
       newZoom = 1;
     }
 
-    fabricCanvas.setZoom(newZoom);
     setZoomLevel(newZoom);
-    fabricCanvas.renderAll();
+    
+    // Apply zoom to container
+    const container = containerRef.current;
+    container.style.transform = `scale(${newZoom})`;
   };
 
   // Handle symptom selection from list
@@ -253,9 +220,51 @@ const UniversalSymptomSelector = ({
             </div>
 
             {/* Canvas Container */}
-            <div className="flex items-center justify-center h-full pt-16 pb-4">
-              <div className="border-2 border-gray-200 rounded-lg shadow-lg bg-white">
-                <canvas ref={canvasRef} className="rounded-lg" />
+            <div className="flex items-center justify-center h-full pt-16 pb-4 overflow-auto">
+              <div 
+                ref={containerRef}
+                className="relative border-2 border-gray-200 rounded-lg shadow-lg bg-white"
+                style={{ 
+                  transformOrigin: 'center',
+                  transition: 'transform 0.2s ease-in-out'
+                }}
+              >
+                {/* Background Image */}
+                {imageUrl && (
+                  <img
+                    ref={imageRef}
+                    src={imageUrl}
+                    alt={`${bodyPart} symptom diagram`}
+                    className="block max-w-none"
+                    style={{
+                      width: imageDimensions.width || 'auto',
+                      height: imageDimensions.height || 'auto',
+                      display: imageLoaded ? 'block' : 'none'
+                    }}
+                  />
+                )}
+                
+                {/* Loading State */}
+                {!imageLoaded && (
+                  <div className="flex items-center justify-center w-96 h-96 bg-gray-100">
+                    <div className="text-center">
+                      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+                      <p className="text-sm text-muted-foreground">Loading image...</p>
+                    </div>
+                  </div>
+                )}
+                
+                {/* Overlay Canvas for Markers */}
+                {imageLoaded && (
+                  <canvas 
+                    ref={canvasRef}
+                    className="absolute top-0 left-0 pointer-events-auto"
+                    style={{
+                      width: imageDimensions.width,
+                      height: imageDimensions.height
+                    }}
+                  />
+                )}
               </div>
             </div>
 
