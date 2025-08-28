@@ -57,11 +57,11 @@ const UniversalSymptomSelector = ({
 
   const { toast } = useToast();
 
-  const getImagePath = useCallback(() => {
-    const fileName = `${bodyPart}-${view}-${gender}.jpg`;
-    const { data } = supabase.storage.from('Symptom_Images').getPublicUrl(fileName);
-    return data.publicUrl;
-  }, [bodyPart, view, gender]);
+  const getImagePath = useCallback(async () => {
+    const { loadImageFromStorage } = await import('@/lib/storageUtils');
+    const result = await loadImageFromStorage(bodyPart, 'Symptom_Images');
+    return result.url;
+  }, [bodyPart]);
 
   const fetchSymptoms = useCallback(async () => {
     if (!bodyPart) return;
@@ -98,7 +98,7 @@ const UniversalSymptomSelector = ({
     }
   }, [isOpen, fetchSymptoms]);
 
-  const initializeCanvas = useCallback(() => {
+  const initializeCanvas = useCallback(async () => {
     if (!canvasRef.current || !containerRef.current) return;
 
     // Clean up existing canvas
@@ -106,7 +106,13 @@ const UniversalSymptomSelector = ({
       fabricCanvasRef.current.dispose();
     }
 
+    // Set canvas dimensions to match container
+    const containerWidth = containerRef.current.offsetWidth;
+    const containerHeight = containerRef.current.offsetHeight;
+
     const canvas = new FabricCanvas(canvasRef.current, {
+      width: containerWidth,
+      height: containerHeight,
       selection: false,
       preserveObjectStacking: true,
       allowTouchScrolling: false,
@@ -127,35 +133,41 @@ const UniversalSymptomSelector = ({
     fabricCanvasRef.current = canvas;
 
     // Load the body image
-    const imagePath = getImagePath();
-    FabricImage.fromURL(imagePath, { crossOrigin: 'anonymous' }).then((img) => {
-      if (!canvas || !containerRef.current) return;
+    try {
+      const imagePath = await getImagePath();
+      if (imagePath) {
+        FabricImage.fromURL(imagePath, { crossOrigin: 'anonymous' }).then((img) => {
+          if (!canvas || !containerRef.current) return;
 
-      const containerWidth = containerRef.current.offsetWidth * 0.75;
-      const containerHeight = containerRef.current.offsetHeight * 0.9;
-      
-      const scale = Math.min(
-        containerWidth / (img.width || 1),
-        containerHeight / (img.height || 1)
-      ) * 0.8;
+          const maxWidth = containerWidth * 0.9;
+          const maxHeight = containerHeight * 0.9;
+          
+          const scale = Math.min(
+            maxWidth / (img.width || 1),
+            maxHeight / (img.height || 1)
+          );
 
-      img.set({
-        left: (containerWidth - (img.width || 0) * scale) / 2,
-        top: (containerHeight - (img.height || 0) * scale) / 2,
-        scaleX: scale,
-        scaleY: scale,
-        selectable: false,
-        evented: false,
-        hoverCursor: 'crosshair',
-        moveCursor: 'crosshair'
-      });
+          img.set({
+            left: (containerWidth - (img.width || 0) * scale) / 2,
+            top: (containerHeight - (img.height || 0) * scale) / 2,
+            scaleX: scale,
+            scaleY: scale,
+            selectable: false,
+            evented: false,
+            hoverCursor: 'crosshair',
+            moveCursor: 'crosshair'
+          });
 
-      imageRef.current = img;
-      canvas.add(img);
-      canvas.renderAll();
-    }).catch((error) => {
-      console.error('Error loading image:', error);
-    });
+          imageRef.current = img;
+          canvas.add(img);
+          canvas.renderAll();
+        }).catch((error) => {
+          console.error('Error loading image:', error);
+        });
+      }
+    } catch (error) {
+      console.error('Error getting image path:', error);
+    }
 
     // Handle canvas clicks - disabled for now to focus on list selection
     canvas.on('mouse:down', (event) => {
@@ -182,7 +194,7 @@ const UniversalSymptomSelector = ({
     });
 
     return canvas;
-  }, [getImagePath, availableSymptoms, selectedSymptom]);
+  }, [getImagePath]);
 
   const scrollToSymptom = (symptom: string) => {
     // Scroll in column view
