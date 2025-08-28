@@ -59,10 +59,12 @@ const UniversalSymptomSelector = ({
 
   const getImagePath = useCallback(async () => {
     try {
-      // Map body parts to local asset filenames
-      const bodyPartMap = {
+      console.log(`🔍 Looking for image for bodyPart: "${bodyPart}", gender: "${gender}"`);
+      
+      // Map body parts to local asset filenames based on actual files in assets
+      const bodyPartMap: Record<string, string> = {
         'HEAD': 'head',
-        'CHEST': 'chest',
+        'CHEST': 'chest', 
         'UPPER ABDOMEN': 'abdomen',
         'LOWER ABDOMEN': 'abdomen',
         'ABDOMEN': 'abdomen',
@@ -71,51 +73,51 @@ const UniversalSymptomSelector = ({
       };
       
       // Get the base name for the body part
-      const baseName = bodyPartMap[bodyPart.toUpperCase()] || 'body-diagram';
+      const baseName = bodyPartMap[bodyPart.toUpperCase()] || bodyPartMap[bodyPart] || 'body-diagram';
+      console.log(`📋 Mapped "${bodyPart}" to base name: "${baseName}"`);
       
       // Determine gender suffix
       const genderSuffix = gender === 'female' ? 'female' : 'male';
       
-      // Try different image variations
+      // Try different image variations based on existing assets
       const imageVariations = [
         `${baseName}-front-${genderSuffix}`,
+        `${baseName}-back-${genderSuffix}`,
         `${baseName}-front-detailed`,
-        `${baseName}-${genderSuffix}`,
-        `${baseName}-detailed`,
-        'body-diagram-front',
-        'body-front-realistic'
+        `${baseName}-back-detailed`,
+        'body-front-realistic',
+        'body-diagram-front'
       ];
       
       for (const variation of imageVariations) {
-        try {
-          // Try .jpg first, then .png
-          const extensions = ['jpg', 'png'];
-          for (const ext of extensions) {
+        // Try .jpg first, then .png
+        const extensions = ['jpg', 'png'];
+        for (const ext of extensions) {
+          try {
             const imagePath = `/src/assets/${variation}.${ext}`;
             console.log(`🔍 Trying image: ${imagePath}`);
             
-            // Test if image exists by trying to create an Image object
-            const img = new Image();
-            img.crossOrigin = 'anonymous';
-            
-            const imageExists = await new Promise<boolean>((resolve) => {
-              img.onload = () => resolve(true);
-              img.onerror = () => resolve(false);
-              img.src = imagePath;
-            });
-            
-            if (imageExists) {
+            // Import the image to verify it exists
+            const imageModule = await import(/* @vite-ignore */ imagePath);
+            if (imageModule.default) {
               console.log(`✅ Found image: ${imagePath}`);
-              return imagePath;
+              return imageModule.default;
             }
+          } catch (error) {
+            // Image doesn't exist, continue to next variation
+            continue;
           }
-        } catch (error) {
-          console.log(`❌ Failed to load ${variation}`);
         }
       }
       
+      // Final fallback
       console.log('🔄 Using fallback image');
-      return '/src/assets/body-diagram-front.png';
+      try {
+        const fallbackImage = await import('/src/assets/body-diagram-front.png');
+        return fallbackImage.default;
+      } catch {
+        return '/src/assets/body-diagram-front.png';
+      }
       
     } catch (error) {
       console.error('❌ Error in getImagePath:', error);
