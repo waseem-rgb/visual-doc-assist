@@ -83,6 +83,7 @@ const InteractiveSymptomSelector = ({ bodyPart, patientData, onBack }: Interacti
       setImageError(null);
       console.log(`🎯 [IMAGE FETCH START] Fetching image for: "${bodyPart}"`);
       console.log(`📍 [BODY PART INFO] Original: "${bodyPart}", Length: ${bodyPart.length}, Trimmed: "${bodyPart.trim()}"`);
+      console.log(`🔧 [LOADING STATE] Setting loading to true, imageError to null`);
       
       // Clean up previous blob URL if it exists (only blob URLs need cleanup now)
       if (blobUrlRef.current && blobUrlRef.current.startsWith('blob:')) {
@@ -98,6 +99,7 @@ const InteractiveSymptomSelector = ({ bodyPart, patientData, onBack }: Interacti
       console.log(`🔍 [STARTING SEARCH] About to call loadImageFromStorage for "${bodyPart}"`);
       const result = await loadImageFromStorage(bodyPart, 'Symptom_Images');
       console.log(`📋 [SEARCH RESULT]`, result);
+      console.log(`✅ [RESULT CHECK] result.url: ${result.url ? 'EXISTS' : 'NULL'}, result.filename: ${result.filename || 'NULL'}`);
       
       if (result.url && result.filename) {
         console.log(`✅ [IMAGE SUCCESS] Setting image URL:`, result.url.substring(0, 100) + '...');
