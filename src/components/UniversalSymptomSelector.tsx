@@ -170,6 +170,7 @@ const UniversalSymptomSelector = ({
 
     // Create hover circle that follows cursor
     const createHoverCircle = () => {
+      console.log('🔍 Creating hover circle');
       return new Circle({
         radius: 15,
         fill: 'rgba(59, 130, 246, 0.3)',
@@ -183,9 +184,13 @@ const UniversalSymptomSelector = ({
 
     // Handle mouse movement for hover circle
     canvas.on('mouse:move', (event) => {
-      if (!imageLoaded) return;
+      if (!imageLoaded || !fabricImageRef.current) {
+        console.log('🔍 Mouse move - not ready:', { imageLoaded, hasImage: !!fabricImageRef.current });
+        return;
+      }
       
       const pointer = canvas.getPointer(event.e);
+      console.log('🔍 Mouse move at:', pointer.x, pointer.y);
       
       // Remove existing hover circle
       if (hoverCircleRef.current) {
@@ -200,9 +205,9 @@ const UniversalSymptomSelector = ({
       });
       
       canvas.add(newHoverCircle);
-      // No need to move to front as hover circle is added last
       hoverCircleRef.current = newHoverCircle;
       canvas.renderAll();
+      console.log('🔍 Hover circle created and added');
     });
 
     // Handle mouse leave to remove hover circle
