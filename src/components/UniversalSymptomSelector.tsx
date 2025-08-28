@@ -36,8 +36,6 @@ const UniversalSymptomSelector = ({
   symptoms,
   onSymptomSubmit
 }: UniversalSymptomSelectorProps) => {
-  console.log('🚀 UniversalSymptomSelector rendering, open:', open, 'imageUrl:', imageUrl);
-  
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const hoverCircleRef = useRef<Circle | null>(null);
@@ -121,20 +119,15 @@ const UniversalSymptomSelector = ({
 
   // Initialize Fabric canvas and load image
   useEffect(() => {
-    console.log('🎯 Canvas useEffect triggered:', { open, canvasRef: !!canvasRef.current, dimensions: canvasDimensions });
-    
     if (!open || !canvasRef.current || canvasDimensions.width === 0 || canvasDimensions.height === 0) {
-      console.log('🎯 Canvas useEffect early return');
       return;
     }
 
     // Dispose existing canvas if any
     if (fabricCanvas) {
-      console.log('🎯 Disposing existing canvas');
       fabricCanvas.dispose();
     }
 
-    console.log('🎯 Creating new Fabric canvas');
     const canvas = new FabricCanvas(canvasRef.current, {
       width: canvasDimensions.width,
       height: canvasDimensions.height,
@@ -148,28 +141,10 @@ const UniversalSymptomSelector = ({
       allowTouchScrolling: false
     });
 
-    console.log('🎯 Canvas created successfully:', canvas);
-
-    console.log('🎨 Canvas initialized with dimensions:', canvasDimensions.width, 'x', canvasDimensions.height);
-    console.log('🎨 Canvas element:', canvasRef.current);
-    
-    // Test if canvas is receiving events
-    canvas.on('mouse:over', () => {
-      console.log('🎨 Mouse entered canvas');
-    });
-    
-    canvas.on('mouse:out', () => {
-      console.log('🎨 Mouse left canvas');
-    });
-
-    console.log('🎨 Canvas initialized:', canvasDimensions.width, 'x', canvasDimensions.height);
-
     // Load image into Fabric canvas
     FabricImage.fromURL(imageUrl, {
       crossOrigin: 'anonymous'
     }).then((img) => {
-      console.log('✅ Image loaded into Fabric:', img.width, 'x', img.height);
-      
       // Scale image to fit canvas while maintaining aspect ratio
       const scaleX = canvasDimensions.width / img.width!;
       const scaleY = canvasDimensions.height / img.height!;
@@ -203,9 +178,8 @@ const UniversalSymptomSelector = ({
       hoverCircleRef.current = hoverCircle;
       
       canvas.renderAll();
-      console.log('✅ Image added to canvas and hover circle created');
     }).catch((error) => {
-      console.error('❌ Failed to load image into Fabric:', error);
+      console.error('Failed to load image:', error);
       setImageLoaded(false);
       imageReadyRef.current = false;
     });
@@ -252,9 +226,6 @@ const UniversalSymptomSelector = ({
         y: rect.top + pointer.y + window.scrollY
       });
       setShowSymptomPopover(true);
-      
-      console.log('✅ Click detected at canvas:', pointer.x, pointer.y);
-      console.log('✅ Popover position:', rect.left + pointer.x, rect.top + pointer.y);
     });
 
     // Handle panning with space key or middle mouse
@@ -375,7 +346,6 @@ const UniversalSymptomSelector = ({
     // No need to move to front as marker is added last
     setHighlightCircle(circle);
     fabricCanvas.renderAll();
-    console.log('✅ Symptom selected and marker placed:', symptom.text);
   };
 
   // Submit selection
@@ -385,7 +355,6 @@ const UniversalSymptomSelector = ({
         id: selectedSymptom.id,
         text: selectedSymptom.text
       });
-      console.log('✅ Symptom submitted:', selectedSymptom.text);
     }
   };
 
@@ -398,7 +367,6 @@ const UniversalSymptomSelector = ({
       setHighlightCircle(null);
       fabricCanvas.renderAll();
     }
-    console.log('✅ Selection cleared');
   };
 
   return (
@@ -465,14 +433,15 @@ const UniversalSymptomSelector = ({
             <div className="flex items-center justify-center h-full pt-16 pb-4">
               <div 
                 ref={containerRef}
-                className="border-2 border-gray-200 rounded-lg shadow-lg bg-white inline-block select-none"
+                className="border-2 border-gray-200 rounded-lg shadow-lg bg-white inline-block select-none relative"
+                style={{ 
+                  width: canvasDimensions.width, 
+                  height: canvasDimensions.height 
+                }}
               >
-                {/* Loading State */}
+                {/* Loading Overlay */}
                 {!imageLoaded && (
-                  <div className="flex items-center justify-center bg-gray-100" style={{ 
-                    width: canvasDimensions.width, 
-                    height: canvasDimensions.height 
-                  }}>
+                  <div className="absolute inset-0 flex items-center justify-center bg-gray-100 z-10">
                     <div className="text-center">
                       <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
                       <p className="text-sm text-muted-foreground">Loading image...</p>
@@ -480,13 +449,12 @@ const UniversalSymptomSelector = ({
                   </div>
                 )}
                 
-                {/* Fabric Canvas */}
+                {/* Fabric Canvas - Always rendered */}
                 <canvas 
                   ref={canvasRef}
                   className="block cursor-crosshair"
-                  style={{
-                    display: imageLoaded ? 'block' : 'none'
-                  }}
+                  width={canvasDimensions.width}
+                  height={canvasDimensions.height}
                 />
               </div>
             </div>
