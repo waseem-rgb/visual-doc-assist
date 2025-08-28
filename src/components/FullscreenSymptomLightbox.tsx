@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { X, ZoomIn, ZoomOut } from "lucide-react";
 import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
 
@@ -76,7 +76,7 @@ const FullscreenSymptomLightbox = ({
     }
   }, [zoomLevel]);
 
-  // Ultra-fast mouse movement handler
+  // Ultra-fast mouse movement handler with immediate response
   const handleMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
     if (!imageRef.current || selectedSymptom) return;
     
@@ -85,8 +85,28 @@ const FullscreenSymptomLightbox = ({
     const y = e.clientY - imageRect.top;
     
     setCursorPosition({ x, y });
-    checkTextAreaIntersection(x, y);
-  }, [selectedSymptom]);
+    
+    // Immediate intersection check
+    let hoveredArea = null;
+    for (const area of textAreas) {
+      // Use percentage-based coordinates that work with any image size
+      const leftPercent = area.x / 800;
+      const topPercent = area.y / 600;
+      const rightPercent = (area.x + area.width) / 800;
+      const bottomPercent = (area.y + area.height) / 600;
+      
+      const left = leftPercent * imageRect.width;
+      const top = topPercent * imageRect.height;
+      const right = rightPercent * imageRect.width;
+      const bottom = bottomPercent * imageRect.height;
+      
+      if (x >= left && x <= right && y >= top && y <= bottom) {
+        hoveredArea = area.id;
+        break;
+      }
+    }
+    setCurrentHoveredArea(hoveredArea);
+  }, [selectedSymptom, textAreas]);
 
   const handleMouseEnter = () => {
     if (!selectedSymptom) {
@@ -113,35 +133,6 @@ const FullscreenSymptomLightbox = ({
     setCurrentHoveredArea(null);
   }, [selectedSymptom, currentHoveredArea, textAreas]);
 
-  const checkTextAreaIntersection = useCallback((x: number, y: number) => {
-    if (selectedSymptom) return;
-
-    let hoveredArea = null;
-
-    // Much simpler coordinate mapping - use fixed zones
-    for (const area of textAreas) {
-      const imageRect = imageRef.current?.getBoundingClientRect();
-      if (!imageRect) return;
-      
-      // Map coordinates as percentage of image size
-      const leftPercent = area.x / 800;
-      const topPercent = area.y / 600;
-      const rightPercent = (area.x + area.width) / 800;
-      const bottomPercent = (area.y + area.height) / 600;
-      
-      const left = leftPercent * imageRect.width;
-      const top = topPercent * imageRect.height;
-      const right = rightPercent * imageRect.width;
-      const bottom = bottomPercent * imageRect.height;
-      
-      if (x >= left && x <= right && y >= top && y <= bottom) {
-        hoveredArea = area.id;
-        break;
-      }
-    }
-
-    setCurrentHoveredArea(hoveredArea);
-  }, [selectedSymptom, textAreas]);
 
   const changeSelection = () => {
     setSelectedSymptom(null);
@@ -178,9 +169,10 @@ const FullscreenSymptomLightbox = ({
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-[100vw] max-h-[100vh] w-full h-full p-0 gap-0 m-0">
+        <DialogTitle className="sr-only">Select Your {bodyPart} Symptom</DialogTitle>
         <div className="flex h-screen w-screen">
-          {/* Left Side - Image (Full Screen) */}
-          <div className="flex-[3] relative bg-gray-50 h-full">
+          {/* Left Side - Image (Takes up 75% of screen width) */}
+          <div className="w-3/4 relative bg-gray-50 h-full">
             {/* Header */}
             <div className="absolute top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur border-b p-3">
               <div className="flex items-center justify-between">
@@ -270,7 +262,7 @@ const FullscreenSymptomLightbox = ({
                           ref={imageRef}
                           src={imageUrl} 
                           alt={`${bodyPart} symptom diagram`}
-                          className="w-full h-full object-cover pointer-events-none"
+                          className="w-full h-full object-contain pointer-events-none"
                           draggable={false}
                           onLoad={handleImageLoad}
                         />
@@ -282,8 +274,8 @@ const FullscreenSymptomLightbox = ({
             </div>
           </div>
 
-          {/* Right Side - Symptom Details (Compact) */}
-          <div className="w-72 bg-background border-l flex flex-col h-screen">
+          {/* Right Side - Symptom Details (25% of screen width) */}
+          <div className="w-1/4 bg-background border-l flex flex-col h-screen">
             <div className="p-6 flex-1 overflow-y-auto space-y-6">
               {/* Instructions */}
               <Card>

@@ -36,6 +36,25 @@ const InteractiveSymptomSelector = ({ bodyPart, patientData, onBack }: Interacti
   // Define text areas dynamically based on body part
   const getTextAreasForBodyPart = (bodyPart: string): TextArea[] => {
     switch(bodyPart.toUpperCase()) {
+      case 'HAIR AND SCALP':
+        return [
+          { id: "hair-loss-general", x: 200, y: 150, width: 180, height: 120, 
+            symptomText: "Problems with hair loss, hair thinning or receding hairline. May occur gradually over time or suddenly. Common in both men and women, affecting confidence and appearance." },
+          { id: "scalp-conditions", x: 400, y: 140, width: 180, height: 100, 
+            symptomText: "Scalp problems including dryness, itching, flaking, or irritation. May include dandruff, seborrheic dermatitis, or other scalp conditions causing discomfort." },
+          { id: "hair-texture-changes", x: 150, y: 280, width: 200, height: 80, 
+            symptomText: "Changes in hair texture including hair becoming coarse, fine, brittle, or losing its natural shine. May be accompanied by increased hair breakage." },
+          { id: "scalp-skin-changes", x: 380, y: 260, width: 200, height: 100, 
+            symptomText: "Visible changes to scalp skin including redness, scaling, patches of different color or texture. May involve areas where hair growth has stopped." },
+          { id: "patchy-hair-loss", x: 220, y: 380, width: 160, height: 80, 
+            symptomText: "Patchy areas of hair loss creating bald spots or uneven hair distribution. Different from general thinning, these are distinct areas without hair." },
+          { id: "scalp-sensitivity", x: 400, y: 380, width: 180, height: 80, 
+            symptomText: "Scalp sensitivity or pain when touching the head or hair. May include burning, stinging, or tender sensations when brushing or washing hair." },
+          { id: "excessive-hair-shedding", x: 170, y: 480, width: 200, height: 80, 
+            symptomText: "Excessive daily hair shedding beyond normal amounts. Noticing significantly more hair in brush, on pillow, or in shower drain than usual." },
+          { id: "scalp-odor-discharge", x: 390, y: 480, width: 190, height: 80, 
+            symptomText: "Unusual scalp odor or discharge. May include oily, flaky, or crusty substances on the scalp that create an unpleasant smell or appearance." }
+        ];
       case 'MALE GENITALS':
         return [
           { id: "penile-issues", x: 300, y: 150, width: 200, height: 150, 
