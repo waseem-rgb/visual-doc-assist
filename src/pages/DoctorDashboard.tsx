@@ -222,46 +222,48 @@ const DoctorDashboard = () => {
   const handleViewPrescription = async (request: PrescriptionRequest) => {
     if (request.prescription) {
       try {
-        // If PDF URL exists, open it directly
-        if (request.prescription.pdf_url) {
-          window.open(request.prescription.pdf_url, '_blank');
-          return;
-        }
-
-        // Generate PDF if it doesn't exist
-        toast({
-          title: "Generating PDF",
-          description: "Please wait while we prepare your prescription...",
-        });
-
-        const { data, error } = await supabase.functions.invoke('generate-prescription-pdf', {
-          body: {
-            requestId: request.id,
-            doctorId: user?.id
+        // Use the new download function to get fresh signed URL
+        const { data, error } = await supabase.functions.invoke('download-prescription', {
+          body: { 
+            prescriptionId: request.prescription.id,
+            requestId: request.id 
           }
         });
 
-        if (error) {
-          console.error('Error generating PDF:', error);
-          throw error;
-        }
-
-        if (data?.pdfUrl) {
-          // Open the generated PDF
-          window.open(data.pdfUrl, '_blank');
+        if (error || !data?.success) {
+          console.error('Error downloading prescription:', error);
           
-          // Update the local state with the PDF URL
-          setRequests(requests.map(r => 
-            r.id === request.id && r.prescription 
-              ? { ...r, prescription: { ...r.prescription, pdf_url: data.pdfUrl } }
-              : r
-          ));
-
+          // If download fails, try to generate a new PDF
           toast({
-            title: "Success",
-            description: "Prescription PDF generated successfully!",
+            title: "Generating PDF",
+            description: "Please wait while we prepare your prescription...",
           });
+
+          const { data: generateData, error: generateError } = await supabase.functions.invoke('generate-prescription-pdf', {
+            body: {
+              requestId: request.id,
+              doctorId: user?.id
+            }
+          });
+
+          if (generateError || !generateData?.success) {
+            throw new Error('Failed to generate prescription');
+          }
+
+          if (generateData?.pdfUrl) {
+            window.open(generateData.pdfUrl, '_blank');
+            
+            toast({
+              title: "Success",
+              description: "Prescription PDF generated successfully!",
+            });
+          }
+          return;
         }
+
+        // Open the fresh signed URL
+        window.open(data.downloadUrl, '_blank');
+        
       } catch (error) {
         console.error('Error handling prescription:', error);
         toast({

@@ -81,10 +81,10 @@ Deno.serve(async (req) => {
       request: prescription.prescription_requests 
     });
     
-    // Upload PDF to storage
+    // Upload PDF to new_prescription-templet bucket as requested
     const fileName = `prescription-${prescription.id}-${Date.now()}.pdf`;
     const { error: uploadError } = await supabase.storage
-      .from('prescriptions')
+      .from('new_prescription-templet')
       .upload(fileName, pdfContent, {
         contentType: 'application/pdf',
         upsert: false
@@ -101,19 +101,22 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Get signed URL for the PDF
+    // Create fresh signed URL for immediate access
     const { data: signedUrlData } = await supabase.storage
-      .from('prescriptions')
+      .from('new_prescription-templet')
       .createSignedUrl(fileName, 3600); // 1 hour expiry
 
-    // Update prescription record with PDF URL
+    // Store the file path instead of the signed URL to avoid expiration issues
     const { error: updateError } = await supabase
       .from('prescriptions')
-      .update({ pdf_url: signedUrlData?.signedUrl })
+      .update({ 
+        pdf_url: fileName,  // Store file path instead of signed URL
+        pdf_bucket: 'new_prescription-templet'  // Store bucket name for future reference
+      })
       .eq('id', prescription.id);
 
     if (updateError) {
-      console.error('Error updating prescription with PDF URL:', updateError);
+      console.error('Error updating prescription with PDF path:', updateError);
     }
 
     console.log(`Prescription PDF generated successfully for prescription ${prescription.id}`);
@@ -122,7 +125,8 @@ Deno.serve(async (req) => {
       JSON.stringify({ 
         success: true, 
         pdfUrl: signedUrlData?.signedUrl,
-        fileName 
+        fileName,
+        filePath: fileName
       }),
       { 
         status: 200,
