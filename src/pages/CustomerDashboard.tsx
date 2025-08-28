@@ -297,6 +297,13 @@ const CustomerDashboard = () => {
         <div className="space-y-6">
           <div className="flex items-center justify-between">
             <h2 className="text-2xl font-bold">Your Medical Consultations</h2>
+            <Button 
+              onClick={() => navigate("/consultation")} 
+              className="hidden md:flex"
+            >
+              <Heart className="h-4 w-4 mr-2" />
+              Start New Consultation
+            </Button>
           </div>
 
           {/* Request Cards */}
@@ -417,6 +424,18 @@ const CustomerDashboard = () => {
             </div>
           )}
         </div>
+      </div>
+
+      {/* Mobile Floating Action Button */}
+      <div className="fixed bottom-6 right-6 md:hidden">
+        <Button 
+          onClick={() => navigate("/consultation")} 
+          size="lg"
+          className="shadow-lg hover:shadow-xl transition-shadow"
+        >
+          <Heart className="h-5 w-5 mr-2" />
+          Start New Consultation
+        </Button>
       </div>
     </div>
   );
