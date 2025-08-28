@@ -733,13 +733,15 @@ const InteractiveSymptomSelector = ({ bodyPart, patientData, onBack }: Interacti
       {/* Fullscreen Universal Selector */}
       {imageUrl && !showClinicalForm ? (
         <UniversalSymptomSelector
-          open={lightboxOpen}
+          isOpen={lightboxOpen}
           onClose={() => setLightboxOpen(false)}
-          imageUrl={imageUrl}
           bodyPart={bodyPart}
-          patientData={patientData}
-          symptoms={symptoms}
-          onSymptomSubmit={handleSymptomSubmit}
+          gender="male"
+          view="front"
+          onSymptomsSelected={(symptoms) => {
+            console.log('Selected symptoms:', symptoms);
+            setLightboxOpen(false);
+          }}
         />
       ) : (
         (() => {
