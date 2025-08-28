@@ -614,32 +614,30 @@ const UniversalSymptomSelector = ({
               </p>
             </div>
 
-            <div className="flex-1 overflow-hidden">
-              <ScrollArea className="h-full w-full">
-                <div className="p-4 space-y-3">
-                  {isLoadingSymptoms ? (
-                    <div className="flex items-center justify-center py-8">
-                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-                    </div>
-                  ) : (
-                    <>
-                      {availableSymptoms.map((symptom) => (
-                        <Card
-                          key={symptom.id}
-                          className="cursor-pointer border border-border hover:border-primary/50 hover:shadow-md transition-all duration-200 active:scale-95"
-                          onClick={() => handleFallbackSymptomClick(symptom)}
-                        >
-                          <CardContent className="p-3">
-                            <p className="text-sm text-foreground leading-relaxed">
-                              {symptom.text}
-                            </p>
-                          </CardContent>
-                        </Card>
-                      ))}
-                    </>
-                  )}
-                </div>
-              </ScrollArea>
+            <div className="flex-1 overflow-y-auto overflow-x-hidden">
+              <div className="p-4 space-y-3">
+                {isLoadingSymptoms ? (
+                  <div className="flex items-center justify-center py-8">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                  </div>
+                ) : (
+                  <>
+                    {availableSymptoms.map((symptom) => (
+                      <Card
+                        key={symptom.id}
+                        className="cursor-pointer border border-border hover:border-primary/50 hover:shadow-md transition-all duration-200 active:scale-95"
+                        onClick={() => handleFallbackSymptomClick(symptom)}
+                      >
+                        <CardContent className="p-3">
+                          <p className="text-sm text-foreground leading-relaxed">
+                            {symptom.text}
+                          </p>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </>
+                )}
+              </div>
             </div>
           </div>
         </div>
