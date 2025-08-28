@@ -88,8 +88,8 @@ const UniversalSymptomSelector = ({
 
   // Calculate canvas dimensions based on screen size
   const calculateCanvasDimensions = () => {
-    const availableWidth = isFullscreen ? window.innerWidth * 0.75 : Math.min(900, window.innerWidth * 0.7);
-    const availableHeight = isFullscreen ? window.innerHeight * 0.9 : Math.min(700, window.innerHeight * 0.8);
+    const availableWidth = isFullscreen ? window.innerWidth * 0.85 : Math.min(1000, window.innerWidth * 0.75);
+    const availableHeight = isFullscreen ? window.innerHeight * 0.95 : Math.min(800, window.innerHeight * 0.85);
     
     setCanvasDimensions({
       width: Math.round(availableWidth),
@@ -200,6 +200,7 @@ const UniversalSymptomSelector = ({
     let isDragging = false;
     let lastPosX = 0;
     let lastPosY = 0;
+    let hoverIndicator: Circle | null = null;
 
     // Mouse down
     canvas.on('mouse:down', (event) => {
@@ -209,9 +210,10 @@ const UniversalSymptomSelector = ({
       isDragging = false;
     });
 
-    // Mouse move for dragging
+    // Mouse move for dragging and hover effects
     canvas.on('mouse:move', (event) => {
       const evt = event.e as MouseEvent;
+      const pointer = canvas.getPointer(event.e);
       
       if (evt.buttons === 1) {
         const deltaX = evt.clientX - lastPosX;
@@ -226,6 +228,9 @@ const UniversalSymptomSelector = ({
           lastPosX = evt.clientX;
           lastPosY = evt.clientY;
         }
+      } else {
+        // Handle hover effects when not dragging
+        handleCanvasHover(pointer, canvas);
       }
     });
 
@@ -237,6 +242,59 @@ const UniversalSymptomSelector = ({
       }
       isDragging = false;
     });
+
+    // Helper function for hover effects
+    const handleCanvasHover = (pointer: { x: number; y: number }, canvas: FabricCanvas) => {
+      // Find matching symptom region
+      const matchedRegion = textRegions.find(region => {
+        const imgBounds = fabricImage;
+        if (!imgBounds) return false;
+        
+        const imgLeft = imgBounds.left!;
+        const imgTop = imgBounds.top!;
+        const imgWidth = imgBounds.width! * imgBounds.scaleX!;
+        const imgHeight = imgBounds.height! * imgBounds.scaleY!;
+        
+        const regionLeft = imgLeft + (region.coordinates.xPct / 100) * imgWidth;
+        const regionTop = imgTop + (region.coordinates.yPct / 100) * imgHeight;
+        const regionWidth = (region.coordinates.wPct / 100) * imgWidth;
+        const regionHeight = (region.coordinates.hPct / 100) * imgHeight;
+        
+        return pointer.x >= regionLeft && 
+               pointer.x <= regionLeft + regionWidth &&
+               pointer.y >= regionTop && 
+               pointer.y <= regionTop + regionHeight;
+      });
+
+      // Remove existing hover indicator
+      if (hoverIndicator) {
+        canvas.remove(hoverIndicator);
+        hoverIndicator = null;
+      }
+
+      // Add new hover indicator if hovering over a region
+      if (matchedRegion && !isSubmitted) {
+        hoverIndicator = new Circle({
+          left: pointer.x - 8,
+          top: pointer.y - 8,
+          radius: 8,
+          fill: 'rgba(59, 130, 246, 0.8)',
+          stroke: '#ffffff',
+          strokeWidth: 2,
+          selectable: false,
+          evented: false
+        });
+        
+        canvas.add(hoverIndicator);
+        canvas.bringObjectToFront(hoverIndicator);
+        canvas.requestRenderAll();
+        
+        // Change cursor to pointer
+        canvas.defaultCursor = 'pointer';
+      } else {
+        canvas.defaultCursor = 'default';
+      }
+    };
 
     // Zoom
     canvas.on('mouse:wheel', (opt) => {
@@ -398,7 +456,7 @@ const UniversalSymptomSelector = ({
 
         <div className="flex h-full">
           {/* Left Side - Canvas */}
-          <div className={`${isFullscreen ? 'w-4/5' : 'w-3/4'} relative bg-muted/20 border-r border-border`}>
+          <div className={`${isFullscreen ? 'w-5/6' : 'w-4/5'} relative bg-muted/20 border-r border-border`}>
             {/* Header */}
             <div className="absolute top-0 left-0 right-0 z-10 bg-background/95 backdrop-blur border-b border-border p-4">
               <div className="flex items-center justify-between">
@@ -496,7 +554,7 @@ const UniversalSymptomSelector = ({
           </div>
 
           {/* Right Side - Symptom List */}
-          <div className={`${isFullscreen ? 'w-1/5' : 'w-1/4'} bg-background border-l border-border flex flex-col`}>
+          <div className={`${isFullscreen ? 'w-1/6' : 'w-1/5'} bg-background border-l border-border flex flex-col`}>
             <div className="p-4 border-b border-border">
               <h3 className="text-lg font-semibold text-foreground mb-2">Available Symptoms</h3>
               <p className="text-sm text-muted-foreground">

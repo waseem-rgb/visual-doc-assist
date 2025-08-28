@@ -87,13 +87,16 @@ export const SafeCanvasWrapper = ({
 
       console.log('📏 [SAFE CANVAS] Image loaded. Dimensions:', img.width, 'x', img.height);
 
-      // Calculate scale to fit image properly
+      // Calculate scale to fill the canvas area properly
       const imgWidth = img.width || 1;
       const imgHeight = img.height || 1;
       const scaleX = width / imgWidth;
       const scaleY = height / imgHeight;
-      const scale = Math.min(scaleX, scaleY, 1);
+      // Use max instead of min to ensure image covers the full area
+      const scale = Math.max(scaleX, scaleY, 0.8);
       
+      console.log('🔧 [SAFE CANVAS] Image dimensions:', imgWidth, 'x', imgHeight);
+      console.log('🔧 [SAFE CANVAS] Canvas dimensions:', width, 'x', height);
       console.log('🔧 [SAFE CANVAS] Scaling image by:', scale);
       
       img.scale(scale);
