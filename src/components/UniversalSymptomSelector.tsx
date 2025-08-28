@@ -911,13 +911,13 @@ const UniversalSymptomSelector = ({
                   <div className="bg-yellow-50 p-3 rounded-lg border border-yellow-200">
                     <p className="text-sm text-yellow-800 text-center">
                       <strong>No specific regions mapped for {bodyPart}</strong><br />
-                      Click anywhere on the image to select from available symptoms.
+                      Click anywhere on the image to select from available symptoms, or choose from the list on the right.
                     </p>
                   </div>
                 ) : (
                   <div className="space-y-2">
                     <p className="text-sm text-center">
-                      <strong>Click on any text paragraph</strong> to select that specific symptom description
+                      <strong>Click on any text paragraph</strong> to select that specific symptom description, or choose from the list on the right.
                     </p>
                     <p className="text-xs text-center text-muted-foreground">
                       Drag to pan • Scroll to zoom
@@ -996,6 +996,130 @@ const UniversalSymptomSelector = ({
                   </div>
                 )}
             </div>
+          </div>
+
+          {/* Right Side - Symptom List */}
+          <div className="w-80 bg-background border-l p-4 flex flex-col">
+            <div className="mb-4">
+              <h3 className="text-lg font-semibold mb-2">Available Symptoms</h3>
+              <p className="text-xs text-muted-foreground mb-3">
+                Select a symptom from the list below or click on the image
+              </p>
+            </div>
+
+            {isLoadingSymptoms ? (
+              <div className="flex-1 flex items-center justify-center">
+                <div className="text-center">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"></div>
+                  <p className="text-sm text-muted-foreground">Loading symptoms...</p>
+                </div>
+              </div>
+            ) : (
+              <ScrollArea className="flex-1">
+                <div className="space-y-2 pr-2">
+                  {/* Show mapped text regions first if they exist */}
+                  {hasRegions && textRegions.map((region, index) => (
+                    <Card 
+                      key={region.id}
+                      className={`cursor-pointer transition-all hover:shadow-md border ${
+                        selectedSymptom?.id === region.id 
+                          ? 'border-primary bg-primary/5' 
+                          : 'border-border hover:border-primary/50'
+                      }`}
+                      onClick={() => {
+                        // Create a fake click position for visual feedback
+                        setClickPosition({ x: canvasDimensions.width / 2, y: canvasDimensions.height / 2 });
+                        handleFallbackSymptomClick({ 
+                          id: region.id, 
+                          text: region.text,
+                          diagnosis: region.diagnosis,
+                          summary: region.summary
+                        });
+                      }}
+                    >
+                      <CardContent className="p-3">
+                        <p className="text-sm leading-relaxed text-foreground">
+                          {region.text}
+                        </p>
+                        {region.diagnosis && (
+                          <p className="text-xs text-muted-foreground mt-2 font-medium">
+                            Diagnosis: {region.diagnosis}
+                          </p>
+                        )}
+                      </CardContent>
+                    </Card>
+                  ))}
+                  
+                  {/* Show database fallback symptoms if no regions or as additional options */}
+                  {(!hasRegions || textRegions.length === 0) && symptomContentData?.fallbackSymptoms?.map((symptom, index) => (
+                    <Card 
+                      key={symptom.id}
+                      className={`cursor-pointer transition-all hover:shadow-md border ${
+                        selectedSymptom?.id === symptom.id 
+                          ? 'border-primary bg-primary/5' 
+                          : 'border-border hover:border-primary/50'
+                      }`}
+                      onClick={() => {
+                        // Create a fake click position for visual feedback
+                        setClickPosition({ x: canvasDimensions.width / 2, y: canvasDimensions.height / 2 });
+                        handleFallbackSymptomClick(symptom);
+                      }}
+                    >
+                      <CardContent className="p-3">
+                        <p className="text-sm leading-relaxed text-foreground">
+                          {symptom.text}
+                        </p>
+                        {('diagnosis' in symptom && symptom.diagnosis) && (
+                          <p className="text-xs text-muted-foreground mt-2 font-medium">
+                            Diagnosis: {String(symptom.diagnosis)}
+                          </p>
+                        )}
+                      </CardContent>
+                    </Card>
+                  ))}
+                  
+                  {/* Show passed symptoms as final backup */}
+                  {(!hasRegions && (!symptomContentData?.fallbackSymptoms || symptomContentData.fallbackSymptoms.length === 0)) && symptoms.map((symptom, index) => (
+                    <Card 
+                      key={symptom.id}
+                      className={`cursor-pointer transition-all hover:shadow-md border ${
+                        selectedSymptom?.id === symptom.id 
+                          ? 'border-primary bg-primary/5' 
+                          : 'border-border hover:border-primary/50'
+                      }`}
+                      onClick={() => {
+                        // Create a fake click position for visual feedback
+                        setClickPosition({ x: canvasDimensions.width / 2, y: canvasDimensions.height / 2 });
+                        handleFallbackSymptomClick(symptom);
+                      }}
+                    >
+                      <CardContent className="p-3">
+                        <p className="text-sm leading-relaxed text-foreground">
+                          {symptom.text}
+                        </p>
+                        {('diagnosis' in symptom && symptom.diagnosis) && (
+                          <p className="text-xs text-muted-foreground mt-2 font-medium">
+                            Diagnosis: {String(symptom.diagnosis)}
+                          </p>
+                        )}
+                      </CardContent>
+                    </Card>
+                  ))}
+
+                  {/* No symptoms available */}
+                  {!isLoadingSymptoms && 
+                   (!hasRegions || textRegions.length === 0) && 
+                   (!symptomContentData?.fallbackSymptoms || symptomContentData.fallbackSymptoms.length === 0) && 
+                   symptoms.length === 0 && (
+                    <div className="text-center py-8">
+                      <p className="text-sm text-muted-foreground">
+                        No symptoms available for {bodyPart}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </ScrollArea>
+            )}
           </div>
 
         </div>
