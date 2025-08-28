@@ -221,7 +221,7 @@ const CustomerDashboard = () => {
             <div className="flex items-center gap-4">
               <Button
                 variant="outline"
-                onClick={() => navigate("/")}
+                onClick={() => navigate("/consultation")}
                 className="hidden md:flex"
               >
                 New Consultation
@@ -304,10 +304,6 @@ const CustomerDashboard = () => {
         <div className="space-y-6">
           <div className="flex items-center justify-between">
             <h2 className="text-2xl font-bold">Your Medical Consultations</h2>
-            <Button onClick={() => navigate("/")} className="bg-primary hover:bg-primary-dark">
-              <Heart className="h-4 w-4 mr-2" />
-              New Consultation
-            </Button>
           </div>
 
           {/* Request Cards */}
@@ -318,7 +314,7 @@ const CustomerDashboard = () => {
                   <Heart className="h-12 w-12 mx-auto mb-4 opacity-50" />
                   <p className="text-lg mb-2">No consultations yet</p>
                   <p>Start your first consultation to see your medical records here.</p>
-                  <Button onClick={() => navigate("/")} className="mt-4">
+                  <Button onClick={() => navigate("/consultation")} className="mt-4">
                     Start Consultation
                   </Button>
                 </div>
