@@ -163,11 +163,12 @@ const UniversalSymptomSelector = ({
 
     // Load the body image
     const imagePath = getImagePath();
-    console.log('Attempting to load image from:', imagePath);
+    console.log('🔍 Attempting to load image from:', imagePath);
+    console.log('🔍 Body part mapping - original:', bodyPart, 'mapped path:', imagePath);
     
     FabricImage.fromURL(imagePath, { crossOrigin: 'anonymous' })
       .then((img) => {
-        console.log('✅ Image loaded successfully:', imagePath);
+        console.log('✅ Image loaded successfully:', imagePath, 'Size:', img.width, 'x', img.height);
         if (!canvas || !containerRef.current) return;
 
         const containerWidth = containerRef.current.offsetWidth * 0.75;
@@ -195,41 +196,64 @@ const UniversalSymptomSelector = ({
       })
       .catch((error) => {
         console.error('❌ Failed to load image:', imagePath, error);
-        // Try without /src prefix
-        const altPath = imagePath.replace('/src/assets/', '/');
-        console.log('Trying alternative path:', altPath);
+        console.log('🔧 Trying alternative paths...');
         
-        FabricImage.fromURL(altPath, { crossOrigin: 'anonymous' })
-          .then((img) => {
-            console.log('✅ Image loaded with alternative path:', altPath);
-            if (!canvas || !containerRef.current) return;
+        // Try different path variations
+        const altPaths = [
+          imagePath.replace('/src/assets/', '/src/assets/'),
+          imagePath.replace('/src/', './src/'),
+          imagePath.replace('.jpg', '.png'),
+          imagePath.replace('/src/assets/', '/assets/'),
+          imagePath.replace('/src/assets/', '')
+        ];
+        
+        console.log('🔧 Alternative paths to try:', altPaths);
+        
+        // Try each alternative path
+        const tryNextPath = (pathIndex = 0) => {
+          if (pathIndex >= altPaths.length) {
+            console.error('❌ All image paths failed for:', bodyPart);
+            return;
+          }
+          
+          const currentPath = altPaths[pathIndex];
+          console.log(`🔧 Trying path ${pathIndex + 1}/${altPaths.length}:`, currentPath);
+          
+          FabricImage.fromURL(currentPath, { crossOrigin: 'anonymous' })
+            .then((img) => {
+              console.log('✅ Success with alternative path:', currentPath);
+              if (!canvas || !containerRef.current) return;
 
-            const containerWidth = containerRef.current.offsetWidth * 0.75;
-            const containerHeight = containerRef.current.offsetHeight * 0.9;
-            
-            const scale = Math.min(
-              containerWidth / (img.width || 1),
-              containerHeight / (img.height || 1)
-            ) * 0.8;
+              const containerWidth = containerRef.current.offsetWidth * 0.75;
+              const containerHeight = containerRef.current.offsetHeight * 0.9;
+              
+              const scale = Math.min(
+                containerWidth / (img.width || 1),
+                containerHeight / (img.height || 1)
+              ) * 0.8;
 
-            img.set({
-              left: (containerWidth - (img.width || 0) * scale) / 2,
-              top: (containerHeight - (img.height || 0) * scale) / 2,
-              scaleX: scale,
-              scaleY: scale,
-              selectable: false,
-              evented: false,
-              hoverCursor: 'default',
-              moveCursor: 'default'
+              img.set({
+                left: (containerWidth - (img.width || 0) * scale) / 2,
+                top: (containerHeight - (img.height || 0) * scale) / 2,
+                scaleX: scale,
+                scaleY: scale,
+                selectable: false,
+                evented: false,
+                hoverCursor: 'default',
+                moveCursor: 'default'
+              });
+
+              imageRef.current = img;
+              canvas.add(img);
+              canvas.renderAll();
+            })
+            .catch((err) => {
+              console.log(`❌ Path ${pathIndex + 1} failed:`, currentPath, err);
+              tryNextPath(pathIndex + 1);
             });
-
-            imageRef.current = img;
-            canvas.add(img);
-            canvas.renderAll();
-          })
-          .catch((err) => {
-            console.error('❌ Failed to load image with alternative path:', altPath, err);
-          });
+        };
+        
+        tryNextPath();
       });
 
     // Disable canvas interactions - no click handlers
