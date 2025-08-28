@@ -82,13 +82,25 @@ const BodyMap = ({ gender, patientData }: BodyMapProps) => {
     },
   });
 
-  // Filter body parts based on current view and gender
+  // Filter body parts based on current view and gender with more flexible matching
   const bodyParts = allBodyParts?.filter(part => {
-    const matchesView = part.View === currentView;
-    const genderRules = ["shown to Both gender", gender === "male" ? "Only to Male patient" : "Only to Female patient"];
-    const matchesGender = genderRules.includes(part["Specific rules"]);
+    if (!part?.Body_part || !part?.View || !part?.["Specific rules"]) return false;
     
-    console.log(`Part: ${part.Body_part}, View: ${part.View} (matches: ${matchesView}), Rules: ${part["Specific rules"]} (matches: ${matchesGender})`);
+    // More flexible view matching
+    const partView = part.View?.trim();
+    const matchesView = partView === currentView || 
+      (currentView === "Front" && partView === "Front") ||
+      (currentView === "Back view" && partView === "Back view");
+    
+    // Gender rules matching
+    const specificRules = part["Specific rules"]?.trim();
+    const genderRules = [
+      "shown to Both gender", 
+      gender === "male" ? "Only to Male patient" : "Only to Female patient"
+    ];
+    const matchesGender = genderRules.some(rule => specificRules?.includes(rule));
+    
+    console.log(`Part: ${part.Body_part}, View: ${partView} (matches: ${matchesView}), Rules: ${specificRules} (matches: ${matchesGender})`);
     
     return matchesView && matchesGender;
   }) || [];

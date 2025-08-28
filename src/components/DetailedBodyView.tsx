@@ -81,8 +81,9 @@ const getQuadrantParts = (quadrant: string, view: string) => {
         { name: "HEAD FRONT", x1: 0.35, y1: 0.12, x2: 0.65, y2: 0.25 },
         { name: "HEAD SIDE", x1: 0.15, y1: 0.30, x2: 0.25, y2: 0.45 },
         { name: "FACE", x1: 0.35, y1: 0.28, x2: 0.65, y2: 0.65 },
-        { name: "EYE VISION", x1: 0.38, y1: 0.35, x2: 0.62, y2: 0.42 },
-        { name: "EYE PHYSICAL", x1: 0.38, y1: 0.35, x2: 0.62, y2: 0.42 },
+        // Separate eye dots to avoid overlap - left and right eyes
+        { name: "EYE VISION", x1: 0.32, y1: 0.35, x2: 0.44, y2: 0.42 }, // Left eye vision
+        { name: "EYE PHYSICAL", x1: 0.56, y1: 0.35, x2: 0.68, y2: 0.42 }, // Right eye physical
         { name: "NOSE", x1: 0.46, y1: 0.48, x2: 0.54, y2: 0.58 },
         { name: "MOUTH", x1: 0.42, y1: 0.62, x2: 0.58, y2: 0.68 },
         { name: "EAR PHYSICAL", x1: 0.15, y1: 0.42, x2: 0.25, y2: 0.52 },
@@ -206,8 +207,39 @@ const DetailedBodyView = ({
   bodyParts
 }: DetailedBodyViewProps) => {
   const parts = getQuadrantParts(quadrant, currentView).filter(part => {
-    const bodyPart = bodyParts.find(bp => bp.Body_part === part.name);
-    if (!bodyPart) return false;
+    // More robust matching - case insensitive and flexible
+    const bodyPart = bodyParts.find(bp => {
+      const dbPartName = bp.Body_part?.trim().toUpperCase();
+      const coordPartName = part.name?.trim().toUpperCase();
+      
+      // Direct match
+      if (dbPartName === coordPartName) return true;
+      
+      // Handle variations and partial matches
+      if (dbPartName && coordPartName) {
+        // Handle cases like "EYE PHYSICAL LEFT" vs "EYE PHYSICAL"
+        if (coordPartName.includes("EYE") && dbPartName.includes("EYE")) {
+          if (coordPartName.includes("PHYSICAL") && dbPartName.includes("PHYSICAL")) return true;
+          if (coordPartName.includes("VISION") && dbPartName.includes("VISION")) return true;
+        }
+        
+        // Handle throat variations
+        if (coordPartName.includes("THROAT") && dbPartName.includes("THROAT")) return true;
+        
+        // Handle nose
+        if (coordPartName === "NOSE" && dbPartName === "NOSE") return true;
+        
+        // Handle other exact matches
+        if (dbPartName === coordPartName) return true;
+      }
+      
+      return false;
+    });
+    
+    if (!bodyPart) {
+      console.log(`No database match found for coordinate part: ${part.name}`);
+      return false;
+    }
     
     // Check gender-specific rules
     const specificRules = bodyPart["Specific rules"];
