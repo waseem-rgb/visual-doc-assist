@@ -2,8 +2,8 @@ import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
-import { X, ZoomIn, ZoomOut, Check, Maximize, Minimize } from "lucide-react";
-import { Canvas as FabricCanvas, Circle, FabricImage } from "fabric";
+import { X, ZoomIn, ZoomOut, Maximize, Minimize } from "lucide-react";
+import { Canvas as FabricCanvas, Circle } from "fabric";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface SymptomItem {
@@ -40,55 +40,31 @@ const UniversalSymptomSelector = ({
   const containerRef = useRef<HTMLDivElement>(null);
   const [fabricCanvas, setFabricCanvas] = useState<FabricCanvas | null>(null);
   const [selectedSymptom, setSelectedSymptom] = useState<SymptomItem | null>(null);
-  const [hoveredSymptom, setHoveredSymptom] = useState<string | null>(null);
   const [highlightCircle, setHighlightCircle] = useState<Circle | null>(null);
   const [zoomLevel, setZoomLevel] = useState(1);
   const [imageLoaded, setImageLoaded] = useState(false);
-  const [imageDimensions, setImageDimensions] = useState({ width: 0, height: 0 });
   const [displayDimensions, setDisplayDimensions] = useState({ width: 0, height: 0 });
   const [isFullscreen, setIsFullscreen] = useState(false);
 
-  // Simplified image loading approach
-  useEffect(() => {
-    if (!open || !imageUrl) {
-      console.log('❌ Image loading skipped:', { open, imageUrl });
-      return;
-    }
-
-    console.log('🔄 Starting image load for:', imageUrl);
-    setImageLoaded(false);
-    
-    // Reset dimensions while loading
-    setImageDimensions({ width: 0, height: 0 });
-
-  }, [open, imageUrl]);
-
-  // Handle image load event
+  // Handle image load event with dynamic sizing
   const handleImageLoad = (e: React.SyntheticEvent<HTMLImageElement>) => {
     const img = e.currentTarget;
     console.log('✅ Image loaded successfully:', img.naturalWidth, 'x', img.naturalHeight);
     
-    // Calculate responsive display dimensions that fit in viewport
-    const maxWidth = 600; // Max width for the image container
-    const maxHeight = 500; // Max height for the image container
+    // Calculate dynamic display dimensions based on available space
+    const availableWidth = isFullscreen ? window.innerWidth * 0.7 : Math.min(800, window.innerWidth * 0.6);
+    const availableHeight = isFullscreen ? window.innerHeight * 0.8 : Math.min(600, window.innerHeight * 0.7);
     
     let displayWidth = img.naturalWidth;
     let displayHeight = img.naturalHeight;
     
-    // Scale down if image is too large, maintaining aspect ratio
-    if (displayWidth > maxWidth || displayHeight > maxHeight) {
-      const widthRatio = maxWidth / displayWidth;
-      const heightRatio = maxHeight / displayHeight;
-      const scale = Math.min(widthRatio, heightRatio);
-      
-      displayWidth = Math.round(displayWidth * scale);
-      displayHeight = Math.round(displayHeight * scale);
-    }
+    // Scale to fit available space while maintaining aspect ratio
+    const widthRatio = availableWidth / displayWidth;
+    const heightRatio = availableHeight / displayHeight;
+    const scale = Math.min(widthRatio, heightRatio, 1); // Don't scale up
     
-    setImageDimensions({ 
-      width: img.naturalWidth, 
-      height: img.naturalHeight 
-    });
+    displayWidth = Math.round(displayWidth * scale);
+    displayHeight = Math.round(displayHeight * scale);
     
     setDisplayDimensions({
       width: displayWidth,
@@ -97,8 +73,13 @@ const UniversalSymptomSelector = ({
     
     setImageLoaded(true);
 
-    // Initialize canvas after image loads with display dimensions
+    // Initialize canvas after image loads
     if (canvasRef.current && displayWidth > 0) {
+      // Dispose existing canvas if any
+      if (fabricCanvas) {
+        fabricCanvas.dispose();
+      }
+
       const canvas = new FabricCanvas(canvasRef.current, {
         width: displayWidth,
         height: displayHeight,
@@ -108,21 +89,26 @@ const UniversalSymptomSelector = ({
         backgroundColor: 'transparent'
       });
 
-      // Handle canvas clicks
+      // Handle canvas clicks for marker placement
       canvas.on('mouse:down', (event) => {
-        if (!selectedSymptom) return;
+        if (!selectedSymptom) {
+          alert('Please select a symptom from the list first!');
+          return;
+        }
 
         const pointer = canvas.getPointer(event.e);
         
+        // Remove existing marker
         if (highlightCircle) {
           canvas.remove(highlightCircle);
         }
 
+        // Create new marker
         const circle = new Circle({
-          left: pointer.x - 12,
-          top: pointer.y - 12,
-          radius: 12,
-          fill: 'rgba(34, 197, 94, 0.8)',
+          left: pointer.x - 15,
+          top: pointer.y - 15,
+          radius: 15,
+          fill: 'rgba(239, 68, 68, 0.8)',
           stroke: '#ffffff',
           strokeWidth: 3,
           selectable: false,
@@ -132,10 +118,11 @@ const UniversalSymptomSelector = ({
         canvas.add(circle);
         setHighlightCircle(circle);
         canvas.renderAll();
+        console.log('✅ Marker placed at:', pointer.x, pointer.y);
       });
 
       setFabricCanvas(canvas);
-      console.log('🎨 Canvas initialized with display dimensions:', displayWidth, 'x', displayHeight);
+      console.log('🎨 Canvas initialized:', displayWidth, 'x', displayHeight);
     }
   };
 
@@ -143,22 +130,26 @@ const UniversalSymptomSelector = ({
   const handleImageError = (e: React.SyntheticEvent<HTMLImageElement>) => {
     console.error('❌ Image failed to load:', e.currentTarget.src);
     setImageLoaded(false);
-    setImageDimensions({ width: 0, height: 0 });
   };
 
-  // Cleanup canvas when component unmounts or imageUrl changes
+  // Cleanup canvas
   useEffect(() => {
     return () => {
       if (fabricCanvas) {
         fabricCanvas.dispose();
-        setFabricCanvas(null);
       }
     };
   }, [fabricCanvas]);
 
   // Toggle fullscreen
   const toggleFullscreen = () => {
-    setIsFullscreen(!isFullscreen);
+    setIsFullscreen(prev => !prev);
+    // Trigger image reload for new dimensions
+    setTimeout(() => {
+      if (imageRef.current) {
+        handleImageLoad({ currentTarget: imageRef.current } as any);
+      }
+    }, 100);
   };
 
   // Reset state when dialog closes
@@ -174,59 +165,57 @@ const UniversalSymptomSelector = ({
         setFabricCanvas(null);
       }
     }
-  }, [open, fabricCanvas]);
+  }, [open]);
+
+  // Handle zoom
   const handleZoom = (direction: 'in' | 'out' | 'reset') => {
     if (!containerRef.current) return;
 
     let newZoom = zoomLevel;
     if (direction === 'in') {
-      newZoom = Math.min(zoomLevel * 1.2, 3);
+      newZoom = Math.min(zoomLevel * 1.3, 3);
     } else if (direction === 'out') {
-      newZoom = Math.max(zoomLevel / 1.2, 0.5);
+      newZoom = Math.max(zoomLevel / 1.3, 0.5);
     } else {
       newZoom = 1;
     }
 
     setZoomLevel(newZoom);
-    
-    // Apply zoom to container
-    const container = containerRef.current;
-    container.style.transform = `scale(${newZoom})`;
+    containerRef.current.style.transform = `scale(${newZoom})`;
   };
 
-  // Handle symptom selection from list
+  // Handle symptom selection
   const handleSymptomClick = (symptom: SymptomItem) => {
     setSelectedSymptom(symptom);
-    
-    // Remove any existing highlights
-    if (highlightCircle) {
-      fabricCanvas?.remove(highlightCircle);
+    // Remove any existing markers
+    if (highlightCircle && fabricCanvas) {
+      fabricCanvas.remove(highlightCircle);
       setHighlightCircle(null);
+      fabricCanvas.renderAll();
     }
-  };
-
-  // Handle symptom hover for highlighting
-  const handleSymptomHover = (symptomId: string | null) => {
-    setHoveredSymptom(symptomId);
+    console.log('✅ Symptom selected:', symptom.text);
   };
 
   // Submit selection
   const handleSubmit = () => {
-    if (selectedSymptom) {
+    if (selectedSymptom && highlightCircle) {
       onSymptomSubmit({
         id: selectedSymptom.id,
         text: selectedSymptom.text
       });
+      console.log('✅ Symptom submitted:', selectedSymptom.text);
     }
   };
 
   // Clear selection
   const handleClearSelection = () => {
     setSelectedSymptom(null);
-    if (highlightCircle) {
-      fabricCanvas?.remove(highlightCircle);
+    if (highlightCircle && fabricCanvas) {
+      fabricCanvas.remove(highlightCircle);
       setHighlightCircle(null);
+      fabricCanvas.renderAll();
     }
+    console.log('✅ Selection cleared');
   };
 
   return (
