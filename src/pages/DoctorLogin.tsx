@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Stethoscope, Lock, Mail } from "lucide-react";
+import { Stethoscope, Lock, Mail, ArrowLeft } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 const DoctorLogin = () => {
@@ -109,6 +109,18 @@ const DoctorLogin = () => {
               <p>Test Credentials:</p>
               <p>Email: waseem@5thvital.com</p>
               <p>Password: doctor123</p>
+            </div>
+
+            <div className="pt-4 border-t">
+              <Button
+                type="button"
+                variant="ghost"
+                className="w-full"
+                onClick={() => navigate("/")}
+              >
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Back to Home
+              </Button>
             </div>
           </form>
         </CardContent>
