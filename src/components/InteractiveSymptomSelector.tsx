@@ -52,62 +52,11 @@ const InteractiveSymptomSelector = ({ bodyPart, patientData, onBack }: Interacti
     mobileNumber: ''
   });
 
-  // Universal symptom definitions - works for any body part
-  const getUniversalSymptoms = (bodyPart: string): SymptomItem[] => {
-    const bodyPartUpper = bodyPart.toUpperCase();
-    
-    // Define symptoms based on body part categories
-    if (bodyPartUpper.includes('HAIR') || bodyPartUpper.includes('SCALP')) {
-      return [
-        { id: "hair-loss-general", text: "Hair loss, hair thinning, or receding hairline that occurs gradually over time or suddenly" },
-        { id: "scalp-conditions", text: "Scalp problems including dryness, itching, flaking, or irritation with possible dandruff" },
-        { id: "hair-texture-changes", text: "Changes in hair texture - hair becoming coarse, fine, brittle, or losing natural shine" },
-        { id: "scalp-skin-changes", text: "Visible changes to scalp skin including redness, scaling, or patches of different color/texture" },
-        { id: "patchy-hair-loss", text: "Patchy areas of hair loss creating bald spots or uneven hair distribution" },
-        { id: "scalp-sensitivity", text: "Scalp sensitivity or pain when touching head or hair, burning or stinging sensations" },
-        { id: "excessive-shedding", text: "Excessive daily hair shedding - more hair than usual in brush, on pillow, or in shower" },
-        { id: "scalp-odor", text: "Unusual scalp odor or discharge, oily/flaky substances creating unpleasant smell" }
-      ];
-    } else if (bodyPartUpper.includes('EAR')) {
-      return [
-        { id: "hearing-loss-gradual", text: "Gradually increasing hearing loss affecting both ears, difficulty with conversation in noise" },
-        { id: "blocked-ear", text: "Blocked ear sensation with mild discomfort and reduced hearing" },
-        { id: "reduced-hearing", text: "Reduced hearing requiring high TV volume, quieter speech, may follow recent cold" },
-        { id: "hearing-unequal", text: "Unequal hearing loss in both ears, improved hearing in noisy backgrounds, tinnitus" },
-        { id: "vertigo-dizziness", text: "Vertigo worsened by head position changes, tinnitus, hearing loss, ear pressure" },
-        { id: "hearing-one-sided", text: "One-sided hearing loss with tinnitus, balance issues, headaches, facial numbness" },
-        { id: "dizziness-attacks", text: "Attacks of dizziness, hearing loss, and tinnitus lasting minutes to days" },
-        { id: "sudden-hearing-loss", text: "Sudden hearing loss, usually one-sided - requires immediate medical attention" },
-        { id: "ear-pain-bleeding", text: "Hearing loss following brief intense pain, possible bleeding or discharge from ear" },
-        { id: "sudden-dizziness-nausea", text: "Sudden dizziness with nausea, vomiting, and feeling unsteady" },
-        { id: "tinnitus-noises", text: "Noises from inside head - ringing, whistling, hissing sounds, possible hearing loss" }
-      ];
-    } else if (bodyPartUpper.includes('GENITAL') || bodyPartUpper.includes('MALE')) {
-      return [
-        { id: "penile-discharge", text: "Discharge from penis with burning during urination - clear, white, yellow, or green" },
-        { id: "testicular-pain", text: "Pain or discomfort in one or both testicles, swelling of testicles or scrotum" },
-        { id: "genital-sores", text: "Sores, ulcers, or lesions on penis, testicles, or surrounding area - painful or painless" },
-        { id: "urinary-burning", text: "Burning, stinging, or pain during urination, increased frequency or difficulty urinating" },
-        { id: "erectile-dysfunction", text: "Difficulty achieving or maintaining erection sufficient for sexual intercourse" },
-        { id: "scrotal-swelling", text: "Swelling in scrotum, feeling of heaviness or dragging sensation" },
-        { id: "groin-pain", text: "Pain in groin area that may radiate to testicles or lower abdomen" }
-      ];
-    } else {
-      // Generic symptoms for any other body part
-      return [
-        { id: "pain-aching", text: "Persistent pain, aching, or discomfort in this area" },
-        { id: "swelling-inflammation", text: "Swelling, inflammation, or visible enlargement" },
-        { id: "skin-changes", text: "Changes in skin color, texture, or appearance" },
-        { id: "numbness-tingling", text: "Numbness, tingling, or loss of sensation" },
-        { id: "stiffness-mobility", text: "Stiffness or reduced range of motion" },
-        { id: "warmth-heat", text: "Unusual warmth or heat in the area" },
-        { id: "discharge-bleeding", text: "Any unusual discharge, bleeding, or fluid" },
-        { id: "itching-irritation", text: "Itching, burning, or general irritation" }
-      ];
-    }
-  };
-
-  const symptoms: SymptomItem[] = getUniversalSymptoms(bodyPart);
+  // Universal symptom definitions - removed as UniversalSymptomSelector now handles this via Supabase
+  // const getUniversalSymptoms = ... // Moved to UniversalSymptomSelector to use Supabase data
+  
+  // Empty symptoms array - let UniversalSymptomSelector fetch from Supabase
+  const symptoms: SymptomItem[] = [];
 
   useEffect(() => {
     fetchSymptomImage();
