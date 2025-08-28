@@ -40,8 +40,11 @@ export const fetchSymptomData = async (bodyPart: string): Promise<SymptomContent
     }
 
     if (!data || data.length === 0) {
+      console.log(`No symptoms found for body part: ${bodyPart}`);
       return { regions: [], fallbackSymptoms: [] };
     }
+
+    console.log(`Found ${data.length} symptoms for ${bodyPart}:`, data);
 
     // Create specific regions based on body part and content
     const regions: SymptomRegion[] = [];
@@ -88,9 +91,12 @@ export const fetchSymptomData = async (bodyPart: string): Promise<SymptomContent
           )
         ) || regionData;
 
+        // Ensure we have complete symptom text
+        const completeSymptomText = symptomText.trim() || shortSummary.trim() || 'Symptom description not available';
+
         regions.push({
           id: `${bodyPart.toLowerCase().replace(/\s+/g, '_')}_${index}`,
-          text: symptomText,
+          text: completeSymptomText,
           diagnosis: item['Probable Diagnosis'] || '',
           summary: shortSummary,
           coordinates: {
@@ -111,9 +117,12 @@ export const fetchSymptomData = async (bodyPart: string): Promise<SymptomContent
         const regionWidth = 90 / cols;
         const regionHeight = 85 / Math.ceil(data.length / cols);
         
+        // Ensure we have complete symptom text
+        const completeSymptomText = (item.Symptoms || '').trim() || (item['Short Summary'] || '').trim() || 'Symptom description not available';
+        
         regions.push({
           id: `${bodyPart.toLowerCase().replace(/\s+/g, '_')}_${index}`,
-          text: item.Symptoms || '',
+          text: completeSymptomText,
           diagnosis: item['Probable Diagnosis'] || '',
           summary: item['Short Summary'] || '',
           coordinates: {

@@ -439,6 +439,8 @@ const UniversalSymptomSelector = ({
             selectionMarkerRef.current = null;
           }
           
+          console.log('Selected symptom region:', clickedRegion);
+          
           // Directly select the detected text with diagnosis and summary
           setSelectedSymptom({ 
             id: clickedRegion.id, 
