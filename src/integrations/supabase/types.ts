@@ -92,6 +92,113 @@ export type Database = {
         }
         Relationships: []
       }
+      prescription_requests: {
+        Row: {
+          assigned_doctor_id: string | null
+          basic_investigations: string | null
+          body_part: string
+          common_treatments: string | null
+          created_at: string
+          id: string
+          patient_age: string
+          patient_gender: string
+          patient_name: string
+          prescription_required: boolean
+          probable_diagnosis: string | null
+          short_summary: string | null
+          status: Database["public"]["Enums"]["request_status"]
+          symptoms: string | null
+          updated_at: string
+        }
+        Insert: {
+          assigned_doctor_id?: string | null
+          basic_investigations?: string | null
+          body_part: string
+          common_treatments?: string | null
+          created_at?: string
+          id?: string
+          patient_age: string
+          patient_gender: string
+          patient_name: string
+          prescription_required?: boolean
+          probable_diagnosis?: string | null
+          short_summary?: string | null
+          status?: Database["public"]["Enums"]["request_status"]
+          symptoms?: string | null
+          updated_at?: string
+        }
+        Update: {
+          assigned_doctor_id?: string | null
+          basic_investigations?: string | null
+          body_part?: string
+          common_treatments?: string | null
+          created_at?: string
+          id?: string
+          patient_age?: string
+          patient_gender?: string
+          patient_name?: string
+          prescription_required?: boolean
+          probable_diagnosis?: string | null
+          short_summary?: string | null
+          status?: Database["public"]["Enums"]["request_status"]
+          symptoms?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      prescriptions: {
+        Row: {
+          created_at: string
+          diagnosis: string | null
+          doctor_id: string
+          follow_up_notes: string | null
+          id: string
+          instructions: string | null
+          medications: string | null
+          patient_age: string
+          patient_gender: string
+          patient_name: string
+          pdf_url: string | null
+          request_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          diagnosis?: string | null
+          doctor_id: string
+          follow_up_notes?: string | null
+          id?: string
+          instructions?: string | null
+          medications?: string | null
+          patient_age: string
+          patient_gender: string
+          patient_name: string
+          pdf_url?: string | null
+          request_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          diagnosis?: string | null
+          doctor_id?: string
+          follow_up_notes?: string | null
+          id?: string
+          instructions?: string | null
+          medications?: string | null
+          patient_age?: string
+          patient_gender?: string
+          patient_name?: string
+          pdf_url?: string | null
+          request_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prescriptions_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "prescription_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -128,6 +235,7 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "doctor"
+      request_status: "pending" | "in_progress" | "completed"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -256,6 +364,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "doctor"],
+      request_status: ["pending", "in_progress", "completed"],
     },
   },
 } as const
