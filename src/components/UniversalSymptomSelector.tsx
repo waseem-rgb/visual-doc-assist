@@ -91,16 +91,20 @@ const UniversalSymptomSelector = ({
     });
   };
 
-  // Cleanup canvas on unmount only
+  // Cleanup canvas on unmount only - with proper timing to avoid React conflicts
   useEffect(() => {
     return () => {
-      if (fabricCanvas && !fabricCanvas.disposed) {
-        try {
-          fabricCanvas.dispose();
-        } catch (error) {
-          console.warn('Canvas disposal error:', error);
+      // Delay disposal to let React handle DOM cleanup first
+      setTimeout(() => {
+        if (fabricCanvas && !fabricCanvas.disposed) {
+          try {
+            fabricCanvas.dispose();
+          } catch (error) {
+            console.warn('Canvas disposal error:', error);
+          }
         }
-      }
+      }, 0);
+      
       // Cleanup blob URL on unmount
       if (blobUrlRef.current && blobUrlRef.current.startsWith('blob:')) {
         try {
@@ -153,14 +157,22 @@ const UniversalSymptomSelector = ({
       setSymptomContentData(null);
       setIsLoadingSymptoms(false);
       setIsSubmitted(false);
+      
+      // Safe canvas disposal - clear the reference first to prevent multiple disposals
       if (fabricCanvas && !fabricCanvas.disposed) {
+        const canvasToDispose = fabricCanvas;
+        setFabricCanvas(null); // Clear reference immediately
+        
+        // Dispose safely without interfering with React's DOM cleanup
         try {
-          fabricCanvas.dispose();
+          // Clear all objects first to minimize DOM manipulation
+          canvasToDispose.clear();
+          canvasToDispose.dispose();
         } catch (error) {
           console.warn('Canvas disposal error:', error);
         }
-        setFabricCanvas(null);
       }
+      
       // Clean up blob URL when dialog closes or URL changes (only blob URLs need cleanup)
       if (blobUrlRef.current && blobUrlRef.current.startsWith('blob:')) {
         try {
@@ -217,6 +229,8 @@ const UniversalSymptomSelector = ({
           await new Promise(resolve => setTimeout(resolve, 0));
           
           if (!isCleanedUp) {
+            // Clear canvas contents first to minimize DOM manipulation during disposal
+            oldCanvas.clear();
             oldCanvas.dispose();
           }
         } catch (error) {
