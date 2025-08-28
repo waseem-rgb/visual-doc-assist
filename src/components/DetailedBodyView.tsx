@@ -78,16 +78,15 @@ const getQuadrantParts = (quadrant: string, view: string) => {
     head: {
       Front: [
         { name: "HAIR AND SCALP", x1: 0.25, y1: 0.02, x2: 0.75, y2: 0.25 },
-        { name: "HEAD FRONT", x1: 0.30, y1: 0.08, x2: 0.70, y2: 0.22 }, // Forehead area
-        { name: "FACE", x1: 0.25, y1: 0.28, x2: 0.75, y2: 0.75 },
-        { name: "EYE VISION LEFT", x1: 0.32, y1: 0.35, x2: 0.44, y2: 0.42 }, // Left eye
-        { name: "EYE VISION RIGHT", x1: 0.56, y1: 0.35, x2: 0.68, y2: 0.42 }, // Right eye
-        { name: "EYE PHYSICAL LEFT", x1: 0.32, y1: 0.35, x2: 0.44, y2: 0.42 }, // Left eye
-        { name: "EYE PHYSICAL RIGHT", x1: 0.56, y1: 0.35, x2: 0.68, y2: 0.42 }, // Right eye
+        { name: "HEAD FRONT", x1: 0.35, y1: 0.12, x2: 0.65, y2: 0.25 },
+        { name: "HEAD SIDE", x1: 0.15, y1: 0.30, x2: 0.25, y2: 0.45 },
+        { name: "FACE", x1: 0.35, y1: 0.28, x2: 0.65, y2: 0.65 },
+        { name: "EYE VISION", x1: 0.38, y1: 0.35, x2: 0.62, y2: 0.42 },
+        { name: "EYE PHYSICAL", x1: 0.38, y1: 0.35, x2: 0.62, y2: 0.42 },
         { name: "NOSE", x1: 0.46, y1: 0.48, x2: 0.54, y2: 0.58 },
         { name: "MOUTH", x1: 0.42, y1: 0.62, x2: 0.58, y2: 0.68 },
-        { name: "EAR PHYSICAL", x1: 0.18, y1: 0.42, x2: 0.28, y2: 0.52 }, // Left ear closer
-        { name: "EAR HEARING", x1: 0.72, y1: 0.42, x2: 0.82, y2: 0.52 }, // Right ear closer
+        { name: "EAR PHYSICAL", x1: 0.15, y1: 0.42, x2: 0.25, y2: 0.52 },
+        { name: "EAR HEARING", x1: 0.75, y1: 0.42, x2: 0.85, y2: 0.52 },
         { name: "NECK", x1: 0.40, y1: 0.76, x2: 0.60, y2: 0.88 },
         { name: "THROAT", x1: 0.42, y1: 0.78, x2: 0.58, y2: 0.84 },
         { name: "THROAT VOICE", x1: 0.44, y1: 0.80, x2: 0.56, y2: 0.86 },
@@ -154,25 +153,26 @@ const getQuadrantParts = (quadrant: string, view: string) => {
         { name: "HAND BACK", x1: 0.30, y1: 0.75, x2: 0.70, y2: 0.95 },
       ]
     },
-    legs: {
-      Front: [
-        { name: "HIP FRONT", x1: 0.35, y1: 0.02, x2: 0.65, y2: 0.12 }, // Hip over actual hip bone
-        { name: "THIGH FRONT", x1: 0.28, y1: 0.18, x2: 0.72, y2: 0.48 },
-        { name: "KNEE FRONT", x1: 0.35, y1: 0.50, x2: 0.65, y2: 0.58 },
-        { name: "LOWER LEG FRONT", x1: 0.32, y1: 0.62, x2: 0.68, y2: 0.82 },
-        { name: "ANKLE", x1: 0.38, y1: 0.84, x2: 0.62, y2: 0.90 },
-        { name: "FOOT", x1: 0.28, y1: 0.92, x2: 0.72, y2: 0.98 },
-        { name: "FOOT UPPER", x1: 0.30, y1: 0.88, x2: 0.70, y2: 0.94 },
-        { name: "FOOT UNDERSIDE", x1: 0.32, y1: 0.90, x2: 0.68, y2: 0.96 },
-      ],
-      "Back view": [
-        { name: "HIP BACK", x1: 0.35, y1: 0.02, x2: 0.65, y2: 0.12 }, // Hip over actual hip bone
-        { name: "THIGH BACK", x1: 0.28, y1: 0.18, x2: 0.72, y2: 0.48 },
-        { name: "KNEE BACK", x1: 0.35, y1: 0.50, x2: 0.65, y2: 0.58 },
-        { name: "LOWER LEG BACK", x1: 0.32, y1: 0.62, x2: 0.68, y2: 0.82 },
-        { name: "ANKLE", x1: 0.38, y1: 0.84, x2: 0.62, y2: 0.90 },
-        { name: "FOOT", x1: 0.28, y1: 0.92, x2: 0.72, y2: 0.98 },
-      ]
+      legs: {
+        Front: [
+          { name: "HIP FRONT", x1: 0.35, y1: 0.02, x2: 0.65, y2: 0.12 },
+          { name: "THIGH FRONT", x1: 0.28, y1: 0.18, x2: 0.72, y2: 0.48 },
+          { name: "KNEE FRONT", x1: 0.35, y1: 0.50, x2: 0.65, y2: 0.58 },
+          { name: "LOWER LEG FRONT", x1: 0.32, y1: 0.62, x2: 0.68, y2: 0.82 },
+          { name: "ANKLE", x1: 0.38, y1: 0.84, x2: 0.62, y2: 0.90 },
+          { name: "FOOT", x1: 0.28, y1: 0.92, x2: 0.72, y2: 0.98 },
+          { name: "FOOT UPPER", x1: 0.30, y1: 0.88, x2: 0.70, y2: 0.94 },
+          { name: "FOOT UNDERSIDE", x1: 0.32, y1: 0.94, x2: 0.68, y2: 0.98 },
+        ],
+        "Back view": [
+          { name: "HIP BACK", x1: 0.35, y1: 0.02, x2: 0.65, y2: 0.12 },
+          { name: "THIGH BACK", x1: 0.28, y1: 0.18, x2: 0.72, y2: 0.48 },
+          { name: "KNEE BACK", x1: 0.35, y1: 0.50, x2: 0.65, y2: 0.58 },
+          { name: "LOWER LEG BACK", x1: 0.32, y1: 0.62, x2: 0.68, y2: 0.82 },
+          { name: "ANKLE", x1: 0.38, y1: 0.84, x2: 0.62, y2: 0.90 },
+          { name: "FOOT", x1: 0.28, y1: 0.92, x2: 0.72, y2: 0.98 },
+          { name: "FOOT UNDERSIDE", x1: 0.32, y1: 0.94, x2: 0.68, y2: 0.98 },
+        ]
     }
   };
   
