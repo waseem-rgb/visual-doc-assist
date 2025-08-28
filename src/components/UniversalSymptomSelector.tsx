@@ -59,36 +59,69 @@ const UniversalSymptomSelector = ({
 
   const getImagePath = useCallback(async () => {
     try {
-      const { loadImageFromStorage } = await import('@/lib/storageUtils');
+      // Map body parts to local asset filenames
+      const bodyPartMap = {
+        'HEAD': 'head',
+        'CHEST': 'chest',
+        'UPPER ABDOMEN': 'abdomen',
+        'LOWER ABDOMEN': 'abdomen',
+        'ABDOMEN': 'abdomen',
+        'ARMS': 'arms',
+        'LEGS': 'legs'
+      };
       
-      // Try multiple filename variations based on the body part
-      const searchTerms = [
-        bodyPart, // Original body part name
-        bodyPart.toLowerCase(),
-        bodyPart.replace(/\s+/g, ''), // Remove spaces
-        bodyPart.replace(/\s+/g, '-'), // Replace spaces with dashes
-        bodyPart.replace(/\s+/g, '_'), // Replace spaces with underscores
+      // Get the base name for the body part
+      const baseName = bodyPartMap[bodyPart.toUpperCase()] || 'body-diagram';
+      
+      // Determine gender suffix
+      const genderSuffix = gender === 'female' ? 'female' : 'male';
+      
+      // Try different image variations
+      const imageVariations = [
+        `${baseName}-front-${genderSuffix}`,
+        `${baseName}-front-detailed`,
+        `${baseName}-${genderSuffix}`,
+        `${baseName}-detailed`,
+        'body-diagram-front',
+        'body-front-realistic'
       ];
-
-      for (const searchTerm of searchTerms) {
-        console.log(`🔍 Trying to load image for: "${searchTerm}"`);
-        const result = await loadImageFromStorage(searchTerm, 'Symptom_Images');
-        if (result.url) {
-          console.log(`✅ Found image: ${result.url}`);
-          return result.url;
+      
+      for (const variation of imageVariations) {
+        try {
+          // Try .jpg first, then .png
+          const extensions = ['jpg', 'png'];
+          for (const ext of extensions) {
+            const imagePath = `/src/assets/${variation}.${ext}`;
+            console.log(`🔍 Trying image: ${imagePath}`);
+            
+            // Test if image exists by trying to create an Image object
+            const img = new Image();
+            img.crossOrigin = 'anonymous';
+            
+            const imageExists = await new Promise<boolean>((resolve) => {
+              img.onload = () => resolve(true);
+              img.onerror = () => resolve(false);
+              img.src = imagePath;
+            });
+            
+            if (imageExists) {
+              console.log(`✅ Found image: ${imagePath}`);
+              return imagePath;
+            }
+          }
+        } catch (error) {
+          console.log(`❌ Failed to load ${variation}`);
         }
       }
       
-      // If no specific image found, try generic body diagram
-      console.log('🔄 Falling back to generic body diagram');
-      const fallbackResult = await loadImageFromStorage('body-diagram-front', 'Symptom_Images');
-      return fallbackResult.url;
+      console.log('🔄 Using fallback image');
+      return '/src/assets/body-diagram-front.png';
       
     } catch (error) {
       console.error('❌ Error in getImagePath:', error);
-      return null;
+      return '/src/assets/body-diagram-front.png';
     }
-  }, [bodyPart]);
+  }, [bodyPart, gender]);
 
   const fetchSymptoms = useCallback(async () => {
     if (!bodyPart) return;
