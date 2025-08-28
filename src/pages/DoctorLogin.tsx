@@ -13,7 +13,8 @@ const DoctorLogin = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(""); // Clear error state on component mount
+  const [error, setError] = useState("");
+  const [isSignUp, setIsSignUp] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -28,41 +29,61 @@ const DoctorLogin = () => {
     setError("");
     
     try {
-      // Authenticate with Supabase
-      const { data, error: signInError } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
+      if (isSignUp) {
+        // Sign up new doctor
+        const { data, error: signUpError } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            emailRedirectTo: `${window.location.origin}/doctor/dashboard`
+          }
+        });
 
-      if (signInError) throw signInError;
+        if (signUpError) throw signUpError;
 
-      if (!data.user) {
-        throw new Error("Authentication failed");
+        toast({
+          title: "Account Created",
+          description: "Please check your email to confirm your account, then sign in.",
+        });
+        
+        setIsSignUp(false);
+      } else {
+        // Sign in existing doctor
+        const { data, error: signInError } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+
+        if (signInError) throw signInError;
+
+        if (!data.user) {
+          throw new Error("Authentication failed");
+        }
+
+        // Check if user has doctor role
+        const { data: roles, error: roleError } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', data.user.id);
+
+        if (roleError) throw roleError;
+
+        const hasDocRole = roles?.some(r => r.role === 'doctor');
+        if (!hasDocRole) {
+          await supabase.auth.signOut();
+          throw new Error("Access denied - Doctor role required");
+        }
+
+        toast({
+          title: "Login Successful",
+          description: "Welcome back, Doctor!",
+        });
+        
+        navigate("/doctor/dashboard");
       }
-
-      // Check if user has doctor role
-      const { data: roles, error: roleError } = await supabase
-        .from('user_roles')
-        .select('role')
-        .eq('user_id', data.user.id);
-
-      if (roleError) throw roleError;
-
-      const hasDocRole = roles?.some(r => r.role === 'doctor');
-      if (!hasDocRole) {
-        await supabase.auth.signOut();
-        throw new Error("Access denied - Doctor role required");
-      }
-
-      toast({
-        title: "Login Successful",
-        description: "Welcome back, Doctor!",
-      });
-      
-      navigate("/doctor/dashboard");
     } catch (error: any) {
       setError(error.message);
-      console.error("Login error:", error);
+      console.error("Auth error:", error);
     } finally {
       setLoading(false);
     }
@@ -78,10 +99,10 @@ const DoctorLogin = () => {
             </div>
           </div>
           <CardTitle className="text-2xl font-bold text-foreground">
-            Doctor Login
+            {isSignUp ? "Create Doctor Account" : "Doctor Login"}
           </CardTitle>
           <p className="text-muted-foreground">
-            Access your medical dashboard
+            {isSignUp ? "Register as a new doctor" : "Access your medical dashboard"}
           </p>
         </CardHeader>
 
@@ -130,7 +151,19 @@ const DoctorLogin = () => {
               className="w-full"
               disabled={loading}
             >
-              {loading ? "Signing In..." : "Sign In"}
+              {loading ? 
+                (isSignUp ? "Creating Account..." : "Signing In...") : 
+                (isSignUp ? "Create Account" : "Sign In")
+              }
+            </Button>
+
+            <Button
+              type="button"
+              variant="ghost"
+              className="w-full"
+              onClick={() => setIsSignUp(!isSignUp)}
+            >
+              {isSignUp ? "Already have an account? Sign In" : "Need an account? Sign Up"}
             </Button>
 
             <div className="text-center text-sm text-muted-foreground">
