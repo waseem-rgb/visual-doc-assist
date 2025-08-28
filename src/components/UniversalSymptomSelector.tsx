@@ -132,8 +132,23 @@ const UniversalSymptomSelector = ({
       selection: false,
       hoverCursor: 'crosshair',
       moveCursor: 'crosshair',
+      defaultCursor: 'crosshair',
       backgroundColor: '#f8fafc',
-      enableRetinaScaling: true
+      enableRetinaScaling: true,
+      interactive: true,
+      allowTouchScrolling: false
+    });
+
+    console.log('🎨 Canvas initialized with dimensions:', canvasDimensions.width, 'x', canvasDimensions.height);
+    console.log('🎨 Canvas element:', canvasRef.current);
+    
+    // Test if canvas is receiving events
+    canvas.on('mouse:over', () => {
+      console.log('🎨 Mouse entered canvas');
+    });
+    
+    canvas.on('mouse:out', () => {
+      console.log('🎨 Mouse left canvas');
     });
 
     console.log('🎨 Canvas initialized:', canvasDimensions.width, 'x', canvasDimensions.height);
