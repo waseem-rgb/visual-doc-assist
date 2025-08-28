@@ -475,31 +475,31 @@ const InteractiveSymptomSelector = ({ bodyPart, patientData, onBack }: Interacti
       )}
 
       {/* Clinical History Form Modal */}
-      {showClinicalForm && (
-        <>
-          <div 
-            className="fixed inset-0 bg-black/60 flex items-center justify-center z-[100] p-4 overflow-y-auto"
-            style={{ 
-              backdropFilter: 'blur(4px)',
-              WebkitBackdropFilter: 'blur(4px)'
-            }}
-            onClick={(e) => {
-              // Only close if clicking the backdrop, not the modal content
-              if (e.target === e.currentTarget) {
-                console.log('Backdrop clicked - closing modal');
-                setShowClinicalForm(false);
-              }
-            }}
-          >
-            <div className="w-full max-w-2xl my-8" onClick={(e) => e.stopPropagation()}>
-              <Card className="w-full shadow-2xl border-2 bg-white">
-                <CardHeader className="pb-4">
-                  <CardTitle className="text-xl text-center">Clinical History</CardTitle>
-                  <p className="text-sm text-muted-foreground text-center">
-                    Please provide the following information to complete your prescription request
-                  </p>
-                </CardHeader>
-                <CardContent className="space-y-6 max-h-[70vh] overflow-y-auto">
+      {showClinicalForm ? (
+        <div 
+          key="clinical-modal"
+          className="fixed inset-0 bg-black/60 flex items-center justify-center z-[100] p-4 overflow-y-auto"
+          style={{ 
+            backdropFilter: 'blur(4px)',
+            WebkitBackdropFilter: 'blur(4px)'
+          }}
+          onClick={(e) => {
+            // Only close if clicking the backdrop, not the modal content
+            if (e.target === e.currentTarget) {
+              console.log('Backdrop clicked - closing modal');
+              setShowClinicalForm(false);
+            }
+          }}
+        >
+          <div className="w-full max-w-2xl my-8" onClick={(e) => e.stopPropagation()}>
+            <Card className="w-full shadow-2xl border-2 bg-white">
+              <CardHeader className="pb-4">
+                <CardTitle className="text-xl text-center">Clinical History</CardTitle>
+                <p className="text-sm text-muted-foreground text-center">
+                  Please provide the following information to complete your prescription request
+                </p>
+              </CardHeader>
+              <CardContent className="space-y-6 max-h-[70vh] overflow-y-auto">
               {/* Duration of Symptoms */}
               <div className="space-y-2">
                 <Label htmlFor="symptom-duration">
@@ -641,11 +641,10 @@ const InteractiveSymptomSelector = ({ bodyPart, patientData, onBack }: Interacti
           </Card>
         </div>
       </div>
-      </>
-    )}
+      ) : null}
 
-    {/* Fullscreen Universal Selector */}
-      {imageUrl && (
+      {/* Fullscreen Universal Selector */}
+      {imageUrl && !showClinicalForm && (
         <UniversalSymptomSelector
           open={lightboxOpen}
           onClose={() => setLightboxOpen(false)}
