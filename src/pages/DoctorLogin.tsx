@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,15 +13,22 @@ const DoctorLogin = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [error, setError] = useState(""); // Clear error state on component mount
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  // Clear any error when component mounts or form inputs change
+  useEffect(() => {
+    setError("");
+  }, [email, password]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setError("");
-
+    setError(""); // Clear any previous errors
+    
+    console.log("Doctor login bypassed - proceeding to dashboard");
+    
     // Simulate loading for UX
     setTimeout(() => {
       toast({
