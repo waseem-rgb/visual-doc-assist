@@ -178,6 +178,7 @@ const InteractiveSymptomSelector = ({ bodyPart, patientData, onBack }: Interacti
   };
 
   const handleRequestPrescription = () => {
+    console.log('Request prescription clicked - showing clinical form');
     setShowClinicalForm(true);
   };
 
@@ -461,15 +462,22 @@ const InteractiveSymptomSelector = ({ bodyPart, patientData, onBack }: Interacti
 
       {/* Clinical History Form Modal */}
       {showClinicalForm && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <Card className="w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-            <CardHeader>
-              <CardTitle className="text-xl text-center">Clinical History</CardTitle>
-              <p className="text-sm text-muted-foreground text-center">
-                Please provide the following information to complete your prescription request
-              </p>
-            </CardHeader>
-            <CardContent className="space-y-6">
+        <div 
+          className="fixed inset-0 bg-black/60 flex items-center justify-center z-[100] p-4 overflow-y-auto"
+          style={{ 
+            backdropFilter: 'blur(4px)',
+            WebkitBackdropFilter: 'blur(4px)'
+          }}
+        >
+          <div className="w-full max-w-2xl my-8">
+            <Card className="w-full shadow-2xl border-2">
+              <CardHeader className="pb-4">
+                <CardTitle className="text-xl text-center">Clinical History</CardTitle>
+                <p className="text-sm text-muted-foreground text-center">
+                  Please provide the following information to complete your prescription request
+                </p>
+              </CardHeader>
+              <CardContent className="space-y-6 max-h-[70vh] overflow-y-auto">
               {/* Duration of Symptoms */}
               <div className="space-y-2">
                 <Label htmlFor="symptom-duration">
@@ -610,6 +618,7 @@ const InteractiveSymptomSelector = ({ bodyPart, patientData, onBack }: Interacti
             </CardContent>
           </Card>
         </div>
+      </div>
       )}
 
       {/* Fullscreen Universal Selector */}
