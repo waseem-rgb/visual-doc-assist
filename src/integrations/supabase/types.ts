@@ -62,6 +62,48 @@ export type Database = {
         }
         Relationships: []
       }
+      Medication_new: {
+        Row: {
+          brand_names: string | null
+          category: string | null
+          common_dosages: string | null
+          contraindication: string | null
+          created_at: string | null
+          dosage_form: string | null
+          generic_name: string | null
+          id: string | null
+          indication: string | null
+          name: string | null
+          side_effects: string | null
+        }
+        Insert: {
+          brand_names?: string | null
+          category?: string | null
+          common_dosages?: string | null
+          contraindication?: string | null
+          created_at?: string | null
+          dosage_form?: string | null
+          generic_name?: string | null
+          id?: string | null
+          indication?: string | null
+          name?: string | null
+          side_effects?: string | null
+        }
+        Update: {
+          brand_names?: string | null
+          category?: string | null
+          common_dosages?: string | null
+          contraindication?: string | null
+          created_at?: string | null
+          dosage_form?: string | null
+          generic_name?: string | null
+          id?: string | null
+          indication?: string | null
+          name?: string | null
+          side_effects?: string | null
+        }
+        Relationships: []
+      }
       "New Master": {
         Row: {
           "Basic Investigations": string | null
@@ -97,12 +139,16 @@ export type Database = {
           assigned_doctor_id: string | null
           basic_investigations: string | null
           body_part: string
+          chief_complaint: string | null
+          clinical_history: string | null
           common_treatments: string | null
           created_at: string
           id: string
           patient_age: string
           patient_gender: string
           patient_name: string
+          patient_phone: string | null
+          physical_examination: string | null
           prescription_required: boolean
           probable_diagnosis: string | null
           short_summary: string | null
@@ -114,12 +160,16 @@ export type Database = {
           assigned_doctor_id?: string | null
           basic_investigations?: string | null
           body_part: string
+          chief_complaint?: string | null
+          clinical_history?: string | null
           common_treatments?: string | null
           created_at?: string
           id?: string
           patient_age: string
           patient_gender: string
           patient_name: string
+          patient_phone?: string | null
+          physical_examination?: string | null
           prescription_required?: boolean
           probable_diagnosis?: string | null
           short_summary?: string | null
@@ -131,12 +181,16 @@ export type Database = {
           assigned_doctor_id?: string | null
           basic_investigations?: string | null
           body_part?: string
+          chief_complaint?: string | null
+          clinical_history?: string | null
           common_treatments?: string | null
           created_at?: string
           id?: string
           patient_age?: string
           patient_gender?: string
           patient_name?: string
+          patient_phone?: string | null
+          physical_examination?: string | null
           prescription_required?: boolean
           probable_diagnosis?: string | null
           short_summary?: string | null
@@ -151,42 +205,51 @@ export type Database = {
           created_at: string
           diagnosis: string | null
           doctor_id: string
+          doctor_signature: string | null
           follow_up_notes: string | null
           id: string
           instructions: string | null
+          license_info: string | null
           medications: string | null
           patient_age: string
           patient_gender: string
           patient_name: string
           pdf_url: string | null
+          prescription_date: string | null
           request_id: string | null
         }
         Insert: {
           created_at?: string
           diagnosis?: string | null
           doctor_id: string
+          doctor_signature?: string | null
           follow_up_notes?: string | null
           id?: string
           instructions?: string | null
+          license_info?: string | null
           medications?: string | null
           patient_age: string
           patient_gender: string
           patient_name: string
           pdf_url?: string | null
+          prescription_date?: string | null
           request_id?: string | null
         }
         Update: {
           created_at?: string
           diagnosis?: string | null
           doctor_id?: string
+          doctor_signature?: string | null
           follow_up_notes?: string | null
           id?: string
           instructions?: string | null
+          license_info?: string | null
           medications?: string | null
           patient_age?: string
           patient_gender?: string
           patient_name?: string
           pdf_url?: string | null
+          prescription_date?: string | null
           request_id?: string | null
         }
         Relationships: [
