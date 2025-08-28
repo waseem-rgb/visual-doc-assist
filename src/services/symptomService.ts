@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { symptomContent } from "@/data/symptomContent";
 
 export interface SymptomData {
   symptoms: string;
@@ -40,7 +41,12 @@ export const fetchSymptomData = async (bodyPart: string): Promise<SymptomContent
     }
 
     if (!data || data.length === 0) {
-      console.log(`No symptoms found for body part: ${bodyPart}`);
+      console.log(`No symptoms found for body part: ${bodyPart}, using fallback data`);
+      // Use fallback data from symptomContent.ts
+      const fallbackData = symptomContent[bodyPart];
+      if (fallbackData) {
+        return fallbackData;
+      }
       return { regions: [], fallbackSymptoms: [] };
     }
 
@@ -148,6 +154,11 @@ export const fetchSymptomData = async (bodyPart: string): Promise<SymptomContent
 
   } catch (error) {
     console.error('Error in fetchSymptomData:', error);
+    // Use fallback data from symptomContent.ts
+    const fallbackData = symptomContent[bodyPart];
+    if (fallbackData) {
+      return fallbackData;
+    }
     return {
       regions: [],
       fallbackSymptoms: [
