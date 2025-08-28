@@ -88,8 +88,8 @@ const UniversalSymptomSelector = ({
 
   // Calculate canvas dimensions based on screen size
   const calculateCanvasDimensions = () => {
-    const availableWidth = isFullscreen ? window.innerWidth * 0.65 : Math.min(800, window.innerWidth * 0.6);
-    const availableHeight = isFullscreen ? window.innerHeight * 0.85 : Math.min(600, window.innerHeight * 0.7);
+    const availableWidth = isFullscreen ? window.innerWidth * 0.75 : Math.min(900, window.innerWidth * 0.7);
+    const availableHeight = isFullscreen ? window.innerHeight * 0.9 : Math.min(700, window.innerHeight * 0.8);
     
     setCanvasDimensions({
       width: Math.round(availableWidth),
@@ -398,7 +398,7 @@ const UniversalSymptomSelector = ({
 
         <div className="flex h-full">
           {/* Left Side - Canvas */}
-          <div className={`${isFullscreen ? 'w-2/3' : 'w-3/5'} relative bg-muted/20 border-r border-border`}>
+          <div className={`${isFullscreen ? 'w-4/5' : 'w-3/4'} relative bg-muted/20 border-r border-border`}>
             {/* Header */}
             <div className="absolute top-0 left-0 right-0 z-10 bg-background/95 backdrop-blur border-b border-border p-4">
               <div className="flex items-center justify-between">
@@ -496,7 +496,7 @@ const UniversalSymptomSelector = ({
           </div>
 
           {/* Right Side - Symptom List */}
-          <div className={`${isFullscreen ? 'w-1/3' : 'w-2/5'} bg-background border-l border-border flex flex-col`}>
+          <div className={`${isFullscreen ? 'w-1/5' : 'w-1/4'} bg-background border-l border-border flex flex-col`}>
             <div className="p-4 border-b border-border">
               <h3 className="text-lg font-semibold text-foreground mb-2">Available Symptoms</h3>
               <p className="text-sm text-muted-foreground">
