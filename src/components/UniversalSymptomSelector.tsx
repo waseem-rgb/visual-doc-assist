@@ -58,7 +58,47 @@ const UniversalSymptomSelector = ({
   const { toast } = useToast();
 
   const getImagePath = useCallback(() => {
-    const basePath = `/src/assets/${bodyPart}-${view}-${gender}.jpg`;
+    console.log('getImagePath - bodyPart:', bodyPart, 'view:', view, 'gender:', gender);
+    
+    // Map body parts to actual asset names
+    let assetName = bodyPart.toLowerCase().replace(/\s+/g, '-').replace('physical', '').replace(/-+$/, '');
+    
+    // Handle special mappings
+    const bodyPartMappings: { [key: string]: string } = {
+      'ear': 'head',
+      'eye': 'head',
+      'nose': 'head',
+      'mouth': 'head',
+      'face': 'head',
+      'neck': 'head',
+      'throat': 'head',
+      'shoulder': 'arms',
+      'elbow': 'arms',
+      'wrist': 'arms',
+      'hand': 'arms',
+      'finger': 'arms',
+      'hip': 'legs',
+      'knee': 'legs',
+      'ankle': 'legs',
+      'foot': 'legs',
+      'toe': 'legs',
+      'back': 'chest',
+      'spine': 'chest',
+      'stomach': 'abdomen',
+      'belly': 'abdomen'
+    };
+    
+    // Check if we need to map the body part
+    for (const [key, value] of Object.entries(bodyPartMappings)) {
+      if (assetName.includes(key)) {
+        assetName = value;
+        break;
+      }
+    }
+    
+    const basePath = `/src/assets/${assetName}-${view}-${gender}.jpg`;
+    
+    console.log('Generated image path:', basePath);
     return basePath;
   }, [bodyPart, view, gender]);
 
@@ -123,32 +163,74 @@ const UniversalSymptomSelector = ({
 
     // Load the body image
     const imagePath = getImagePath();
-    FabricImage.fromURL(imagePath, { crossOrigin: 'anonymous' }).then((img) => {
-      if (!canvas || !containerRef.current) return;
+    console.log('Attempting to load image from:', imagePath);
+    
+    FabricImage.fromURL(imagePath, { crossOrigin: 'anonymous' })
+      .then((img) => {
+        console.log('✅ Image loaded successfully:', imagePath);
+        if (!canvas || !containerRef.current) return;
 
-      const containerWidth = containerRef.current.offsetWidth * 0.75;
-      const containerHeight = containerRef.current.offsetHeight * 0.9;
-      
-      const scale = Math.min(
-        containerWidth / (img.width || 1),
-        containerHeight / (img.height || 1)
-      ) * 0.8;
+        const containerWidth = containerRef.current.offsetWidth * 0.75;
+        const containerHeight = containerRef.current.offsetHeight * 0.9;
+        
+        const scale = Math.min(
+          containerWidth / (img.width || 1),
+          containerHeight / (img.height || 1)
+        ) * 0.8;
 
-      img.set({
-        left: (containerWidth - (img.width || 0) * scale) / 2,
-        top: (containerHeight - (img.height || 0) * scale) / 2,
-        scaleX: scale,
-        scaleY: scale,
-        selectable: false,
-        evented: false,
-        hoverCursor: 'default',
-        moveCursor: 'default'
+        img.set({
+          left: (containerWidth - (img.width || 0) * scale) / 2,
+          top: (containerHeight - (img.height || 0) * scale) / 2,
+          scaleX: scale,
+          scaleY: scale,
+          selectable: false,
+          evented: false,
+          hoverCursor: 'default',
+          moveCursor: 'default'
+        });
+
+        imageRef.current = img;
+        canvas.add(img);
+        canvas.renderAll();
+      })
+      .catch((error) => {
+        console.error('❌ Failed to load image:', imagePath, error);
+        // Try without /src prefix
+        const altPath = imagePath.replace('/src/assets/', '/');
+        console.log('Trying alternative path:', altPath);
+        
+        FabricImage.fromURL(altPath, { crossOrigin: 'anonymous' })
+          .then((img) => {
+            console.log('✅ Image loaded with alternative path:', altPath);
+            if (!canvas || !containerRef.current) return;
+
+            const containerWidth = containerRef.current.offsetWidth * 0.75;
+            const containerHeight = containerRef.current.offsetHeight * 0.9;
+            
+            const scale = Math.min(
+              containerWidth / (img.width || 1),
+              containerHeight / (img.height || 1)
+            ) * 0.8;
+
+            img.set({
+              left: (containerWidth - (img.width || 0) * scale) / 2,
+              top: (containerHeight - (img.height || 0) * scale) / 2,
+              scaleX: scale,
+              scaleY: scale,
+              selectable: false,
+              evented: false,
+              hoverCursor: 'default',
+              moveCursor: 'default'
+            });
+
+            imageRef.current = img;
+            canvas.add(img);
+            canvas.renderAll();
+          })
+          .catch((err) => {
+            console.error('❌ Failed to load image with alternative path:', altPath, err);
+          });
       });
-
-      imageRef.current = img;
-      canvas.add(img);
-      canvas.renderAll();
-    });
 
     // Disable canvas interactions - no click handlers
 
@@ -312,8 +394,8 @@ const UniversalSymptomSelector = ({
               }}
             />
             
-            {/* Canvas Controls */}
-            <div className="absolute top-4 left-4 flex flex-col gap-2 bg-white/90 backdrop-blur-sm rounded-lg p-2 shadow-lg">
+            {/* Canvas Controls - Hidden */}
+            <div className="hidden absolute top-4 left-4 flex flex-col gap-2 bg-white/90 backdrop-blur-sm rounded-lg p-2 shadow-lg">
               <Button variant="outline" size="sm" onClick={handleZoomIn}>
                 <ZoomIn className="h-4 w-4" />
               </Button>
@@ -325,8 +407,8 @@ const UniversalSymptomSelector = ({
               </Button>
             </div>
 
-            {/* Zoom Level Indicator */}
-            <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm rounded-lg px-3 py-1 text-sm font-medium shadow-lg">
+            {/* Zoom Level Indicator - Hidden */}
+            <div className="hidden absolute top-4 right-4 bg-white/90 backdrop-blur-sm rounded-lg px-3 py-1 text-sm font-medium shadow-lg">
               {Math.round(zoomLevel * 100)}%
             </div>
 
