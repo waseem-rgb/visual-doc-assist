@@ -278,18 +278,68 @@ const DetailedBodyView = ({
     return true;
   });
   
+  console.log(`DetailedBodyView for ${quadrant} ${currentView} (${gender}): ${parts.length} parts rendered: ${parts.map(p => p.name).join(', ')}`);
+
   const title = getQuadrantTitle(quadrant, currentView);
   const dedicatedImage = getQuadrantImage(quadrant, currentView, gender);
+
+  // Priority-based part selection to handle overlapping regions
+  const getPartPriority = (partName: string): number => {
+    const priorities: Record<string, number> = {
+      // Highest priority - small specific features
+      "EYE PHYSICAL": 10,
+      "EYE VISION": 10, 
+      "NOSE": 10,
+      "THROAT": 10,
+      "THROAT VOICE": 10,
+      "MOUTH": 9,
+      // Medium priority
+      "EAR PHYSICAL": 8,
+      "EAR HEARING": 8,
+      // Lower priority - larger general areas
+      "FACE": 3,
+      "NECK": 3,
+      "HEAD FRONT": 2,
+      "HEAD SIDE": 2,
+      "HAIR AND SCALP": 1
+    };
+    return priorities[partName] || 5; // Default medium priority
+  };
+
+  const selectBestPart = (x: number, y: number) => {
+    // Find all parts that contain the cursor position
+    const matchingParts = parts.filter(p => 
+      x >= p.x1 && x <= p.x2 && y >= p.y1 && y <= p.y2
+    );
+
+    if (matchingParts.length === 0) return null;
+    if (matchingParts.length === 1) return matchingParts[0];
+
+    // Rank by priority, then by area (smaller area = more specific)
+    const bestPart = matchingParts.reduce((best, current) => {
+      const bestPriority = getPartPriority(best.name);
+      const currentPriority = getPartPriority(current.name);
+      
+      // Higher priority wins
+      if (currentPriority > bestPriority) return current;
+      if (bestPriority > currentPriority) return best;
+      
+      // Same priority - smaller area wins (more specific)
+      const bestArea = (best.x2 - best.x1) * (best.y2 - best.y1);
+      const currentArea = (current.x2 - current.x1) * (current.y2 - current.y1);
+      
+      return currentArea < bestArea ? current : best;
+    });
+
+    return bestPart;
+  };
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
     const x = (e.clientX - rect.left) / rect.width;
     const y = (e.clientY - rect.top) / rect.height;
     
-    const part = parts.find(p => 
-      x >= p.x1 && x <= p.x2 && y >= p.y1 && y <= p.y2
-    );
-    
+    const part = selectBestPart(x, y);
     onBodyPartHover(part?.name || null);
   };
 
@@ -298,10 +348,7 @@ const DetailedBodyView = ({
     const x = (e.clientX - rect.left) / rect.width;
     const y = (e.clientY - rect.top) / rect.height;
     
-    const part = parts.find(p => 
-      x >= p.x1 && x <= p.x2 && y >= p.y1 && y <= p.y2
-    );
-    
+    const part = selectBestPart(x, y);
     if (part?.name) {
       onBodyPartClick(part.name);
     }
@@ -350,6 +397,11 @@ const DetailedBodyView = ({
               const centerX = (part.x1 + part.x2) / 2;
               const centerY = (part.y1 + part.y2) / 2;
               
+              // Calculate z-index based on priority and area (smaller = higher z-index)
+              const area = (part.x2 - part.x1) * (part.y2 - part.y1);
+              const priority = getPartPriority(part.name);
+              const zIndex = Math.round(priority * 10 + (1 / area) * 100); // Higher priority and smaller area = higher z-index
+              
               return (
                 <div key={part.name}>
                   {/* Clickable area - invisible but covers the body part region */}
@@ -365,11 +417,12 @@ const DetailedBodyView = ({
                   
                   {/* Red blinking dot at center */}
                   <div
-                    className="absolute pointer-events-none z-10"
+                    className="absolute pointer-events-none"
                     style={{
                       left: `${centerX * 100}%`,
                       top: `${centerY * 100}%`,
-                      transform: 'translate(-50%, -50%)'
+                      transform: 'translate(-50%, -50%)',
+                      zIndex: zIndex
                     }}
                   >
                     <div 
