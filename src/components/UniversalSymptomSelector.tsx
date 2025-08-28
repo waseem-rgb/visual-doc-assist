@@ -481,11 +481,11 @@ const UniversalSymptomSelector = ({
 
               <div 
                 ref={symptomListRef}
-                className="flex-1 min-h-0 overflow-y-auto overscroll-contain" 
-                style={{ scrollBehavior: 'smooth' }}
+                className="flex-1 min-h-0 overflow-y-auto overscroll-contain scroll-smooth" 
+                style={{ scrollBehavior: 'smooth', maxHeight: 'calc(100vh - 300px)' }}
                 onWheel={(e) => e.stopPropagation()}
               >
-                <div className="p-4 space-y-3">
+                <div className="p-4 space-y-3 pb-8">
                   {isLoadingSymptoms ? (
                     <div className="flex items-center justify-center py-8">
                       <div className="text-center">
