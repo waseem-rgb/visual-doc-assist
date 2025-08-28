@@ -36,6 +36,8 @@ const UniversalSymptomSelector = ({
   symptoms,
   onSymptomSubmit
 }: UniversalSymptomSelectorProps) => {
+  console.log('🚀 UniversalSymptomSelector rendering, open:', open, 'imageUrl:', imageUrl);
+  
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const hoverCircleRef = useRef<Circle | null>(null);
@@ -119,15 +121,20 @@ const UniversalSymptomSelector = ({
 
   // Initialize Fabric canvas and load image
   useEffect(() => {
+    console.log('🎯 Canvas useEffect triggered:', { open, canvasRef: !!canvasRef.current, dimensions: canvasDimensions });
+    
     if (!open || !canvasRef.current || canvasDimensions.width === 0 || canvasDimensions.height === 0) {
+      console.log('🎯 Canvas useEffect early return');
       return;
     }
 
     // Dispose existing canvas if any
     if (fabricCanvas) {
+      console.log('🎯 Disposing existing canvas');
       fabricCanvas.dispose();
     }
 
+    console.log('🎯 Creating new Fabric canvas');
     const canvas = new FabricCanvas(canvasRef.current, {
       width: canvasDimensions.width,
       height: canvasDimensions.height,
@@ -140,6 +147,8 @@ const UniversalSymptomSelector = ({
       interactive: true,
       allowTouchScrolling: false
     });
+
+    console.log('🎯 Canvas created successfully:', canvas);
 
     console.log('🎨 Canvas initialized with dimensions:', canvasDimensions.width, 'x', canvasDimensions.height);
     console.log('🎨 Canvas element:', canvasRef.current);
