@@ -34,6 +34,12 @@ interface PrescriptionRequest {
   status: 'pending' | 'in_progress' | 'completed';
   created_at: string;
   assigned_doctor_id: string | null;
+  is_referral?: boolean;
+  referral_type?: string | null;
+  patient_phone?: string;
+  clinical_history?: string;
+  chief_complaint?: string;
+  physical_examination?: string;
 }
 
 interface PrescriptionRequestDetailProps {
