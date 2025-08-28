@@ -43,6 +43,13 @@ interface PrescriptionRequest {
   clinical_history?: string;
   chief_complaint?: string;
   physical_examination?: string;
+  prescription?: {
+    id: string;
+    medications: string;
+    instructions: string;
+    pdf_url?: string;
+    created_at: string;
+  } | null;
 }
 
 interface DoctorProfile {
@@ -126,6 +133,17 @@ const DoctorDashboard = () => {
         throw requestsError;
       }
 
+      // Fetch prescriptions for completed cases
+      const { data: prescriptionsData, error: prescriptionsError } = await supabase
+        .from("prescriptions")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (prescriptionsError) {
+        console.error("Error fetching prescriptions:", prescriptionsError);
+        // Don't throw error, just log it as prescriptions are optional
+      }
+
       // Process requests and determine prescription requirement based on New Master data
       const processedRequests = await Promise.all(
         (requestsData || []).map(async (request) => {
@@ -163,11 +181,21 @@ const DoctorDashboard = () => {
             }
           }
 
+          // Find prescription for this request if it's completed
+          const prescription = prescriptionsData?.find(p => p.request_id === request.id);
+
           return {
             ...request,
             prescription_required: prescriptionRequired,
             is_referral: isReferral,
-            referral_type: isReferral ? masterRecord?.["prescription_Y-N"] : null
+            referral_type: isReferral ? masterRecord?.["prescription_Y-N"] : null,
+            prescription: prescription ? {
+              id: prescription.id,
+              medications: prescription.medications,
+              instructions: prescription.instructions,
+              pdf_url: prescription.pdf_url,
+              created_at: prescription.created_at
+            } : null
           };
         })
       );
@@ -189,6 +217,42 @@ const DoctorDashboard = () => {
   const handleSignOut = async () => {
     await supabase.auth.signOut();
     navigate("/doctor/login");
+  };
+
+  const handleViewPrescription = (request: PrescriptionRequest) => {
+    if (request.prescription) {
+      // Create a detailed prescription view
+      const prescriptionDetails = {
+        patient: {
+          name: request.patient_name,
+          age: request.patient_age,
+          gender: request.patient_gender,
+        },
+        diagnosis: request.probable_diagnosis,
+        medications: request.prescription.medications,
+        instructions: request.prescription.instructions,
+        date: new Date(request.prescription.created_at).toLocaleDateString(),
+        doctorName: doctorProfile?.full_name || "Dr. Unknown",
+        licenseNumber: doctorProfile?.license_number || "N/A"
+      };
+
+      // For now, show an alert with prescription details
+      // In the future, this could open a modal or navigate to a prescription view
+      alert(`
+PRESCRIPTION DETAILS
+
+Patient: ${prescriptionDetails.patient.name} (${prescriptionDetails.patient.age} years, ${prescriptionDetails.patient.gender})
+Date: ${prescriptionDetails.date}
+Diagnosis: ${prescriptionDetails.diagnosis}
+
+Medications: ${prescriptionDetails.medications}
+
+Instructions: ${prescriptionDetails.instructions}
+
+Prescribed by: ${prescriptionDetails.doctorName}
+License: ${prescriptionDetails.licenseNumber}
+      `);
+    }
   };
 
   const getStatusColor = (status: string) => {
@@ -389,16 +453,29 @@ const DoctorDashboard = () => {
                             </p>
                           </div>
 
-                          <div className="flex items-center gap-2 ml-4">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => setSelectedRequest(request)}
-                            >
-                              <Eye className="h-4 w-4 mr-1" />
-                              View Details
-                            </Button>
-                          </div>
+                           <div className="flex items-center gap-2 ml-4">
+                             <Button
+                               variant="outline"
+                               size="sm"
+                               onClick={() => setSelectedRequest(request)}
+                             >
+                               <Eye className="h-4 w-4 mr-1" />
+                               View Details
+                             </Button>
+                             
+                             {/* Show prescription button for completed cases */}
+                             {request.status === 'completed' && request.prescription && (
+                               <Button
+                                 variant="default"
+                                 size="sm"
+                                 onClick={() => handleViewPrescription(request)}
+                                 className="bg-green-600 hover:bg-green-700"
+                               >
+                                 <FileText className="h-4 w-4 mr-1" />
+                                 View Prescription
+                               </Button>
+                             )}
+                           </div>
                         </div>
                       </CardContent>
                     </Card>
