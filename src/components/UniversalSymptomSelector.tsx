@@ -6,6 +6,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { X, ZoomIn, ZoomOut, Maximize, Minimize, Move } from "lucide-react";
 import { Canvas as FabricCanvas, Circle, FabricImage, Point } from "fabric";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { getSymptomContentForBodyPart } from "@/data/symptomContent";
 
 interface SymptomItem {
   id: string;
@@ -65,44 +66,10 @@ const UniversalSymptomSelector = ({
   const [isPanning, setIsPanning] = useState(false);
   const [detectedText, setDetectedText] = useState<string | null>(null);
 
-  // Define text regions for the NAUSEA AND VOMITING image
-  const getTextRegionsForBodyPart = (bodyPart: string): TextRegion[] => {
-    if (bodyPart === "NAUSEA AND VOMITING") {
-      return [
-        {
-          id: "nausea_general",
-          text: "Nausea, usually with earache, dizziness, and reduced hearing. Nausea, usually with dizziness and vertigo, ringing in ears and pain. Dizziness, tinnitus (ringing sounds) in both ears, and hearing loss, with feelings of nausea. Usually a long-term condition, with recurrent episodes.",
-          coordinates: { x: 430, y: 10, width: 200, height: 120 }
-        },
-        {
-          id: "gastroenteritis",
-          text: "Often one-sided headache, with blurred vision, and flashing lights. Rash, fever, headache, stiff neck, and generally unwell. Can rapidly result in unconsciousness if untreated. This is a medical emergency; dial 999",
-          coordinates: { x: 104, y: 20, width: 180, height: 100 }
-        },
-        {
-          id: "abdominal_pain",
-          text: "Pain that comes and goes, beginning in the lower back and moving to the abdomen. May need to pass urine frequently or notice blood in urine. More common in hot climates.",
-          coordinates: { x: 8, y: 200, width: 150, height: 120 }
-        },
-        {
-          id: "stomach_pain",
-          text: "Often cramping in children. Most common in the developing world. Chronic constipation causes a build-up in bowel and affects children. Failure to grow and put on weight. Abdominal pain and diarrhoea, with rash, tiredness. Common in the developing world.",
-          coordinates: { x: 650, y: 200, width: 180, height: 150 }
-        },
-        {
-          id: "blood_symptoms",
-          text: "Vomiting with flu-like symptoms, blood in urine, and back pain. More common in women. Seek medical attention soon if symptoms severe. Pain that comes and goes, beginning in the lower back and moving to the abdomen. May need to pass urine frequently or notice blood in urine. More common in hot climates.",
-          coordinates: { x: 650, y: 400, width: 200, height: 180 }
-        },
-        {
-          id: "appetite_loss",
-          text: "Loss of appetite, nausea, vomiting, fatigue, weakness, itching, lethargy, swelling, shortness of breath, muscle cramps, and headache.",
-          coordinates: { x: 650, y: 580, width: 180, height: 80 }
-        }
-      ];
-    }
-    return [];
-  };
+  // Get symptom content for current body part
+  const symptomContentData = getSymptomContentForBodyPart(bodyPart);
+  const textRegions = symptomContentData?.regions || [];
+  const hasRegions = textRegions.length > 0;
 
   // Calculate canvas dimensions based on screen size
   const calculateCanvasDimensions = () => {
@@ -268,9 +235,6 @@ const UniversalSymptomSelector = ({
       const pointer = canvas.getPointer(event.e);
       const canvasElement = canvasRef.current;
       if (!canvasElement) return;
-      
-      // Get text regions for this body part
-      const textRegions = getTextRegionsForBodyPart(bodyPart);
       
       // Check if click is within any text region
       const clickedRegion = textRegions.find(region => {
@@ -551,9 +515,18 @@ const UniversalSymptomSelector = ({
             {/* Instructions and Selected Symptom Display */}
             <div className="absolute bottom-4 left-4 right-4 bg-background/95 backdrop-blur rounded-lg p-4 border max-h-48 overflow-y-auto">
               {!selectedSymptom ? (
-                <p className="text-sm text-center">
-                  <strong>Click on any text paragraph</strong> to select that specific symptom description
-                </p>
+                !hasRegions ? (
+                  <div className="bg-yellow-50 p-3 rounded-lg border border-yellow-200">
+                    <p className="text-sm text-yellow-800 text-center">
+                      <strong>No specific regions mapped for {bodyPart}</strong><br />
+                      Click anywhere on the image to select from available symptoms.
+                    </p>
+                  </div>
+                ) : (
+                  <p className="text-sm text-center">
+                    <strong>Click on any text paragraph</strong> to select that specific symptom description
+                  </p>
+                )
               ) : (
                 <div className="space-y-3">
                   <div className="text-sm text-center text-green-600">
@@ -644,8 +617,8 @@ const UniversalSymptomSelector = ({
           </div>
         </div>
 
-        {/* Symptom Selection Popover - Fixed positioning */}
-        {showSymptomPopover && (
+        {/* Symptom Selection Popover - Show only if no regions or generic fallback needed */}
+        {showSymptomPopover && (!hasRegions || symptoms.length > 0) && (
           <div 
             className="fixed z-50 w-80 max-h-96 bg-popover border rounded-md shadow-md p-4"
             style={{

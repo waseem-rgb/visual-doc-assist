@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { loadImageFromStorage } from "@/lib/storageUtils";
+import { getSymptomContentForBodyPart } from "@/data/symptomContent";
 import UniversalSymptomSelector from "./UniversalSymptomSelector";
 
 interface GeneralSymptomsProps {
@@ -89,6 +90,9 @@ const GeneralSymptoms = ({ patientData }: GeneralSymptomsProps) => {
       loadSymptomImages();
     }
   }, [selectedSymptoms, symptomImages]);
+
+  // Get symptom content for this symptom to pass correct fallback data
+  const symptomContentData = getSymptomContentForBodyPart(currentSymptom || "");
 
   return (
     <div className="space-y-6">
@@ -203,18 +207,7 @@ const GeneralSymptoms = ({ patientData }: GeneralSymptomsProps) => {
           imageUrl={symptomImages[currentSymptom]}
           bodyPart={currentSymptom}
           patientData={patientData}
-          symptoms={[
-            { id: "1", text: "Nausea: A feeling of sickness with an inclination to vomit. Often accompanied by increased saliva production, sweating, and discomfort in the stomach." },
-            { id: "2", text: "Vomiting: The involuntary, forceful expulsion of stomach contents through the mouth. May be preceded by nausea and can occur suddenly or after prolonged feelings of sickness." },
-            { id: "3", text: "With Headache: Nausea and vomiting accompanied by head pain, which may indicate various conditions including migraines, dehydration, or neurological issues." },
-            { id: "4", text: "With Dizziness: Feelings of lightheadedness, unsteadiness, or spinning sensation (vertigo) occurring alongside nausea and vomiting." },
-            { id: "5", text: "With Abdominal Pain: Sharp, cramping, or persistent pain in the stomach area accompanying nausea and vomiting episodes." },
-            { id: "6", text: "With Fever: Elevated body temperature (above 38°C/100.4°F) occurring with nausea and vomiting, which may suggest infection or other systemic conditions." },
-            { id: "7", text: "After Eating: Nausea and vomiting that occurs specifically after consuming food, which may indicate food poisoning, gastritis, or digestive disorders." },
-            { id: "8", text: "Motion Sickness: Nausea and vomiting triggered by movement in vehicles, boats, or other forms of transportation due to inner ear disturbances." },
-            { id: "9", text: "Persistent/Chronic: Ongoing nausea and vomiting lasting more than 24-48 hours, which requires medical evaluation for underlying causes." },
-            { id: "10", text: "Projectile Vomiting: Forceful vomiting that travels a significant distance, often indicating increased intracranial pressure or severe gastric obstruction." }
-          ]}
+          symptoms={symptomContentData?.fallbackSymptoms || []}
           onSymptomSubmit={handleSymptomSubmit}
         />
       )}
