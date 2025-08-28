@@ -167,12 +167,30 @@ const InteractiveSymptomSelector = ({ bodyPart, patientData, onBack }: Interacti
         };
         img.src = result.url;
       } else {
-        console.error('❌ Failed to load image:', result.error);
+        console.error('❌ Failed to load specific image:', result.error);
+        
+        // Try fallback to generic head image for eye-related symptoms
+        if (bodyPart.toUpperCase().includes('EYE') || bodyPart.toUpperCase().includes('VISION')) {
+          console.log('🔄 Attempting fallback to head-front-detailed.jpg for eye symptoms');
+          try {
+            // Use one of the existing head images as fallback
+            const fallbackResult = await loadImageFromStorage('head-front-detailed', 'Symptom_Images');
+            if (fallbackResult.url) {
+              setImageUrl(fallbackResult.url);
+              console.log('✅ Using head image as fallback for eye symptoms');
+              setLightboxOpen(true);
+              return;
+            }
+          } catch (fallbackError) {
+            console.log('❌ Fallback image also failed:', fallbackError);
+          }
+        }
+        
         setImageError(result.error || 'Failed to load image');
         // Still allow user to proceed without image
         toast({
-          title: "Image Not Available",
-          description: "The symptom diagram couldn't be loaded, but you can still describe your symptoms.",
+          title: "Image Not Available", 
+          description: `No specific diagram available for "${bodyPart}". You can still describe your symptoms from the list below.`,
           variant: "destructive"
         });
       }
