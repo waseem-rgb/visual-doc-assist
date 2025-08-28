@@ -29,6 +29,7 @@ export const generateImageFilenames = (bodyPart: string): string[] => {
 
 /**
  * Attempts to load an image from Supabase storage using multiple filename patterns
+ * Uses signed HTTPS URLs first (primary), then data URLs as fallback
  */
 export const loadImageFromStorage = async (
   bodyPart: string, 
@@ -44,26 +45,57 @@ export const loadImageFromStorage = async (
     try {
       console.log(`⏳ Attempting: "${filename}"`);
       
-      const { data, error } = await supabase.storage
-        .from(bucketName)
-        .download(filename);
+      // STRATEGY 1: Try signed HTTPS URL first (most stable)
+      try {
+        const { data: signedData, error: signedError } = await supabase.storage
+          .from(bucketName)
+          .createSignedUrl(filename, 3600); // 1 hour expiry
 
-      if (error) {
-        console.log(`❌ Failed "${filename}":`, error.message);
-        continue;
+        if (!signedError && signedData?.signedUrl) {
+          console.log(`✅ SUCCESS: Found "${filename}" - Using signed HTTPS URL:`, signedData.signedUrl);
+          return { 
+            url: signedData.signedUrl, 
+            filename,
+          };
+        }
+        
+        console.log(`🔄 Signed URL failed for "${filename}":`, signedError?.message || 'No signed URL returned');
+      } catch (signedErr) {
+        console.log(`💥 Signed URL exception for "${filename}":`, signedErr);
       }
 
-      if (data) {
-        const url = URL.createObjectURL(data);
-        console.log(`✅ SUCCESS: Found "${filename}" - Created blob URL:`, url);
-        
-        // Add a small delay to ensure the blob URL is ready
-        await new Promise(resolve => setTimeout(resolve, 100));
-        
-        return { url, filename };
+      // STRATEGY 2: Fallback to data URL from blob
+      try {
+        const { data, error } = await supabase.storage
+          .from(bucketName)
+          .download(filename);
+
+        if (error) {
+          console.log(`❌ Download failed "${filename}":`, error.message);
+          continue;
+        }
+
+        if (data) {
+          // Convert blob to data URL instead of object URL
+          const dataUrl = await new Promise<string>((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result as string);
+            reader.onerror = reject;
+            reader.readAsDataURL(data);
+          });
+          
+          console.log(`✅ SUCCESS: Found "${filename}" - Using data URL (${dataUrl.substring(0, 50)}...)`);
+          return { 
+            url: dataUrl, 
+            filename,
+          };
+        }
+      } catch (downloadErr) {
+        console.log(`💥 Download exception for "${filename}":`, downloadErr);
       }
+      
     } catch (err) {
-      console.log(`💥 Exception for "${filename}":`, err);
+      console.log(`💥 General exception for "${filename}":`, err);
       continue;
     }
   }

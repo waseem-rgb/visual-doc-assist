@@ -113,7 +113,7 @@ const InteractiveSymptomSelector = ({ bodyPart, patientData, onBack }: Interacti
     fetchSymptomImage();
   }, [bodyPart]);
 
-  // Cleanup blob URLs when component unmounts or bodyPart changes
+  // Cleanup only blob URLs when component unmounts or bodyPart changes
   useEffect(() => {
     return () => {
       if (blobUrlRef.current && blobUrlRef.current.startsWith('blob:')) {
@@ -134,7 +134,7 @@ const InteractiveSymptomSelector = ({ bodyPart, patientData, onBack }: Interacti
       setImageError(null);
       console.log(`🔄 Fetching image for: ${bodyPart}`);
       
-      // Clean up previous blob URL if it exists
+      // Clean up previous blob URL if it exists (only blob URLs need cleanup now)
       if (blobUrlRef.current && blobUrlRef.current.startsWith('blob:')) {
         try {
           URL.revokeObjectURL(blobUrlRef.current);
@@ -149,10 +149,23 @@ const InteractiveSymptomSelector = ({ bodyPart, patientData, onBack }: Interacti
       
       if (result.url && result.filename) {
         setImageUrl(result.url);
-        blobUrlRef.current = result.url; // Store for cleanup
+        // Only track blob URLs for cleanup, signed URLs and data URLs are self-managing
+        if (result.url.startsWith('blob:')) {
+          blobUrlRef.current = result.url;
+        }
         console.log('✅ Image loaded successfully:', result.filename);
-        // Open lightbox immediately once image is loaded
-        setLightboxOpen(true);
+        
+        // Preload image to ensure it's ready before opening lightbox
+        const img = new Image();
+        img.onload = () => {
+          console.log('📸 Image preloaded successfully, opening lightbox');
+          setLightboxOpen(true);
+        };
+        img.onerror = (error) => {
+          console.warn('⚠️ Image preload failed, but opening lightbox anyway:', error);
+          setLightboxOpen(true);
+        };
+        img.src = result.url;
       } else {
         console.error('❌ Failed to load image:', result.error);
         setImageError(result.error || 'Failed to load image');
