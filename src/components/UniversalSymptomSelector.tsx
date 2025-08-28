@@ -57,83 +57,68 @@ const UniversalSymptomSelector = ({
 
   const { toast } = useToast();
 
-  // Load all assets using Vite's glob import for reliable asset mapping
-  const assets = import.meta.glob('/src/assets/**/*.{png,jpg,jpeg,webp,svg}', { 
-    eager: true, 
-    as: 'url' 
-  });
-
-  const normalizeBodyPart = useCallback((bodyPart: string): string => {
-    const part = bodyPart.toUpperCase().trim();
-    console.log(`🔤 Normalizing body part: "${part}"`);
+  const getImagePath = useCallback(async () => {
+    console.log(`🔍 Loading image for bodyPart: "${bodyPart}" from Supabase storage`);
     
-    // Direct mapping for specific body parts to match exact asset names
-    if (part === 'HEAD' || part.includes('HEAD')) return 'head';
-    if (part === 'MOUTH' || part.includes('MOUTH') || part.includes('ORAL') || 
-        part.includes('LIPS') || part.includes('TONGUE') || part.includes('TEETH') || 
-        part.includes('GUM')) return 'mouth';
-    if (part === 'CHEST' || part === 'CHEST CENTRAL' || part === 'CHEST SIDE' || 
-        part === 'CHEST UPPER' || part.includes('CHEST')) return 'chest';
-    if (part === 'UPPER ABDOMEN' || part === 'LOWER ABDOMEN' || part === 'ABDOMEN' || 
-        part.includes('ABDOMEN')) return 'abdomen';
-    if (part === 'ARMS' || part === 'ARM' || part === 'SHOULDER' || part === 'ELBOW' || 
-        part === 'FOREARM' || part === 'HAND' || part.includes('ARM')) return 'arms';
-    if (part === 'LEGS' || part === 'LEG' || part === 'THIGH' || part === 'KNEE' || 
-        part === 'ANKLE' || part === 'FOOT' || part === 'HIP' || part.includes('LEG')) return 'legs';
-    
-    console.log(`⚠️ No specific mapping found for: "${part}", using fallback`);
-    return 'body-diagram';
-  }, []);
-
-  const getImagePath = useCallback(() => {
-    console.log(`🔍 INPUT: bodyPart="${bodyPart}", gender="${gender}", view="${view}"`);
-    
-    const baseName = normalizeBodyPart(bodyPart);
-    console.log(`📋 Normalized "${bodyPart}" → "${baseName}"`);
-    
-    const genderSuffix = gender === 'female' ? 'female' : 'male';
-    
-    // Build prioritized list - try specific body part images first
-    const variations: string[] = [];
-    
-    if (baseName !== 'body-diagram') {
-      // Try specific body part images first
-      variations.push(
-        `${baseName}-${view}-${genderSuffix}`,    // e.g., chest-front-male
-        `${baseName}-${view}-detailed`,           // e.g., chest-front-detailed
-        `${baseName}-${genderSuffix}`,           // e.g., chest-male
-        `${baseName}-detailed`                    // e.g., chest-detailed
-      );
-    }
-    
-    // Then try generic body images
-    variations.push(
-      `body-${view}-${genderSuffix}`,           // e.g., body-front-female  
-      `body-${view}-realistic`,                 // e.g., body-front-realistic
-      'body-diagram-front'                      // final fallback
-    );
-    
-    console.log(`📝 Trying variations:`, variations);
-    
-    // Try to find matching asset
-    const extensions = ['jpg', 'jpeg', 'png', 'webp', 'svg'];
-    
-    for (const variation of variations) {
-      for (const ext of extensions) {
-        const assetKey = `/src/assets/${variation}.${ext}`;
-        
-        if (assets[assetKey]) {
-          console.log(`✅ FOUND: ${assetKey} → ${assets[assetKey]}`);
-          return assets[assetKey] as string;
+    try {
+      // Try exact body part name first (e.g., "CHEST CENTRAL.png")
+      const exactFileName = `${bodyPart}.png`;
+      console.log(`🎯 Trying exact filename: ${exactFileName}`);
+      
+      const { data: exactFile } = await supabase.storage
+        .from('Symptom_Images')
+        .getPublicUrl(exactFileName);
+      
+      if (exactFile?.publicUrl) {
+        // Test if the URL actually works
+        try {
+          const response = await fetch(exactFile.publicUrl, { method: 'HEAD' });
+          if (response.ok) {
+            console.log(`✅ Found exact match: ${exactFileName}`);
+            return exactFile.publicUrl;
+          }
+        } catch (e) {
+          console.log(`❌ Exact filename not accessible: ${exactFileName}`);
         }
       }
+      
+      // Fallback: try some variations
+      const variations = [
+        `${bodyPart.toUpperCase()}.png`,
+        `${bodyPart.toLowerCase()}.png`,
+        `${bodyPart.replace(/\s+/g, ' ').toUpperCase()}.png`,
+        `${bodyPart.replace(/\s+/g, '_').toUpperCase()}.png`,
+        `${bodyPart.replace(/\s+/g, '-').toUpperCase()}.png`
+      ];
+      
+      console.log(`🔄 Trying variations:`, variations);
+      
+      for (const variation of variations) {
+        const { data } = await supabase.storage
+          .from('Symptom_Images')
+          .getPublicUrl(variation);
+        
+        if (data?.publicUrl) {
+          try {
+            const response = await fetch(data.publicUrl, { method: 'HEAD' });
+            if (response.ok) {
+              console.log(`✅ Found variation: ${variation}`);
+              return data.publicUrl;
+            }
+          } catch (e) {
+            continue;
+          }
+        }
+      }
+      
+      console.log(`❌ No image found for: ${bodyPart}`);
+      return null;
+      
+    } catch (error) {
+      console.error('❌ Error loading image from storage:', error);
+      return null;
     }
-    
-    // Emergency fallback
-    console.error(`❌ NO IMAGES FOUND! Available assets:`, Object.keys(assets));
-    const fallbackKey = '/src/assets/body-diagram-front.png';
-    return assets[fallbackKey] as string || '/src/assets/body-diagram-front.png';
-  }, [bodyPart, gender, view, normalizeBodyPart]);
+  }, [bodyPart]);
 
   const fetchSymptoms = useCallback(async () => {
     if (!bodyPart) return;
@@ -170,7 +155,7 @@ const UniversalSymptomSelector = ({
     }
   }, [isOpen, fetchSymptoms]);
 
-  const initializeCanvas = useCallback(() => {
+  const initializeCanvas = useCallback(async () => {
     if (!canvasRef.current || !containerRef.current) return;
 
     // Clean up existing canvas
@@ -207,7 +192,7 @@ const UniversalSymptomSelector = ({
     // Load the body image
     try {
       console.log(`📸 Starting image load for: ${bodyPart}`);
-      const imagePath = getImagePath();
+      const imagePath = await getImagePath();
       console.log(`🎯 Image path result: ${imagePath || 'NULL'}`);
       
       if (imagePath) {
@@ -381,12 +366,6 @@ const UniversalSymptomSelector = ({
             <DialogTitle className="text-xl font-semibold">
               Select Symptoms - {bodyPart} ({gender}, {view} view)
             </DialogTitle>
-            {/* UX hint if using fallback image */}
-            {getImagePath().includes('body-diagram-front') && bodyPart !== 'GENERAL' && (
-              <div className="text-xs text-muted-foreground bg-yellow-50 px-2 py-1 rounded border border-yellow-200">
-                Diagram not available for {bodyPart}; using generic view
-              </div>
-            )}
             <div className="flex items-center gap-2">
               <Button
                 variant="outline"
