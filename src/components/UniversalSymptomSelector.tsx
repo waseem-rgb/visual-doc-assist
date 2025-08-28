@@ -213,7 +213,13 @@ const UniversalSymptomSelector = ({
         backgroundColor: '#f8fafc',
         enableRetinaScaling: true,
         interactive: true,
-        allowTouchScrolling: false
+        allowTouchScrolling: false,
+        stopContextMenu: true,
+        fireRightClick: false,
+        fireMiddleClick: false,
+        touchStartHandler: true,
+        touchMoveHandler: true,
+        touchEndHandler: true
       });
 
       if (isCleanedUp) {
@@ -341,22 +347,49 @@ const UniversalSymptomSelector = ({
       if (!imageReadyRef.current) return;
       
       const pointer = canvas!.getPointer(event.e);
-      const evt = event.e as MouseEvent;
+      const evt = event.e as MouseEvent | TouchEvent;
       
-      // Always start potential dragging on left mouse button
-      if ((evt as any).button === 0) { // Left mouse button
+      // Handle both mouse and touch events
+      let clientX, clientY, button = 0;
+      if ('touches' in evt && evt.touches.length > 0) {
+        // Touch event
+        clientX = evt.touches[0].clientX;
+        clientY = evt.touches[0].clientY;
+      } else if ('clientX' in evt) {
+        // Mouse event
+        clientX = evt.clientX;
+        clientY = evt.clientY;
+        button = (evt as MouseEvent).button;
+      } else {
+        return;
+      }
+      
+      // Always start potential dragging on left mouse button or touch
+      if (button === 0 || 'touches' in evt) {
         mouseDownPositionRef.current = { x: pointer.x, y: pointer.y };
         dragStartTimeRef.current = Date.now();
-        lastPosX = evt.clientX;
-        lastPosY = evt.clientY;
+        lastPosX = clientX;
+        lastPosY = clientY;
         canvas!.setCursor('grab');
         evt.preventDefault();
       }
     });
 
     canvas.on('mouse:move', (opt) => {
-      const evt = opt.e as MouseEvent;
+      const evt = opt.e as MouseEvent | TouchEvent;
       const mouseDown = mouseDownPositionRef.current;
+      
+      // Handle both mouse and touch events for coordinates
+      let clientX, clientY;
+      if ('touches' in evt && evt.touches.length > 0) {
+        clientX = evt.touches[0].clientX;
+        clientY = evt.touches[0].clientY;
+      } else if ('clientX' in evt) {
+        clientX = evt.clientX;
+        clientY = evt.clientY;
+      } else {
+        return;
+      }
       
       // Start dragging if mouse is down and moved more than threshold
       if (mouseDown && !isDragging) {
@@ -380,11 +413,11 @@ const UniversalSymptomSelector = ({
       if (isDragging) {
         const vpt = canvas!.viewportTransform;
         if (vpt) {
-          vpt[4] += evt.clientX - lastPosX;
-          vpt[5] += evt.clientY - lastPosY;
+          vpt[4] += clientX - lastPosX;
+          vpt[5] += clientY - lastPosY;
           canvas!.requestRenderAll();
-          lastPosX = evt.clientX;
-          lastPosY = evt.clientY;
+          lastPosX = clientX;
+          lastPosY = clientY;
         }
       }
     });
@@ -705,7 +738,8 @@ const UniversalSymptomSelector = ({
                 className="border-2 border-gray-200 rounded-lg shadow-lg bg-white inline-block select-none relative"
                 style={{ 
                   width: canvasDimensions.width, 
-                  height: canvasDimensions.height 
+                  height: canvasDimensions.height,
+                  touchAction: 'none'
                 }}
               >
                 {/* Loading Overlay */}

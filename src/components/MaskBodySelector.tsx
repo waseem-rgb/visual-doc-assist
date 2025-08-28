@@ -295,28 +295,50 @@ const MaskBodySelector = ({
     }
   }, [gender, currentView, bodyParts, debug, maskLoaded]);
 
-  // Handle mouse move
-  const handleMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+  // Handle mouse/touch move
+  const handleMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>) => {
     if (!containerRef.current || !imageLoaded || !maskLoaded) return;
     
     const rect = containerRef.current.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
+    let x, y;
+    
+    if ('touches' in e && e.touches.length > 0) {
+      // Touch event
+      x = e.touches[0].clientX - rect.left;
+      y = e.touches[0].clientY - rect.top;
+    } else if ('clientX' in e) {
+      // Mouse event
+      x = e.clientX - rect.left;
+      y = e.clientY - rect.top;
+    } else {
+      return;
+    }
     
     setMousePosition({ x, y });
     
     const bodyPart = getBodyPartAtPosition(x, y);
-    console.log(`Mouse at (${Math.round(x)}, ${Math.round(y)}) - Detected: ${bodyPart || 'None'}`);
+    console.log(`Touch/Mouse at (${Math.round(x)}, ${Math.round(y)}) - Detected: ${bodyPart || 'None'}`);
     onBodyPartHover(bodyPart);
   }, [getBodyPartAtPosition, onBodyPartHover, imageLoaded, maskLoaded]);
 
-  // Handle mouse click
-  const handleMouseClick = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+  // Handle mouse/touch click
+  const handleMouseClick = useCallback((e: React.MouseEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>) => {
     if (!containerRef.current) return;
     
     const rect = containerRef.current.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
+    let x, y;
+    
+    if ('touches' in e && e.touches.length > 0) {
+      // Touch event
+      x = e.touches[0].clientX - rect.left;
+      y = e.touches[0].clientY - rect.top;
+    } else if ('clientX' in e) {
+      // Mouse event
+      x = e.clientX - rect.left;
+      y = e.clientY - rect.top;
+    } else {
+      return;
+    }
     
     const bodyPart = getBodyPartAtPosition(x, y);
     if (bodyPart) {
@@ -334,12 +356,16 @@ const MaskBodySelector = ({
       </CardHeader>
       <CardContent>
         <div className="relative w-full max-w-md mx-auto">
-          <div 
+            <div 
             ref={containerRef}
             className="relative cursor-pointer"
+            style={{ touchAction: 'manipulation' }}
             onMouseMove={handleMouseMove}
+            onTouchMove={handleMouseMove}
             onClick={handleMouseClick}
+            onTouchEnd={handleMouseClick}
             onMouseLeave={() => onBodyPartHover(null)}
+            onTouchCancel={() => onBodyPartHover(null)}
           >
             {/* Main body image */}
             <img 
