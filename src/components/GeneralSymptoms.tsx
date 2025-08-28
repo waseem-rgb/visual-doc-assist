@@ -63,7 +63,6 @@ const GeneralSymptoms = ({ patientData }: GeneralSymptomsProps) => {
     // For now, let's simulate proceeding to next step
     console.log('Continuing with selected symptoms:', selectedSymptoms);
     // You could navigate to a results page or show a diagnosis
-    alert(`Analyzing symptoms: ${selectedSymptoms.join(', ')}`);
   };
 
   // Load images for selected symptoms
