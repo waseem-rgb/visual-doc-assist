@@ -218,6 +218,19 @@ const InteractiveSymptomSelector = ({ bodyPart, patientData, onBack }: Interacti
     setLightboxOpen(false);
   };
 
+  // Debug logging when UniversalSymptomSelector is about to render
+  useEffect(() => {
+    if (imageUrl && !showClinicalForm && lightboxOpen) {
+      console.log('🎯 [PARENT DEBUG] About to render UniversalSymptomSelector');
+      console.log('📋 [PARENT DEBUG] Props being passed:');
+      console.log('   - open:', lightboxOpen);
+      console.log('   - imageUrl:', imageUrl);
+      console.log('   - bodyPart:', bodyPart);
+      console.log('   - imageUrl type:', typeof imageUrl);
+      console.log('   - imageUrl length:', imageUrl?.length);
+    }
+  }, [imageUrl, showClinicalForm, lightboxOpen, bodyPart]);
+
   const openLightbox = () => {
     setLightboxOpen(true);
   };

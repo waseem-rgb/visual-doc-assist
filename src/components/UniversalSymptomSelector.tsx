@@ -215,7 +215,16 @@ const UniversalSymptomSelector = ({
 
   // Safe canvas initialization with race condition prevention
   useEffect(() => {
+    console.log(`🎯 [CANVAS CHECK] Canvas useEffect triggered`);
+    console.log(`📋 [PARAMS] open: ${open}, imageUrl: "${imageUrl}", canvasDimensions: ${canvasDimensions.width}x${canvasDimensions.height}`);
+    console.log(`🎨 [CANVAS REF] canvasRef.current:`, !!canvasRef.current);
+    
     if (!open || !canvasRef.current || !imageUrl || canvasDimensions.width === 0 || canvasDimensions.height === 0) {
+      console.log(`❌ [CANVAS SKIP] Skipping canvas init - missing requirements`);
+      console.log(`   - open: ${open}`);
+      console.log(`   - canvasRef: ${!!canvasRef.current}`);  
+      console.log(`   - imageUrl: "${imageUrl}"`);
+      console.log(`   - dimensions: ${canvasDimensions.width}x${canvasDimensions.height}`);
       return;
     }
 
@@ -229,6 +238,7 @@ const UniversalSymptomSelector = ({
     initializingRef.current = true;
 
     console.log('🎯 [SAFE CANVAS INIT] Starting safe canvas initialization');
+    console.log('🔗 [IMAGE URL] Full URL:', imageUrl);
 
     const initCanvas = async () => {
       try {
