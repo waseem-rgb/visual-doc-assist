@@ -422,7 +422,13 @@ const InteractiveSymptomSelector = ({ bodyPart, patientData, onBack }: Interacti
                 </div>
 
                 <Button 
-                  onClick={handleRequestPrescription}
+                  onClick={() => {
+                    console.log('Request Prescription button clicked!');
+                    console.log('Current showClinicalForm state:', showClinicalForm);
+                    console.log('prescriptionSubmitted state:', prescriptionSubmitted);
+                    handleRequestPrescription();
+                    console.log('After handleRequestPrescription - showClinicalForm should be:', true);
+                  }}
                   size="lg"
                   className="w-full max-w-sm bg-gradient-to-r from-primary to-primary-glow hover:shadow-lg transition-all duration-300"
                   disabled={prescriptionSubmitted}
@@ -460,24 +466,40 @@ const InteractiveSymptomSelector = ({ bodyPart, patientData, onBack }: Interacti
         </div>
       </div>
 
+      {/* Debug Info - Remove after fixing */}
+      {process.env.NODE_ENV === 'development' && (
+        <div className="fixed top-4 right-4 bg-red-100 p-2 rounded text-xs z-[999]">
+          <div>showClinicalForm: {showClinicalForm.toString()}</div>
+          <div>prescriptionSubmitted: {prescriptionSubmitted.toString()}</div>
+        </div>
+      )}
+
       {/* Clinical History Form Modal */}
       {showClinicalForm && (
-        <div 
-          className="fixed inset-0 bg-black/60 flex items-center justify-center z-[100] p-4 overflow-y-auto"
-          style={{ 
-            backdropFilter: 'blur(4px)',
-            WebkitBackdropFilter: 'blur(4px)'
-          }}
-        >
-          <div className="w-full max-w-2xl my-8">
-            <Card className="w-full shadow-2xl border-2">
-              <CardHeader className="pb-4">
-                <CardTitle className="text-xl text-center">Clinical History</CardTitle>
-                <p className="text-sm text-muted-foreground text-center">
-                  Please provide the following information to complete your prescription request
-                </p>
-              </CardHeader>
-              <CardContent className="space-y-6 max-h-[70vh] overflow-y-auto">
+        <>
+          <div 
+            className="fixed inset-0 bg-black/60 flex items-center justify-center z-[100] p-4 overflow-y-auto"
+            style={{ 
+              backdropFilter: 'blur(4px)',
+              WebkitBackdropFilter: 'blur(4px)'
+            }}
+            onClick={(e) => {
+              // Only close if clicking the backdrop, not the modal content
+              if (e.target === e.currentTarget) {
+                console.log('Backdrop clicked - closing modal');
+                setShowClinicalForm(false);
+              }
+            }}
+          >
+            <div className="w-full max-w-2xl my-8" onClick={(e) => e.stopPropagation()}>
+              <Card className="w-full shadow-2xl border-2 bg-white">
+                <CardHeader className="pb-4">
+                  <CardTitle className="text-xl text-center">Clinical History</CardTitle>
+                  <p className="text-sm text-muted-foreground text-center">
+                    Please provide the following information to complete your prescription request
+                  </p>
+                </CardHeader>
+                <CardContent className="space-y-6 max-h-[70vh] overflow-y-auto">
               {/* Duration of Symptoms */}
               <div className="space-y-2">
                 <Label htmlFor="symptom-duration">
@@ -619,9 +641,10 @@ const InteractiveSymptomSelector = ({ bodyPart, patientData, onBack }: Interacti
           </Card>
         </div>
       </div>
-      )}
+      </>
+    )}
 
-      {/* Fullscreen Universal Selector */}
+    {/* Fullscreen Universal Selector */}
       {imageUrl && (
         <UniversalSymptomSelector
           open={lightboxOpen}
