@@ -57,73 +57,84 @@ const UniversalSymptomSelector = ({
 
   const { toast } = useToast();
 
-  const getImagePath = useCallback(async () => {
-    try {
-      console.log(`🔍 Looking for image for bodyPart: "${bodyPart}", gender: "${gender}"`);
-      
-      // Map body parts to local asset filenames based on actual files in assets
-      const bodyPartMap: Record<string, string> = {
-        'HEAD': 'head',
-        'CHEST': 'chest', 
-        'UPPER ABDOMEN': 'abdomen',
-        'LOWER ABDOMEN': 'abdomen',
-        'ABDOMEN': 'abdomen',
-        'ARMS': 'arms',
-        'LEGS': 'legs'
-      };
-      
-      // Get the base name for the body part
-      const baseName = bodyPartMap[bodyPart.toUpperCase()] || bodyPartMap[bodyPart] || 'body-diagram';
-      console.log(`📋 Mapped "${bodyPart}" to base name: "${baseName}"`);
-      
-      // Determine gender suffix
-      const genderSuffix = gender === 'female' ? 'female' : 'male';
-      
-      // Try different image variations based on existing assets
-      const imageVariations = [
+  // Load all assets using Vite's glob import for reliable asset mapping
+  const assets = import.meta.glob('/src/assets/**/*.{png,jpg,jpeg,webp,svg}', { 
+    eager: true, 
+    as: 'url' 
+  });
+
+  const normalizeBodyPart = useCallback((bodyPart: string): string => {
+    const part = bodyPart.toUpperCase();
+    
+    // Normalize body part names to match available asset families
+    if (part.includes('CHEST')) return 'chest';
+    if (part.includes('ABDOMEN')) return 'abdomen';
+    if (part.includes('HEAD') || part.includes('FACE') || part.includes('EYE') || 
+        part.includes('NOSE') || part.includes('MOUTH') || part.includes('EAR') || 
+        part.includes('NECK') || part.includes('THROAT')) return 'head';
+    if (part.includes('ARM') || part.includes('SHOULDER') || part.includes('ELBOW') || 
+        part.includes('FOREARM') || part.includes('HAND')) return 'arms';
+    if (part.includes('LEG') || part.includes('THIGH') || part.includes('KNEE') || 
+        part.includes('ANKLE') || part.includes('FOOT') || part.includes('HIP')) return 'legs';
+    if (part.includes('BACK')) return 'chest'; // Use chest images for back, prefer back view
+    
+    return 'body-diagram';
+  }, []);
+
+  const getImagePath = useCallback(() => {
+    console.log(`🔍 Looking for image for bodyPart: "${bodyPart}", gender: "${gender}", view: "${view}"`);
+    
+    const baseName = normalizeBodyPart(bodyPart);
+    console.log(`📋 Normalized "${bodyPart}" to base name: "${baseName}"`);
+    
+    const genderSuffix = gender === 'female' ? 'female' : 'male';
+    
+    // Build prioritized list of variations based on view and gender
+    const variations: string[] = [];
+    
+    if (view === 'front') {
+      variations.push(
         `${baseName}-front-${genderSuffix}`,
-        `${baseName}-back-${genderSuffix}`,
         `${baseName}-front-detailed`,
-        `${baseName}-back-detailed`,
+        `${baseName}-front`,
         'body-front-realistic',
+        gender === 'female' ? 'body-front-female' : 'body-front-realistic',
         'body-diagram-front'
-      ];
-      
-      for (const variation of imageVariations) {
-        // Try .jpg first, then .png
-        const extensions = ['jpg', 'png'];
-        for (const ext of extensions) {
-          try {
-            const imagePath = `/src/assets/${variation}.${ext}`;
-            console.log(`🔍 Trying image: ${imagePath}`);
-            
-            // Import the image to verify it exists
-            const imageModule = await import(/* @vite-ignore */ imagePath);
-            if (imageModule.default) {
-              console.log(`✅ Found image: ${imagePath}`);
-              return imageModule.default;
-            }
-          } catch (error) {
-            // Image doesn't exist, continue to next variation
-            continue;
-          }
+      );
+    } else if (view === 'back') {
+      variations.push(
+        `${baseName}-back-${genderSuffix}`,
+        `${baseName}-back-detailed`, 
+        `${baseName}-back`,
+        'body-back-realistic',
+        gender === 'female' ? 'body-back-female' : 'body-back-realistic'
+      );
+    }
+    
+    // Try to find matching asset
+    const extensions = ['jpg', 'jpeg', 'png', 'webp', 'svg'];
+    
+    for (const variation of variations) {
+      for (const ext of extensions) {
+        const assetKey = `/src/assets/${variation}.${ext}`;
+        
+        if (assets[assetKey]) {
+          console.log(`✅ Found asset: ${assetKey} -> ${assets[assetKey]}`);
+          return assets[assetKey] as string;
         }
       }
-      
-      // Final fallback
-      console.log('🔄 Using fallback image');
-      try {
-        const fallbackImage = await import('/src/assets/body-diagram-front.png');
-        return fallbackImage.default;
-      } catch {
-        return '/src/assets/body-diagram-front.png';
-      }
-      
-    } catch (error) {
-      console.error('❌ Error in getImagePath:', error);
-      return '/src/assets/body-diagram-front.png';
     }
-  }, [bodyPart, gender]);
+    
+    // Final fallback - guaranteed to exist
+    const fallbackKey = '/src/assets/body-diagram-front.png';
+    if (assets[fallbackKey]) {
+      console.log(`🔄 Using fallback: ${fallbackKey}`);
+      return assets[fallbackKey] as string;
+    }
+    
+    console.warn('⚠️ No images found, using generic path');
+    return '/src/assets/body-diagram-front.png';
+  }, [bodyPart, gender, view, normalizeBodyPart]);
 
   const fetchSymptoms = useCallback(async () => {
     if (!bodyPart) return;
@@ -160,7 +171,7 @@ const UniversalSymptomSelector = ({
     }
   }, [isOpen, fetchSymptoms]);
 
-  const initializeCanvas = useCallback(async () => {
+  const initializeCanvas = useCallback(() => {
     if (!canvasRef.current || !containerRef.current) return;
 
     // Clean up existing canvas
@@ -197,7 +208,7 @@ const UniversalSymptomSelector = ({
     // Load the body image
     try {
       console.log(`📸 Starting image load for: ${bodyPart}`);
-      const imagePath = await getImagePath();
+      const imagePath = getImagePath();
       console.log(`🎯 Image path result: ${imagePath || 'NULL'}`);
       
       if (imagePath) {
@@ -371,6 +382,12 @@ const UniversalSymptomSelector = ({
             <DialogTitle className="text-xl font-semibold">
               Select Symptoms - {bodyPart} ({gender}, {view} view)
             </DialogTitle>
+            {/* UX hint if using fallback image */}
+            {getImagePath().includes('body-diagram-front') && bodyPart !== 'GENERAL' && (
+              <div className="text-xs text-muted-foreground bg-yellow-50 px-2 py-1 rounded border border-yellow-200">
+                Diagram not available for {bodyPart}; using generic view
+              </div>
+            )}
             <div className="flex items-center gap-2">
               <Button
                 variant="outline"
