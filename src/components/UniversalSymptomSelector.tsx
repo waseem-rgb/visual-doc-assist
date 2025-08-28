@@ -64,52 +64,53 @@ const UniversalSymptomSelector = ({
   });
 
   const normalizeBodyPart = useCallback((bodyPart: string): string => {
-    const part = bodyPart.toUpperCase();
+    const part = bodyPart.toUpperCase().trim();
+    console.log(`🔤 Normalizing body part: "${part}"`);
     
-    // Normalize body part names to match available asset families
-    if (part.includes('CHEST')) return 'chest';
-    if (part.includes('ABDOMEN')) return 'abdomen';
-    if (part.includes('HEAD') || part.includes('FACE') || part.includes('EYE') || 
-        part.includes('NOSE') || part.includes('MOUTH') || part.includes('EAR') || 
-        part.includes('NECK') || part.includes('THROAT')) return 'head';
-    if (part.includes('ARM') || part.includes('SHOULDER') || part.includes('ELBOW') || 
-        part.includes('FOREARM') || part.includes('HAND')) return 'arms';
-    if (part.includes('LEG') || part.includes('THIGH') || part.includes('KNEE') || 
-        part.includes('ANKLE') || part.includes('FOOT') || part.includes('HIP')) return 'legs';
-    if (part.includes('BACK')) return 'chest'; // Use chest images for back, prefer back view
+    // Direct mapping for specific body parts to match exact asset names
+    if (part === 'HEAD' || part.includes('HEAD')) return 'head';
+    if (part === 'CHEST' || part === 'CHEST CENTRAL' || part === 'CHEST SIDE' || 
+        part === 'CHEST UPPER' || part.includes('CHEST')) return 'chest';
+    if (part === 'UPPER ABDOMEN' || part === 'LOWER ABDOMEN' || part === 'ABDOMEN' || 
+        part.includes('ABDOMEN')) return 'abdomen';
+    if (part === 'ARMS' || part === 'ARM' || part === 'SHOULDER' || part === 'ELBOW' || 
+        part === 'FOREARM' || part === 'HAND' || part.includes('ARM')) return 'arms';
+    if (part === 'LEGS' || part === 'LEG' || part === 'THIGH' || part === 'KNEE' || 
+        part === 'ANKLE' || part === 'FOOT' || part === 'HIP' || part.includes('LEG')) return 'legs';
     
+    console.log(`⚠️ No specific mapping found for: "${part}", using fallback`);
     return 'body-diagram';
   }, []);
 
   const getImagePath = useCallback(() => {
-    console.log(`🔍 Looking for image for bodyPart: "${bodyPart}", gender: "${gender}", view: "${view}"`);
+    console.log(`🔍 INPUT: bodyPart="${bodyPart}", gender="${gender}", view="${view}"`);
     
     const baseName = normalizeBodyPart(bodyPart);
-    console.log(`📋 Normalized "${bodyPart}" to base name: "${baseName}"`);
+    console.log(`📋 Normalized "${bodyPart}" → "${baseName}"`);
     
     const genderSuffix = gender === 'female' ? 'female' : 'male';
     
-    // Build prioritized list of variations based on view and gender
+    // Build prioritized list - try specific body part images first
     const variations: string[] = [];
     
-    if (view === 'front') {
+    if (baseName !== 'body-diagram') {
+      // Try specific body part images first
       variations.push(
-        `${baseName}-front-${genderSuffix}`,
-        `${baseName}-front-detailed`,
-        `${baseName}-front`,
-        'body-front-realistic',
-        gender === 'female' ? 'body-front-female' : 'body-front-realistic',
-        'body-diagram-front'
-      );
-    } else if (view === 'back') {
-      variations.push(
-        `${baseName}-back-${genderSuffix}`,
-        `${baseName}-back-detailed`, 
-        `${baseName}-back`,
-        'body-back-realistic',
-        gender === 'female' ? 'body-back-female' : 'body-back-realistic'
+        `${baseName}-${view}-${genderSuffix}`,    // e.g., chest-front-male
+        `${baseName}-${view}-detailed`,           // e.g., chest-front-detailed
+        `${baseName}-${genderSuffix}`,           // e.g., chest-male
+        `${baseName}-detailed`                    // e.g., chest-detailed
       );
     }
+    
+    // Then try generic body images
+    variations.push(
+      `body-${view}-${genderSuffix}`,           // e.g., body-front-female  
+      `body-${view}-realistic`,                 // e.g., body-front-realistic
+      'body-diagram-front'                      // final fallback
+    );
+    
+    console.log(`📝 Trying variations:`, variations);
     
     // Try to find matching asset
     const extensions = ['jpg', 'jpeg', 'png', 'webp', 'svg'];
@@ -119,21 +120,16 @@ const UniversalSymptomSelector = ({
         const assetKey = `/src/assets/${variation}.${ext}`;
         
         if (assets[assetKey]) {
-          console.log(`✅ Found asset: ${assetKey} -> ${assets[assetKey]}`);
+          console.log(`✅ FOUND: ${assetKey} → ${assets[assetKey]}`);
           return assets[assetKey] as string;
         }
       }
     }
     
-    // Final fallback - guaranteed to exist
+    // Emergency fallback
+    console.error(`❌ NO IMAGES FOUND! Available assets:`, Object.keys(assets));
     const fallbackKey = '/src/assets/body-diagram-front.png';
-    if (assets[fallbackKey]) {
-      console.log(`🔄 Using fallback: ${fallbackKey}`);
-      return assets[fallbackKey] as string;
-    }
-    
-    console.warn('⚠️ No images found, using generic path');
-    return '/src/assets/body-diagram-front.png';
+    return assets[fallbackKey] as string || '/src/assets/body-diagram-front.png';
   }, [bodyPart, gender, view, normalizeBodyPart]);
 
   const fetchSymptoms = useCallback(async () => {
