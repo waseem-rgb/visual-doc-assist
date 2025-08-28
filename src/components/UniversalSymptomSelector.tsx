@@ -86,14 +86,18 @@ const UniversalSymptomSelector = ({
     });
   };
 
-  // Cleanup canvas
+  // Cleanup canvas on unmount only
   useEffect(() => {
     return () => {
-      if (fabricCanvas) {
-        fabricCanvas.dispose();
+      if (fabricCanvas && !fabricCanvas.disposed) {
+        try {
+          fabricCanvas.dispose();
+        } catch (error) {
+          console.warn('Canvas disposal error:', error);
+        }
       }
     };
-  }, [fabricCanvas]);
+  }, []);
 
   // Toggle fullscreen
   const toggleFullscreen = () => {
@@ -136,8 +140,12 @@ const UniversalSymptomSelector = ({
       setSymptomContentData(null);
       setIsLoadingSymptoms(false);
       setMouseDownPosition(null);
-      if (fabricCanvas) {
-        fabricCanvas.dispose();
+      if (fabricCanvas && !fabricCanvas.disposed) {
+        try {
+          fabricCanvas.dispose();
+        } catch (error) {
+          console.warn('Canvas disposal error:', error);
+        }
         setFabricCanvas(null);
       }
     }
@@ -167,8 +175,12 @@ const UniversalSymptomSelector = ({
     }
 
     // Dispose existing canvas if any
-    if (fabricCanvas) {
-      fabricCanvas.dispose();
+    if (fabricCanvas && !fabricCanvas.disposed) {
+      try {
+        fabricCanvas.dispose();
+      } catch (error) {
+        console.warn('Canvas disposal error:', error);
+      }
     }
 
     const canvas = new FabricCanvas(canvasRef.current, {
@@ -399,7 +411,13 @@ const UniversalSymptomSelector = ({
 
     // Cleanup function
     return () => {
-      canvas.dispose();
+      if (canvas && !canvas.disposed) {
+        try {
+          canvas.dispose();
+        } catch (error) {
+          console.warn('Canvas cleanup disposal error:', error);
+        }
+      }
     };
   }, [open, canvasDimensions, imageUrl]);
 
@@ -601,6 +619,7 @@ const UniversalSymptomSelector = ({
                   className="block cursor-crosshair"
                   width={canvasDimensions.width}
                   height={canvasDimensions.height}
+                  key={`canvas-${bodyPart}-${imageUrl}`}
                 />
               </div>
             </div>
