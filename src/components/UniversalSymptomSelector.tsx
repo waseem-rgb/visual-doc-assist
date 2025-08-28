@@ -67,7 +67,6 @@ const UniversalSymptomSelector = ({
   const [clickPosition, setClickPosition] = useState<{ x: number, y: number } | null>(null);
   const [isPanning, setIsPanning] = useState(false);
   const [detectedText, setDetectedText] = useState<string | null>(null);
-  const [mouseDownPosition, setMouseDownPosition] = useState<{ x: number, y: number } | null>(null);
   const [symptomContentData, setSymptomContentData] = useState<SymptomContent | null>(null);
   const [isLoadingSymptoms, setIsLoadingSymptoms] = useState(false);
 
@@ -139,7 +138,6 @@ const UniversalSymptomSelector = ({
       setDetectedText(null);
       setSymptomContentData(null);
       setIsLoadingSymptoms(false);
-      setMouseDownPosition(null);
       if (fabricCanvas && !fabricCanvas.disposed) {
         try {
           fabricCanvas.dispose();
@@ -265,26 +263,20 @@ const UniversalSymptomSelector = ({
       }
     });
 
-    // Handle canvas clicks to detect text regions
+    // Handle panning and clicking with single mouse:down handler
+    let isDragging = false;
+    let lastPosX = 0;
+    let lastPosY = 0;
+    const mouseDownPositionRef = { current: null as { x: number; y: number } | null };
+
     canvas.on('mouse:down', (event) => {
       if (!imageReadyRef.current) return;
       
       const pointer = canvas.getPointer(event.e);
-      const canvasElement = canvasRef.current;
-      if (!canvasElement) return;
+      const evt = event.e as MouseEvent;
       
-      // Store mouse down position for movement threshold
-      setMouseDownPosition({ x: pointer.x, y: pointer.y });
-    });
-
-    // Handle panning with space key or middle mouse
-    let isDragging = false;
-    let lastPosX = 0;
-    let lastPosY = 0;
-
-    canvas.on('mouse:down', (opt) => {
-      const evt = opt.e as MouseEvent;
-      if ((evt as any).button === 1 || evt.ctrlKey || evt.shiftKey) { // Middle mouse or Ctrl/Shift + click
+      // Check for panning (middle mouse, Ctrl, or Shift)
+      if ((evt as any).button === 1 || evt.ctrlKey || evt.shiftKey) {
         isDragging = true;
         canvas.selection = false;
         canvas.setCursor('grabbing');
@@ -292,7 +284,11 @@ const UniversalSymptomSelector = ({
         lastPosY = evt.clientY;
         setIsPanning(true);
         evt.preventDefault();
+        return;
       }
+      
+      // Store mouse down position for click detection
+      mouseDownPositionRef.current = { x: pointer.x, y: pointer.y };
     });
 
     canvas.on('mouse:move', (opt) => {
@@ -321,7 +317,7 @@ const UniversalSymptomSelector = ({
       }
       
       // Check if this was a click (not a drag) by measuring movement
-      const mouseDown = mouseDownPosition;
+      const mouseDown = mouseDownPositionRef.current;
       if (!mouseDown) return;
       
       const movement = Math.sqrt(
@@ -390,7 +386,7 @@ const UniversalSymptomSelector = ({
         }
       }
       
-      setMouseDownPosition(null);
+      mouseDownPositionRef.current = null;
     });
 
     // Handle mouse wheel zoom
