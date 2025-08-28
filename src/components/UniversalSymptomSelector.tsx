@@ -239,18 +239,34 @@ const UniversalSymptomSelector = ({
 
     // Handle mouse movement for hover circle
     canvas.on('mouse:move', (event) => {
-      if (!imageReadyRef.current || !fabricImageRef.current || !hoverCircleRef.current) {
+      if (!imageReadyRef.current || !fabricImageRef.current || !hoverCircleRef.current || isDragging) {
         return;
       }
       
       const pointer = canvas.getPointer(event.e);
       
-      // Move the existing hover circle to cursor position
-      hoverCircleRef.current.set({
-        left: pointer.x - 3,
-        top: pointer.y - 3,
-        visible: true
-      });
+      // Check if pointer is within the image bounds
+      const img = fabricImageRef.current;
+      const imgLeft = img.left!;
+      const imgTop = img.top!;
+      const imgWidth = img.width! * img.scaleX!;
+      const imgHeight = img.height! * img.scaleY!;
+      
+      const isWithinImage = pointer.x >= imgLeft && 
+                           pointer.x <= imgLeft + imgWidth && 
+                           pointer.y >= imgTop && 
+                           pointer.y <= imgTop + imgHeight;
+      
+      if (isWithinImage) {
+        // Move the existing hover circle to cursor position
+        hoverCircleRef.current.set({
+          left: pointer.x - 3,
+          top: pointer.y - 3,
+          visible: true
+        });
+      } else {
+        hoverCircleRef.current.set({ visible: false });
+      }
       
       canvas.renderAll();
     });

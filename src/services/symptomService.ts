@@ -43,30 +43,88 @@ export const fetchSymptomData = async (bodyPart: string): Promise<SymptomContent
       return { regions: [], fallbackSymptoms: [] };
     }
 
-    // Convert database data to regions with estimated coordinates
-    // Since we don't have exact coordinates stored, we'll distribute them evenly
-    const regions: SymptomRegion[] = data.map((item, index) => {
-      // Distribute regions across the image (simple grid layout)
-      const cols = Math.ceil(Math.sqrt(data.length));
-      const row = Math.floor(index / cols);
-      const col = index % cols;
-      
-      const regionWidth = 90 / cols; // Leave some margin
-      const regionHeight = 85 / Math.ceil(data.length / cols);
-      
-      return {
-        id: `${bodyPart.toLowerCase().replace(/\s+/g, '_')}_${index}`,
-        text: item.Symptoms || '',
-        diagnosis: item['Probable Diagnosis'] || '',
-        summary: item['Short Summary'] || '',
-        coordinates: {
-          xPct: 5 + (col * regionWidth),
-          yPct: 5 + (row * regionHeight),
-          wPct: regionWidth - 2,
-          hPct: regionHeight - 2
+    // Create specific regions based on body part and content
+    const regions: SymptomRegion[] = [];
+    
+    if (bodyPart === 'SKIN RASHES') {
+      // Define specific text regions for skin rashes based on actual image layout
+      const skinRashRegions = [
+        {
+          xPct: 8, yPct: 25, wPct: 35, hPct: 15,
+          keywords: ['blotchy', 'red rash', 'itchy', 'group', 'flea']
+        },
+        {
+          xPct: 45, yPct: 25, wPct: 35, hPct: 15,
+          keywords: ['itchy', 'red skin', 'eczema', 'allergic', 'contact']
+        },
+        {
+          xPct: 8, yPct: 42, wPct: 35, hPct: 15,
+          keywords: ['intense irritation', 'night', 'scabies', 'burrows']
+        },
+        {
+          xPct: 45, yPct: 42, wPct: 35, hPct: 15,
+          keywords: ['small', 'raised', 'purplish', 'flat spots', 'wrists']
+        },
+        {
+          xPct: 8, yPct: 59, wPct: 35, hPct: 15,
+          keywords: ['herald', 'coloured', 'rash', 'christmas tree']
+        },
+        {
+          xPct: 45, yPct: 59, wPct: 35, hPct: 15,
+          keywords: ['contagious', 'viral', 'blister', 'chickenpox']
         }
-      };
-    });
+      ];
+
+      data.forEach((item, index) => {
+        const regionData = skinRashRegions[index] || skinRashRegions[0];
+        const symptomText = item.Symptoms || '';
+        const shortSummary = item['Short Summary'] || '';
+        
+        // Find matching region based on keywords
+        const matchingRegion = skinRashRegions.find(region => 
+          region.keywords.some(keyword => 
+            symptomText.toLowerCase().includes(keyword.toLowerCase()) ||
+            shortSummary.toLowerCase().includes(keyword.toLowerCase())
+          )
+        ) || regionData;
+
+        regions.push({
+          id: `${bodyPart.toLowerCase().replace(/\s+/g, '_')}_${index}`,
+          text: symptomText,
+          diagnosis: item['Probable Diagnosis'] || '',
+          summary: shortSummary,
+          coordinates: {
+            xPct: matchingRegion.xPct,
+            yPct: matchingRegion.yPct,
+            wPct: matchingRegion.wPct,
+            hPct: matchingRegion.hPct
+          }
+        });
+      });
+    } else {
+      // Fallback to grid layout for other body parts
+      data.forEach((item, index) => {
+        const cols = Math.ceil(Math.sqrt(data.length));
+        const row = Math.floor(index / cols);
+        const col = index % cols;
+        
+        const regionWidth = 90 / cols;
+        const regionHeight = 85 / Math.ceil(data.length / cols);
+        
+        regions.push({
+          id: `${bodyPart.toLowerCase().replace(/\s+/g, '_')}_${index}`,
+          text: item.Symptoms || '',
+          diagnosis: item['Probable Diagnosis'] || '',
+          summary: item['Short Summary'] || '',
+          coordinates: {
+            xPct: 5 + (col * regionWidth),
+            yPct: 5 + (row * regionHeight),
+            wPct: regionWidth - 2,
+            hPct: regionHeight - 2
+          }
+        });
+      });
+    }
 
     // Create fallback symptoms from the data
     const fallbackSymptoms = data.map((item, index) => ({
