@@ -1,6 +1,6 @@
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { fabric } from 'fabric';
+import { Canvas as FabricCanvas, Image as FabricImage, Point } from 'fabric';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -10,13 +10,18 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
 interface UniversalSymptomSelectorProps {
-  isOpen: boolean;
+  isOpen?: boolean;
+  open?: boolean;
   onClose: () => void;
   bodyPart: string;
-  gender: 'male' | 'female';
-  view: 'front' | 'back';
-  onSymptomsSelected: (symptoms: string[]) => void;
+  gender?: 'male' | 'female';
+  view?: 'front' | 'back';
+  onSymptomsSelected?: (symptoms: string[]) => void;
   initialSymptoms?: string[];
+  imageUrl?: string;
+  patientData?: any;
+  symptoms?: any[];
+  onSymptomSubmit?: (symptom: any) => void;
 }
 
 interface SymptomData {
@@ -31,17 +36,20 @@ interface SymptomData {
 
 const UniversalSymptomSelector = ({
   isOpen,
+  open,
   onClose,
   bodyPart,
-  gender,
-  view,
+  gender = 'male',
+  view = 'front',
   onSymptomsSelected,
-  initialSymptoms = []
+  initialSymptoms = [],
+  ...otherProps
 }: UniversalSymptomSelectorProps) => {
+  const isDialogOpen = isOpen || open || false;
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const fabricCanvasRef = useRef<fabric.Canvas | null>(null);
+  const fabricCanvasRef = useRef<FabricCanvas | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const imageRef = useRef<fabric.Image | null>(null);
+  const imageRef = useRef<FabricImage | null>(null);
   const symptomListRef = useRef<HTMLDivElement>(null);
   const symptomRailRef = useRef<HTMLDivElement>(null);
 
@@ -92,10 +100,10 @@ const UniversalSymptomSelector = ({
   }, [bodyPart, toast]);
 
   useEffect(() => {
-    if (isOpen) {
+    if (isDialogOpen) {
       fetchSymptoms();
     }
-  }, [isOpen, fetchSymptoms]);
+  }, [isDialogOpen, fetchSymptoms]);
 
   const initializeCanvas = useCallback(() => {
     if (!canvasRef.current || !containerRef.current) return;
@@ -105,7 +113,7 @@ const UniversalSymptomSelector = ({
       fabricCanvasRef.current.dispose();
     }
 
-    const canvas = new fabric.Canvas(canvasRef.current, {
+    const canvas = new FabricCanvas(canvasRef.current, {
       selection: false,
       preserveObjectStacking: true,
       allowTouchScrolling: false,
@@ -116,16 +124,17 @@ const UniversalSymptomSelector = ({
     });
 
     // Disable text selection on canvas
-    canvas.getElement().style.userSelect = 'none';
-    canvas.getElement().style.webkitUserSelect = 'none';
-    canvas.getElement().style.msUserSelect = 'none';
-    canvas.getElement().style.mozUserSelect = 'none';
+    const canvasElement = canvas.getElement();
+    canvasElement.style.userSelect = 'none';
+    canvasElement.style.webkitUserSelect = 'none';
+    (canvasElement.style as any).msUserSelect = 'none';
+    (canvasElement.style as any).mozUserSelect = 'none';
 
     fabricCanvasRef.current = canvas;
 
     // Load the body image
     const imagePath = getImagePath();
-    fabric.Image.fromURL(imagePath, (img) => {
+    FabricImage.fromURL(imagePath).then((img) => {
       if (!canvas || !containerRef.current) return;
 
       const containerWidth = containerRef.current.offsetWidth * 0.75;
@@ -150,7 +159,9 @@ const UniversalSymptomSelector = ({
       imageRef.current = img;
       canvas.add(img);
       canvas.renderAll();
-    }, { crossOrigin: 'anonymous' });
+    }).catch((error) => {
+      console.error('Failed to load image:', error);
+    });
 
     // Handle canvas clicks
     canvas.on('mouse:down', (event) => {
@@ -177,7 +188,7 @@ const UniversalSymptomSelector = ({
       if (zoom > 3) zoom = 3;
       if (zoom < 0.3) zoom = 0.3;
       
-      canvas.zoomToPoint({ x: opt.e.offsetX, y: opt.e.offsetY }, zoom);
+      canvas.zoomToPoint(new Point(opt.e.offsetX, opt.e.offsetY), zoom);
       setZoomLevel(zoom);
       opt.e.preventDefault();
       opt.e.stopPropagation();
@@ -205,13 +216,13 @@ const UniversalSymptomSelector = ({
   };
 
   useEffect(() => {
-    if (isOpen && canvasRef.current) {
+    if (isDialogOpen && canvasRef.current) {
       const timer = setTimeout(() => {
         initializeCanvas();
       }, 100);
       return () => clearTimeout(timer);
     }
-  }, [isOpen, initializeCanvas, isFullscreen]);
+  }, [isDialogOpen, initializeCanvas, isFullscreen]);
 
   const handleSymptomClick = (symptom: string) => {
     setSelectedSymptom(symptom);
@@ -260,7 +271,7 @@ const UniversalSymptomSelector = ({
   const resetZoom = () => {
     if (fabricCanvasRef.current) {
       fabricCanvasRef.current.setZoom(1);
-      fabricCanvasRef.current.absolutePan({ x: 0, y: 0 });
+      fabricCanvasRef.current.absolutePan(new Point(0, 0));
       setZoomLevel(1);
     }
   };
@@ -279,7 +290,7 @@ const UniversalSymptomSelector = ({
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={handleClose}>
+    <Dialog open={isDialogOpen} onOpenChange={handleClose}>
       <DialogContent 
         className={`${isFullscreen ? 'w-[98vw] h-[98vh] max-w-none' : 'w-[95vw] h-[95vh] max-w-7xl'} p-0 gap-0`}
         style={{ maxHeight: '98vh' }}
@@ -393,7 +404,7 @@ const UniversalSymptomSelector = ({
 
               <div 
                 ref={symptomListRef}
-                className="flex-1 min-h-0 overflow-y-auto overscroll-contain" 
+                className="flex-1 min-h-0 overflow-y-auto overscroll-contain scrollbar-thin scrollbar-thumb-gray-300 hover:scrollbar-thumb-gray-400" 
                 style={{ scrollBehavior: 'smooth' }}
                 onWheel={(e) => e.stopPropagation()}
               >
