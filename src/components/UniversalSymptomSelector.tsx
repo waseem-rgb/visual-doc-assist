@@ -64,6 +64,7 @@ const UniversalSymptomSelector = ({
   const [zoomLevel, setZoomLevel] = useState(1);
   const blobUrlRef = useRef<string | null>(null);
   const [imageLoaded, setImageLoaded] = useState(false);
+  const [imageFailed, setImageFailed] = useState(false);
   const [canvasDimensions, setCanvasDimensions] = useState({ width: 800, height: 600 });
   const [isFullscreen, setIsFullscreen] = useState(true);
   const [showConfirmationPopover, setShowConfirmationPopover] = useState(false);
@@ -143,6 +144,7 @@ const UniversalSymptomSelector = ({
   useEffect(() => {
     if (!open) {
       setImageLoaded(false);
+      setImageFailed(false);
       imageReadyRef.current = false;
       setSelectedSymptom(null);
       selectionMarkerRef.current = null;
@@ -278,9 +280,8 @@ const UniversalSymptomSelector = ({
                   reject(new Error(`Image loading timeout after ${timeout}ms on attempt ${attempt + 1}`));
                 }, timeout);
                 
-                FabricImage.fromURL(url, {
-                  crossOrigin: 'anonymous'
-                }).then((fabricImg) => {
+                const loadOptions = url.startsWith('http') ? { crossOrigin: 'anonymous' as const } : {};
+                FabricImage.fromURL(url, loadOptions).then((fabricImg) => {
                   clearTimeout(timer);
                   console.log(`✅ Fabric image loaded successfully on attempt ${attempt + 1}`);
                   resolve(fabricImg);
@@ -391,6 +392,7 @@ const UniversalSymptomSelector = ({
         console.error('Failed to load image:', error);
         if (!isCleanedUp) {
           setImageLoaded(false);
+          setImageFailed(true);
           imageReadyRef.current = false;
           // Show fallback state - allow users to proceed without image
           toast({
@@ -865,13 +867,28 @@ const UniversalSymptomSelector = ({
                 }}
               >
                 {/* Loading Overlay */}
-                {(!imageLoaded || isLoadingSymptoms) && (
+                {((!imageLoaded && !imageFailed) || isLoadingSymptoms) && (
                   <div className="absolute inset-0 flex items-center justify-center bg-gray-100 z-10">
                     <div className="text-center">
                       <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
                       <p className="text-sm text-muted-foreground">
                         {isLoadingSymptoms ? 'Loading symptom data...' : 'Loading image...'}
                       </p>
+                    </div>
+                  </div>
+                )}
+                
+                {/* Image Failed Fallback */}
+                {imageFailed && !isLoadingSymptoms && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-gray-50 z-10">
+                    <div className="text-center p-6">
+                      <div className="text-gray-400 mb-4">
+                        <svg className="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                      </div>
+                      <p className="text-sm text-muted-foreground mb-2">Image couldn't be loaded</p>
+                      <p className="text-xs text-muted-foreground">You can still select symptoms from the available options</p>
                     </div>
                   </div>
                 )}
