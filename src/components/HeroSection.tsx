@@ -18,8 +18,8 @@ const HeroSection = () => {
                 <span className="gradient-text">Redefined</span>
               </h1>
               <p className="text-xl text-muted-foreground leading-relaxed max-w-lg">
-                Get instant medical guidance by selecting symptoms from interactive body diagrams. 
-                AI-powered prescriptions backed by real doctors.
+                Get secure medical consultations by selecting symptoms from interactive body diagrams. 
+                Login required for AI-powered prescriptions backed by real doctors.
               </p>
             </div>
 
@@ -27,19 +27,10 @@ const HeroSection = () => {
               <Button 
                 size="lg" 
                 className="gradient-primary shadow-medium transition-bounce hover:shadow-large"
-                onClick={() => navigate("/consultation")}
-              >
-                Start Consultation
-                <ArrowRight className="ml-2 h-5 w-5" />
-              </Button>
-              <Button 
-                size="lg" 
-                variant="outline" 
-                className="border-primary text-primary hover:bg-primary hover:text-primary-foreground transition-smooth"
                 onClick={() => navigate("/customer/login")}
               >
-                My Dashboard
-                <Smartphone className="ml-2 h-5 w-5" />
+                Login to Start Consultation
+                <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
               <Button 
                 size="lg" 
@@ -58,8 +49,8 @@ const HeroSection = () => {
                   <Smartphone className="h-6 w-6 text-success" />
                 </div>
                 <div>
-                  <div className="font-semibold">24/7 Available</div>
-                  <div className="text-sm text-muted-foreground">Instant consultations</div>
+                  <div className="font-semibold">Secure Access</div>
+                  <div className="text-sm text-muted-foreground">Login required for consultations</div>
                 </div>
               </div>
               <div className="flex items-center space-x-2">

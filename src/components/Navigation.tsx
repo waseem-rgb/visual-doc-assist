@@ -34,8 +34,12 @@ const Navigation = () => {
                 {item.label}
               </a>
             ))}
-            <Button variant="default" className="gradient-primary">
-              Get Started
+            <Button 
+              variant="default" 
+              className="gradient-primary"
+              onClick={() => window.location.href = "/customer/login"}
+            >
+              Login / Sign Up
             </Button>
           </div>
 
@@ -62,8 +66,12 @@ const Navigation = () => {
                   {item.label}
                 </a>
               ))}
-              <Button variant="default" className="gradient-primary w-full">
-                Get Started
+              <Button 
+                variant="default" 
+                className="gradient-primary w-full"
+                onClick={() => window.location.href = "/customer/login"}
+              >
+                Login / Sign Up
               </Button>
             </div>
           </div>
