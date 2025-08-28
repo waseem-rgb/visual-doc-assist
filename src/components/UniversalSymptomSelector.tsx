@@ -39,10 +39,10 @@ const UniversalSymptomSelector = ({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const imageRef = useRef<HTMLImageElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const hoverCircleRef = useRef<Circle | null>(null);
   const [fabricCanvas, setFabricCanvas] = useState<FabricCanvas | null>(null);
   const [selectedSymptom, setSelectedSymptom] = useState<SymptomItem | null>(null);
   const [highlightCircle, setHighlightCircle] = useState<Circle | null>(null);
-  const [hoverCircle, setHoverCircle] = useState<Circle | null>(null);
   const [zoomLevel, setZoomLevel] = useState(1);
   const [imageLoaded, setImageLoaded] = useState(false);
   const [displayDimensions, setDisplayDimensions] = useState({ width: 0, height: 0 });
@@ -77,88 +77,6 @@ const UniversalSymptomSelector = ({
     });
     
     setImageLoaded(true);
-
-    // Initialize canvas after image loads
-    if (canvasRef.current && displayWidth > 0) {
-      // Dispose existing canvas if any
-      if (fabricCanvas) {
-        fabricCanvas.dispose();
-      }
-
-      const canvas = new FabricCanvas(canvasRef.current, {
-        width: displayWidth,
-        height: displayHeight,
-        selection: false,
-        hoverCursor: 'crosshair',
-        moveCursor: 'crosshair',
-        backgroundColor: 'transparent'
-      });
-
-      // Create hover circle that follows cursor
-      const createHoverCircle = () => {
-        return new Circle({
-          radius: 20,
-          fill: 'rgba(59, 130, 246, 0.3)',
-          stroke: '#3b82f6',
-          strokeWidth: 2,
-          selectable: false,
-          evented: false,
-          opacity: 0.8
-        });
-      };
-
-      // Handle mouse movement for hover circle
-      canvas.on('mouse:move', (event) => {
-        const pointer = canvas.getPointer(event.e);
-        
-        // Remove existing hover circle
-        if (hoverCircle) {
-          canvas.remove(hoverCircle);
-        }
-
-        // Create and add new hover circle at cursor position
-        const newHoverCircle = createHoverCircle();
-        newHoverCircle.set({
-          left: pointer.x - 20,
-          top: pointer.y - 20
-        });
-        
-        canvas.add(newHoverCircle);
-        setHoverCircle(newHoverCircle);
-        canvas.renderAll();
-      });
-
-      // Handle mouse leave to remove hover circle
-      canvas.on('mouse:out', () => {
-        if (hoverCircle) {
-          canvas.remove(hoverCircle);
-          setHoverCircle(null);
-          canvas.renderAll();
-        }
-      });
-
-      // Handle canvas clicks to open symptom popover
-      canvas.on('mouse:down', (event) => {
-        const pointer = canvas.getPointer(event.e);
-        const canvasElement = canvasRef.current;
-        if (!canvasElement) return;
-        
-        const rect = canvasElement.getBoundingClientRect();
-        
-        setClickPosition({ x: pointer.x, y: pointer.y });
-        setPopoverPosition({ 
-          x: rect.left + (pointer.x * rect.width / canvas.width) + window.scrollX, 
-          y: rect.top + (pointer.y * rect.height / canvas.height) + window.scrollY
-        });
-        setShowSymptomPopover(true);
-        
-        console.log('✅ Click detected at canvas:', pointer.x, pointer.y);
-        console.log('✅ Popover position:', rect.left, rect.top);
-      });
-
-      setFabricCanvas(canvas);
-      console.log('🎨 Canvas initialized:', displayWidth, 'x', displayHeight);
-    }
   };
 
   // Handle image load error
@@ -193,7 +111,7 @@ const UniversalSymptomSelector = ({
       setImageLoaded(false);
       setSelectedSymptom(null);
       setHighlightCircle(null);
-      setHoverCircle(null);
+      hoverCircleRef.current = null;
       setZoomLevel(1);
       setIsFullscreen(true); // Keep fullscreen as default
       setShowSymptomPopover(false);
@@ -204,6 +122,110 @@ const UniversalSymptomSelector = ({
       }
     }
   }, [open]);
+
+  // Initialize Fabric canvas after image loads and DOM is ready
+  useEffect(() => {
+    if (!imageLoaded || !canvasRef.current || displayDimensions.width === 0 || displayDimensions.height === 0) {
+      return;
+    }
+
+    // Dispose existing canvas if any
+    if (fabricCanvas) {
+      fabricCanvas.dispose();
+    }
+
+    const canvas = new FabricCanvas(canvasRef.current, {
+      width: displayDimensions.width,
+      height: displayDimensions.height,
+      selection: false,
+      hoverCursor: 'crosshair',
+      moveCursor: 'crosshair',
+      backgroundColor: 'transparent',
+      enableRetinaScaling: true
+    });
+
+    // Create hover circle that follows cursor
+    const createHoverCircle = () => {
+      return new Circle({
+        radius: 20 / zoomLevel, // Scale with zoom for constant on-screen size
+        fill: 'rgba(59, 130, 246, 0.3)',
+        stroke: '#3b82f6',
+        strokeWidth: 2 / zoomLevel, // Scale stroke with zoom
+        selectable: false,
+        evented: false,
+        opacity: 0.8
+      });
+    };
+
+    // Handle mouse movement for hover circle
+    canvas.on('mouse:move', (event) => {
+      const pointer = canvas.getPointer(event.e);
+      
+      // Remove existing hover circle
+      if (hoverCircleRef.current) {
+        canvas.remove(hoverCircleRef.current);
+      }
+
+      // Create and add new hover circle at cursor position
+      const newHoverCircle = createHoverCircle();
+      newHoverCircle.set({
+        left: pointer.x - (20 / zoomLevel),
+        top: pointer.y - (20 / zoomLevel)
+      });
+      
+      canvas.add(newHoverCircle);
+      hoverCircleRef.current = newHoverCircle;
+      canvas.renderAll();
+    });
+
+    // Handle mouse leave to remove hover circle
+    canvas.on('mouse:out', () => {
+      if (hoverCircleRef.current) {
+        canvas.remove(hoverCircleRef.current);
+        hoverCircleRef.current = null;
+        canvas.renderAll();
+      }
+    });
+
+    // Handle canvas clicks to open symptom popover
+    canvas.on('mouse:down', (event) => {
+      const pointer = canvas.getPointer(event.e);
+      const canvasElement = canvasRef.current;
+      if (!canvasElement) return;
+      
+      const rect = canvasElement.getBoundingClientRect();
+      
+      setClickPosition({ x: pointer.x, y: pointer.y });
+      setPopoverPosition({ 
+        x: rect.left + pointer.x + window.scrollX, 
+        y: rect.top + pointer.y + window.scrollY
+      });
+      setShowSymptomPopover(true);
+      
+      console.log('✅ Click detected at canvas:', pointer.x, pointer.y);
+      console.log('✅ Popover position:', rect.left + pointer.x, rect.top + pointer.y);
+    });
+
+    setFabricCanvas(canvas);
+    console.log('🎨 Canvas initialized:', displayDimensions.width, 'x', displayDimensions.height);
+
+    // Cleanup function
+    return () => {
+      canvas.dispose();
+    };
+  }, [imageLoaded, displayDimensions, zoomLevel]);
+
+  // Handle window resize for fullscreen mode
+  useEffect(() => {
+    const handleResize = () => {
+      if (isFullscreen && imageRef.current) {
+        handleImageLoad({ currentTarget: imageRef.current } as any);
+      }
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [isFullscreen]);
 
   // Handle zoom with Fabric.js integration
   const handleZoom = (direction: 'in' | 'out' | 'reset') => {
@@ -220,8 +242,9 @@ const UniversalSymptomSelector = ({
 
     setZoomLevel(newZoom);
     
-    // Apply zoom to Fabric.js canvas instead of CSS transform
+    // Apply zoom to Fabric.js canvas and reset viewport transform
     fabricCanvas.setZoom(newZoom);
+    fabricCanvas.setViewportTransform([newZoom, 0, 0, newZoom, 0, 0]);
     fabricCanvas.renderAll();
   };
 
@@ -239,12 +262,12 @@ const UniversalSymptomSelector = ({
 
     // Create new marker at click position
     const circle = new Circle({
-      left: clickPosition.x - 15,
-      top: clickPosition.y - 15,
-      radius: 15,
+      left: clickPosition.x - (15 / zoomLevel),
+      top: clickPosition.y - (15 / zoomLevel),
+      radius: 15 / zoomLevel, // Scale with zoom for constant on-screen size
       fill: 'rgba(239, 68, 68, 0.8)',
       stroke: '#ffffff',
-      strokeWidth: 3,
+      strokeWidth: 3 / zoomLevel, // Scale stroke with zoom
       selectable: false,
       evented: false
     });
