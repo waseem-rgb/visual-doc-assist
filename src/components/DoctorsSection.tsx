@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { useNavigate } from "react-router-dom";
 import { 
   Stethoscope, 
   BookOpen, 
@@ -9,6 +10,8 @@ import {
 } from "lucide-react";
 
 const DoctorsSection = () => {
+  const navigate = useNavigate();
+  
   const benefits = [
     {
       icon: Stethoscope,
@@ -79,7 +82,11 @@ const DoctorsSection = () => {
               </div>
             </div>
 
-            <Button size="lg" className="gradient-primary shadow-medium transition-bounce hover:shadow-large">
+            <Button 
+              size="lg" 
+              className="gradient-primary shadow-medium transition-bounce hover:shadow-large"
+              onClick={() => navigate("/doctor/login")}
+            >
               Join Our Network
               <ArrowRight className="ml-2 h-5 w-5" />
             </Button>

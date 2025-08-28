@@ -32,7 +32,12 @@ const HeroSection = () => {
                 Start Consultation
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
-              <Button size="lg" variant="outline" className="border-primary text-primary hover:bg-primary hover:text-primary-foreground transition-smooth">
+              <Button 
+                size="lg" 
+                variant="outline" 
+                className="border-primary text-primary hover:bg-primary hover:text-primary-foreground transition-smooth"
+                onClick={() => navigate("/doctor/login")}
+              >
                 For Healthcare Providers
                 <Stethoscope className="ml-2 h-5 w-5" />
               </Button>

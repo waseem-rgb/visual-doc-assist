@@ -181,7 +181,7 @@ const InteractiveSymptomSelector = ({ bodyPart, patientData, onBack }: Interacti
     setShowClinicalForm(true);
   };
 
-  const handleClinicalFormSubmit = () => {
+  const handleClinicalFormSubmit = async () => {
     // Validate required fields
     if (!clinicalData.mobileNumber.trim()) {
       toast({
@@ -203,21 +203,74 @@ const InteractiveSymptomSelector = ({ bodyPart, patientData, onBack }: Interacti
       return;
     }
 
-    console.log("Prescription requested with clinical data:", {
-      patient: patientData,
-      symptom: finalSelection,
-      diagnosis: diagnosis,
-      clinicalHistory: clinicalData
-    });
+    try {
+      // Get additional data from New Master table
+      const { data: masterData, error: masterError } = await supabase
+        .from('New Master')
+        .select('"Short Summary", "Basic Investigations", "Common Treatments", "prescription_Y-N"')
+        .ilike('Symptoms', `%${finalSelection?.text}%`)
+        .maybeSingle();
 
-    setPrescriptionSubmitted(true);
-    setShowClinicalForm(false);
+      if (masterError) {
+        console.warn('Could not fetch additional data from New Master:', masterError);
+      }
 
-    toast({
-      title: "Prescription Request Submitted",
-      description: "Your prescription will be generated within 15 minutes. You will be notified on your mobile number.",
-      duration: 5000
-    });
+      // Prepare symptoms paragraph
+      const symptomsText = finalSelection?.text || '';
+      const durationText = clinicalData.symptomDuration && clinicalData.durationUnit ? 
+        ` Duration: ${clinicalData.symptomDuration} ${clinicalData.durationUnit}.` : '';
+      const chronicText = clinicalData.chronicIllness.length > 0 ? 
+        ` Chronic conditions: ${clinicalData.chronicIllness.join(', ')}.` : '';
+      const allergiesText = clinicalData.drugAllergies.trim() ? 
+        ` Drug allergies: ${clinicalData.drugAllergies}.` : '';
+      const lifestyleText = [
+        clinicalData.smoking ? `Smoking: ${clinicalData.smoking}` : '',
+        clinicalData.alcohol ? `Alcohol: ${clinicalData.alcohol}` : ''
+      ].filter(Boolean).join(', ');
+      const lifestyleFinal = lifestyleText ? ` Lifestyle: ${lifestyleText}.` : '';
+      
+      const fullSymptomsText = symptomsText + durationText + chronicText + allergiesText + lifestyleFinal;
+
+      // Determine if prescription is required (default to true if not specified)
+      const prescriptionRequired = masterData?.['prescription_Y-N'] !== 'N';
+
+      // Store prescription request in database
+      const { data, error } = await supabase
+        .from('prescription_requests')
+        .insert({
+          patient_name: patientData.name,
+          patient_age: patientData.age,
+          patient_gender: patientData.gender,
+          body_part: bodyPart,
+          symptoms: fullSymptomsText,
+          probable_diagnosis: diagnosis || 'To be determined',
+          short_summary: masterData?.['Short Summary'] || '',
+          basic_investigations: masterData?.['Basic Investigations'] || '',
+          common_treatments: masterData?.['Common Treatments'] || '',
+          prescription_required: prescriptionRequired,
+          status: 'pending'
+        });
+
+      if (error) {
+        throw error;
+      }
+
+      setPrescriptionSubmitted(true);
+      setShowClinicalForm(false);
+
+      toast({
+        title: "Request Submitted Successfully",
+        description: `Your ${prescriptionRequired ? 'prescription' : 'referral'} request has been submitted. A doctor will review it within 15 minutes.`,
+        duration: 5000
+      });
+    } catch (error: any) {
+      console.error('Error submitting prescription request:', error);
+      toast({
+        title: "Submission Failed",
+        description: "There was an error submitting your request. Please try again.",
+        variant: "destructive"
+      });
+    }
   };
 
   const handleChronicIllnessChange = (illness: string, checked: boolean) => {
