@@ -55,18 +55,19 @@ const UniversalSymptomSelector = ({
   const hoverCircleRef = useRef<Circle | null>(null);
   const fabricImageRef = useRef<FabricImage | null>(null);
   const imageReadyRef = useRef<boolean>(false);
+  const selectionMarkerRef = useRef<Circle | null>(null);
   const [fabricCanvas, setFabricCanvas] = useState<FabricCanvas | null>(null);
   const [selectedSymptom, setSelectedSymptom] = useState<SymptomItem | null>(null);
-  const [highlightCircle, setHighlightCircle] = useState<Circle | null>(null);
   const [zoomLevel, setZoomLevel] = useState(1);
   const [imageLoaded, setImageLoaded] = useState(false);
   const [canvasDimensions, setCanvasDimensions] = useState({ width: 800, height: 600 });
   const [isFullscreen, setIsFullscreen] = useState(true);
-  const [showSymptomPopover, setShowSymptomPopover] = useState(false);
+  const [showConfirmationPopover, setShowConfirmationPopover] = useState(false);
   const [popoverPosition, setPopoverPosition] = useState({ x: 0, y: 0 });
   const [clickPosition, setClickPosition] = useState<{ x: number, y: number } | null>(null);
   const [isPanning, setIsPanning] = useState(false);
   const [detectedText, setDetectedText] = useState<string | null>(null);
+  const [mouseDownPosition, setMouseDownPosition] = useState<{ x: number, y: number } | null>(null);
   const [symptomContentData, setSymptomContentData] = useState<SymptomContent | null>(null);
   const [isLoadingSymptoms, setIsLoadingSymptoms] = useState(false);
 
@@ -123,17 +124,18 @@ const UniversalSymptomSelector = ({
       setImageLoaded(false);
       imageReadyRef.current = false;
       setSelectedSymptom(null);
-      setHighlightCircle(null);
+      selectionMarkerRef.current = null;
       hoverCircleRef.current = null;
       fabricImageRef.current = null;
       setZoomLevel(1);
       setIsFullscreen(true);
-      setShowSymptomPopover(false);
+      setShowConfirmationPopover(false);
       setClickPosition(null);
       setIsPanning(false);
       setDetectedText(null);
       setSymptomContentData(null);
       setIsLoadingSymptoms(false);
+      setMouseDownPosition(null);
       if (fabricCanvas) {
         fabricCanvas.dispose();
         setFabricCanvas(null);
@@ -253,68 +255,14 @@ const UniversalSymptomSelector = ({
 
     // Handle canvas clicks to detect text regions
     canvas.on('mouse:down', (event) => {
-      if (!imageReadyRef.current || isPanning) return;
+      if (!imageReadyRef.current) return;
       
       const pointer = canvas.getPointer(event.e);
       const canvasElement = canvasRef.current;
       if (!canvasElement) return;
       
-      // Check if click is within any text region using normalized coordinates
-      const clickedRegion = textRegions.find(region => {
-        if (!fabricImageRef.current) return false;
-        
-        const img = fabricImageRef.current;
-        const imgLeft = img.left!;
-        const imgTop = img.top!;
-        const imgWidth = img.width! * img.scaleX!;
-        const imgHeight = img.height! * img.scaleY!;
-        
-        // Convert normalized coordinates to canvas coordinates
-        const x = imgLeft + (region.coordinates.xPct / 100) * imgWidth;
-        const y = imgTop + (region.coordinates.yPct / 100) * imgHeight;
-        const width = (region.coordinates.wPct / 100) * imgWidth;
-        const height = (region.coordinates.hPct / 100) * imgHeight;
-        
-        return pointer.x >= x && pointer.x <= x + width && 
-               pointer.y >= y && pointer.y <= y + height;
-      });
-      
-      if (clickedRegion) {
-        // Directly select the detected text
-        setSelectedSymptom({ id: clickedRegion.id, text: clickedRegion.text });
-        setDetectedText(clickedRegion.text);
-        setClickPosition({ x: pointer.x, y: pointer.y });
-        
-        // Remove any existing markers
-        if (highlightCircle) {
-          canvas.remove(highlightCircle);
-        }
-
-        // Create new marker at click position
-        const circle = new Circle({
-          left: pointer.x - 12,
-          top: pointer.y - 12,
-          radius: 12,
-          fill: 'rgba(239, 68, 68, 0.8)',
-          stroke: '#ffffff',
-          strokeWidth: 3,
-          selectable: false,
-          evented: false
-        });
-
-        canvas.add(circle);
-        setHighlightCircle(circle);
-        canvas.renderAll();
-      } else {
-        // No text region detected, show generic popover
-        const rect = canvasElement.getBoundingClientRect();
-        setClickPosition({ x: pointer.x, y: pointer.y });
-        setPopoverPosition({ 
-          x: rect.left + pointer.x + window.scrollX, 
-          y: rect.top + pointer.y + window.scrollY
-        });
-        setShowSymptomPopover(true);
-      }
+      // Store mouse down position for movement threshold
+      setMouseDownPosition({ x: pointer.x, y: pointer.y });
     });
 
     // Handle panning with space key or middle mouse
@@ -349,13 +297,88 @@ const UniversalSymptomSelector = ({
       }
     });
 
-    canvas.on('mouse:up', () => {
+    canvas.on('mouse:up', (event) => {
+      const pointer = canvas.getPointer(event.e);
+      
       if (isDragging) {
         isDragging = false;
         canvas.selection = true;
         canvas.setCursor('crosshair');
         setIsPanning(false);
+        return;
       }
+      
+      // Check if this was a click (not a drag) by measuring movement
+      const mouseDown = mouseDownPosition;
+      if (!mouseDown) return;
+      
+      const movement = Math.sqrt(
+        Math.pow(pointer.x - mouseDown.x, 2) + Math.pow(pointer.y - mouseDown.y, 2)
+      );
+      
+      // Only process as click if movement is less than threshold (5px)
+      if (movement < 5) {
+        // Check if click is within any text region using normalized coordinates
+        const clickedRegion = textRegions.find(region => {
+          if (!fabricImageRef.current) return false;
+          
+          const img = fabricImageRef.current;
+          const imgLeft = img.left!;
+          const imgTop = img.top!;
+          const imgWidth = img.width! * img.scaleX!;
+          const imgHeight = img.height! * img.scaleY!;
+          
+          // Convert normalized coordinates to canvas coordinates
+          const x = imgLeft + (region.coordinates.xPct / 100) * imgWidth;
+          const y = imgTop + (region.coordinates.yPct / 100) * imgHeight;
+          const width = (region.coordinates.wPct / 100) * imgWidth;
+          const height = (region.coordinates.hPct / 100) * imgHeight;
+          
+          return pointer.x >= x && pointer.x <= x + width && 
+                 pointer.y >= y && pointer.y <= y + height;
+        });
+        
+        if (clickedRegion) {
+          // Remove any existing marker
+          if (selectionMarkerRef.current) {
+            canvas.remove(selectionMarkerRef.current);
+            selectionMarkerRef.current = null;
+          }
+          
+          // Directly select the detected text
+          setSelectedSymptom({ id: clickedRegion.id, text: clickedRegion.text });
+          setDetectedText(clickedRegion.text);
+          setClickPosition({ x: pointer.x, y: pointer.y });
+          
+          // Show confirmation popover
+          const rect = canvasRef.current?.getBoundingClientRect();
+          if (rect) {
+            setPopoverPosition({ 
+              x: rect.left + pointer.x + window.scrollX, 
+              y: rect.top + pointer.y + window.scrollY
+            });
+          }
+          setShowConfirmationPopover(true);
+          
+        } else if (hasRegions) {
+          // No text region detected but regions exist - do nothing, just show instruction
+          setClickPosition(null);
+          setShowConfirmationPopover(false);
+        } else {
+          // No regions exist, show fallback options
+          const rect = canvasRef.current?.getBoundingClientRect();
+          if (rect) {
+            setClickPosition({ x: pointer.x, y: pointer.y });
+            setPopoverPosition({ 
+              x: rect.left + pointer.x + window.scrollX, 
+              y: rect.top + pointer.y + window.scrollY
+            });
+            setShowConfirmationPopover(true);
+          }
+        }
+      }
+      
+      setMouseDownPosition(null);
     });
 
     // Handle mouse wheel zoom
@@ -407,16 +430,16 @@ const UniversalSymptomSelector = ({
     fabricCanvas.renderAll();
   };
 
-  // Handle symptom selection from popover
-  const handleSymptomClick = (symptom: SymptomItem) => {
-    if (!clickPosition || !fabricCanvas) return;
+  // Handle symptom confirmation
+  const handleConfirmSelection = () => {
+    if (!clickPosition || !fabricCanvas || !selectedSymptom) return;
     
-    setSelectedSymptom(symptom);
-    setShowSymptomPopover(false);
+    setShowConfirmationPopover(false);
     
-    // Remove any existing markers
-    if (highlightCircle) {
-      fabricCanvas.remove(highlightCircle);
+    // Remove any existing marker
+    if (selectionMarkerRef.current) {
+      fabricCanvas.remove(selectionMarkerRef.current);
+      selectionMarkerRef.current = null;
     }
 
     // Create new marker at click position
@@ -428,18 +451,49 @@ const UniversalSymptomSelector = ({
       stroke: '#ffffff',
       strokeWidth: 3,
       selectable: false,
-      evented: false
+      evented: false,
+      data: { type: 'selection-marker' }
     });
 
     fabricCanvas.add(circle);
-    // No need to move to front as marker is added last
-    setHighlightCircle(circle);
+    selectionMarkerRef.current = circle;
+    fabricCanvas.renderAll();
+  };
+
+  // Handle symptom selection from fallback list (when no regions)
+  const handleFallbackSymptomClick = (symptom: SymptomItem) => {
+    if (!clickPosition || !fabricCanvas) return;
+    
+    setSelectedSymptom(symptom);
+    setShowConfirmationPopover(false);
+    
+    // Remove any existing marker
+    if (selectionMarkerRef.current) {
+      fabricCanvas.remove(selectionMarkerRef.current);
+      selectionMarkerRef.current = null;
+    }
+
+    // Create new marker at click position
+    const circle = new Circle({
+      left: clickPosition.x - 12,
+      top: clickPosition.y - 12,
+      radius: 12,
+      fill: 'rgba(239, 68, 68, 0.8)',
+      stroke: '#ffffff',
+      strokeWidth: 3,
+      selectable: false,
+      evented: false,
+      data: { type: 'selection-marker' }
+    });
+
+    fabricCanvas.add(circle);
+    selectionMarkerRef.current = circle;
     fabricCanvas.renderAll();
   };
 
   // Submit selection
   const handleSubmit = () => {
-    if (selectedSymptom && highlightCircle) {
+    if (selectedSymptom && selectionMarkerRef.current) {
       onSymptomSubmit({
         id: selectedSymptom.id,
         text: selectedSymptom.text
@@ -451,9 +505,10 @@ const UniversalSymptomSelector = ({
   const handleClearSelection = () => {
     setSelectedSymptom(null);
     setClickPosition(null);
-    if (highlightCircle && fabricCanvas) {
-      fabricCanvas.remove(highlightCircle);
-      setHighlightCircle(null);
+    setShowConfirmationPopover(false);
+    if (selectionMarkerRef.current && fabricCanvas) {
+      fabricCanvas.remove(selectionMarkerRef.current);
+      selectionMarkerRef.current = null;
       fabricCanvas.renderAll();
     }
   };
@@ -609,54 +664,92 @@ const UniversalSymptomSelector = ({
 
         </div>
 
-        {/* Symptom Selection Popover - Show fallback symptoms from database when no region clicked */}
-        {showSymptomPopover && (symptomContentData?.fallbackSymptoms?.length > 0 || symptoms.length > 0) && (
+        {/* Confirmation Popover - Show only the selected paragraph or fallback options */}
+        {showConfirmationPopover && (
           <div 
-            className="fixed z-50 w-80 max-h-96 bg-popover border rounded-md shadow-md p-4"
+            className="fixed z-50 w-80 bg-popover border rounded-md shadow-md p-4"
             style={{
               left: Math.min(popoverPosition.x, window.innerWidth - 320),
-              top: Math.min(popoverPosition.y, window.innerHeight - 400),
-              maxHeight: '400px'
+              top: Math.min(popoverPosition.y, window.innerHeight - 200)
             }}
           >
-            <div className="space-y-1">
-              <div className="flex items-center justify-between">
-                <h4 className="font-medium text-sm">Select Your Symptom</h4>
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  onClick={() => setShowSymptomPopover(false)}
-                >
-                  <X className="h-3 w-3" />
-                </Button>
-              </div>
-               <ScrollArea className="h-80 mt-2">
-                <div className="space-y-1">
-                  {/* Show database fallback symptoms first */}
-                  {symptomContentData?.fallbackSymptoms?.map((symptom) => (
-                    <Button
-                      key={symptom.id}
-                      variant="ghost"
-                      className="w-full h-auto p-2 text-left justify-start whitespace-normal hover:bg-primary/5 text-xs"
-                      onClick={() => handleSymptomClick(symptom)}
-                    >
-                      <span className="leading-relaxed">{symptom.text}</span>
-                    </Button>
-                  ))}
-                  {/* Show passed symptoms as backup */}
-                  {symptoms.map((symptom) => (
-                    <Button
-                      key={symptom.id}
-                      variant="ghost"
-                      className="w-full h-auto p-2 text-left justify-start whitespace-normal hover:bg-primary/5 text-xs"
-                      onClick={() => handleSymptomClick(symptom)}
-                    >
-                      <span className="leading-relaxed">{symptom.text}</span>
-                    </Button>
-                  ))}
+            {selectedSymptom ? (
+              // Show confirmation for detected paragraph
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <h4 className="font-medium text-sm text-green-600">Paragraph Selected</h4>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={() => setShowConfirmationPopover(false)}
+                  >
+                    <X className="h-3 w-3" />
+                  </Button>
                 </div>
-              </ScrollArea>
-            </div>
+                <div className="bg-primary/5 p-3 rounded-lg">
+                  <p className="text-xs text-muted-foreground leading-relaxed">
+                    {selectedSymptom.text}
+                  </p>
+                </div>
+                <div className="flex space-x-2">
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    className="flex-1"
+                    onClick={() => setShowConfirmationPopover(false)}
+                  >
+                    Cancel
+                  </Button>
+                  <Button 
+                    size="sm"
+                    className="flex-1"
+                    onClick={handleConfirmSelection}
+                  >
+                    Confirm
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              // Show fallback symptoms when no regions exist
+              <div className="space-y-1">
+                <div className="flex items-center justify-between">
+                  <h4 className="font-medium text-sm">Select Your Symptom</h4>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={() => setShowConfirmationPopover(false)}
+                  >
+                    <X className="h-3 w-3" />
+                  </Button>
+                </div>
+                <ScrollArea className="h-64 mt-2">
+                  <div className="space-y-1">
+                    {/* Show database fallback symptoms first */}
+                    {symptomContentData?.fallbackSymptoms?.map((symptom) => (
+                      <Button
+                        key={symptom.id}
+                        variant="ghost"
+                        className="w-full h-auto p-2 text-left justify-start whitespace-normal hover:bg-primary/5 text-xs"
+                        onClick={() => handleFallbackSymptomClick(symptom)}
+                      >
+                        <span className="leading-relaxed">{symptom.text}</span>
+                      </Button>
+                    ))}
+                    {/* Show passed symptoms as backup */}
+                    {symptoms.map((symptom) => (
+                      <Button
+                        key={symptom.id}
+                        variant="ghost"
+                        className="w-full h-auto p-2 text-left justify-start whitespace-normal hover:bg-primary/5 text-xs"
+                        onClick={() => handleFallbackSymptomClick(symptom)}
+                      >
+                        <span className="leading-relaxed">{symptom.text}</span>
+                      </Button>
+                    ))}
+                  </div>
+                </ScrollArea>
+              </div>
+            )}
           </div>
         )}
       </DialogContent>
