@@ -185,9 +185,9 @@ const UniversalSymptomSelector = ({
       width: canvasDimensions.width,
       height: canvasDimensions.height,
       selection: false,
-      hoverCursor: 'crosshair',
-      moveCursor: 'crosshair',
-      defaultCursor: 'crosshair',
+      hoverCursor: 'grab',
+      moveCursor: 'grab',
+      defaultCursor: 'grab',
       backgroundColor: '#f8fafc',
       enableRetinaScaling: true,
       interactive: true,
@@ -268,6 +268,7 @@ const UniversalSymptomSelector = ({
     let lastPosX = 0;
     let lastPosY = 0;
     const mouseDownPositionRef = { current: null as { x: number; y: number } | null };
+    const dragStartTimeRef = { current: 0 };
 
     canvas.on('mouse:down', (event) => {
       if (!imageReadyRef.current) return;
@@ -275,25 +276,41 @@ const UniversalSymptomSelector = ({
       const pointer = canvas.getPointer(event.e);
       const evt = event.e as MouseEvent;
       
-      // Check for panning (middle mouse, Ctrl, or Shift)
-      if ((evt as any).button === 1 || evt.ctrlKey || evt.shiftKey) {
-        isDragging = true;
-        canvas.selection = false;
-        canvas.setCursor('grabbing');
+      // Always start potential dragging on left mouse button
+      if ((evt as any).button === 0) { // Left mouse button
+        mouseDownPositionRef.current = { x: pointer.x, y: pointer.y };
+        dragStartTimeRef.current = Date.now();
         lastPosX = evt.clientX;
         lastPosY = evt.clientY;
-        setIsPanning(true);
+        canvas.setCursor('grab');
         evt.preventDefault();
-        return;
       }
-      
-      // Store mouse down position for click detection
-      mouseDownPositionRef.current = { x: pointer.x, y: pointer.y };
     });
 
     canvas.on('mouse:move', (opt) => {
+      const evt = opt.e as MouseEvent;
+      const mouseDown = mouseDownPositionRef.current;
+      
+      // Start dragging if mouse is down and moved more than threshold
+      if (mouseDown && !isDragging) {
+        const pointer = canvas.getPointer(opt.e);
+        const movement = Math.sqrt(
+          Math.pow(pointer.x - mouseDown.x, 2) + Math.pow(pointer.y - mouseDown.y, 2)
+        );
+        
+        // Start panning if moved more than 5px
+        if (movement > 5) {
+          isDragging = true;
+          canvas.selection = false;
+          canvas.setCursor('grabbing');
+          setIsPanning(true);
+          
+          // Close any open popovers when starting to drag
+          setShowConfirmationPopover(false);
+        }
+      }
+      
       if (isDragging) {
-        const evt = opt.e as MouseEvent;
         const vpt = canvas.viewportTransform;
         if (vpt) {
           vpt[4] += evt.clientX - lastPosX;
@@ -311,21 +328,23 @@ const UniversalSymptomSelector = ({
       if (isDragging) {
         isDragging = false;
         canvas.selection = true;
-        canvas.setCursor('crosshair');
+        canvas.setCursor('grab');
         setIsPanning(false);
+        mouseDownPositionRef.current = null;
         return;
       }
       
-      // Check if this was a click (not a drag) by measuring movement
+      // Check if this was a click (not a drag) by measuring movement and time
       const mouseDown = mouseDownPositionRef.current;
       if (!mouseDown) return;
       
       const movement = Math.sqrt(
         Math.pow(pointer.x - mouseDown.x, 2) + Math.pow(pointer.y - mouseDown.y, 2)
       );
+      const timeDiff = Date.now() - dragStartTimeRef.current;
       
-      // Only process as click if movement is less than threshold (5px)
-      if (movement < 5) {
+      // Only process as click if movement is less than threshold (5px) and quick click (under 300ms)
+      if (movement < 5 && timeDiff < 300) {
         // Check if click is within any text region using normalized coordinates
         const clickedRegion = textRegions.find(region => {
           if (!fabricImageRef.current) return false;
@@ -582,7 +601,7 @@ const UniversalSymptomSelector = ({
                   Drag to Pan
                 </div>
                 <p className="text-xs text-center text-muted-foreground">
-                  Ctrl+Drag or Middle Click
+                  Left Click + Drag
                 </p>
               </div>
             </div>
@@ -631,9 +650,14 @@ const UniversalSymptomSelector = ({
                     </p>
                   </div>
                 ) : (
-                  <p className="text-sm text-center">
-                    <strong>Click on any text paragraph</strong> to select that specific symptom description
-                  </p>
+                  <div className="space-y-2">
+                    <p className="text-sm text-center">
+                      <strong>Click on any text paragraph</strong> to select that specific symptom description
+                    </p>
+                    <p className="text-xs text-center text-muted-foreground">
+                      Drag to pan • Scroll to zoom
+                    </p>
+                  </div>
                 )
               ) : (
                 <div className="space-y-3">
