@@ -211,9 +211,20 @@ const UniversalSymptomSelector = ({
 
   // Initialize Fabric canvas and load image
   useEffect(() => {
+    console.log(`🎯 [CANVAS INIT] useEffect triggered - open: ${open}, imageUrl: ${imageUrl ? 'available' : 'missing'}, canvas dimensions: ${canvasDimensions.width}x${canvasDimensions.height}`);
+    
     if (!open || !canvasRef.current || canvasDimensions.width === 0 || canvasDimensions.height === 0) {
+      console.log(`❌ [CANVAS INIT] Skipping canvas init - open: ${open}, canvasRef: ${!!canvasRef.current}, dimensions: ${canvasDimensions.width}x${canvasDimensions.height}`);
       return;
     }
+
+    // Skip if imageUrl is not available yet
+    if (!imageUrl || imageUrl.trim() === '') {
+      console.log(`⏳ [CANVAS INIT] Waiting for imageUrl to be available. Current imageUrl: "${imageUrl}"`);
+      return;
+    }
+
+    console.log(`🚀 [CANVAS INIT] Starting canvas initialization with imageUrl: ${imageUrl.substring(0, 100)}...`);
 
     // Add cleanup flag to prevent race conditions
     let isCleanedUp = false;
@@ -269,8 +280,9 @@ const UniversalSymptomSelector = ({
         // Load image into Fabric canvas with enhanced retry and logging
         try {
           console.log(`🖼️ [FABRIC LOAD START] Loading image into Fabric canvas`);
-          console.log(`📋 [IMAGE INFO] URL type: ${imageUrl.startsWith('data:') ? 'Data URL' : imageUrl.startsWith('blob:') ? 'Blob URL' : imageUrl.startsWith('https://') ? 'HTTPS URL' : 'Other'}`);
-          console.log(`📏 [IMAGE URL] Length: ${imageUrl.length}, Preview: ${imageUrl.substring(0, 100)}...`);
+          console.log(`📋 [IMAGE INFO] URL: "${imageUrl}"`);
+          console.log(`📏 [IMAGE URL] Length: ${imageUrl.length}, Type: ${imageUrl.startsWith('data:') ? 'Data URL' : imageUrl.startsWith('blob:') ? 'Blob URL' : imageUrl.startsWith('https://') ? 'HTTPS URL' : 'Other'}`);
+          console.log(`🔗 [FULL URL] ${imageUrl}`);
           
           const loadWithTimeoutAndRetry = async (url: string, timeout: number = 15000, maxRetries: number = 3): Promise<FabricImage> => {
             for (let attempt = 0; attempt <= maxRetries; attempt++) {
@@ -686,7 +698,14 @@ const UniversalSymptomSelector = ({
       setFabricCanvas(canvas);
     };
 
-    initializeCanvas();
+    initializeCanvas().catch((error) => {
+      console.error('💥 [CANVAS INIT ERROR] Failed to initialize canvas:', error);
+      if (!isCleanedUp) {
+        setImageLoaded(false);
+        setImageFailed(true);
+        imageReadyRef.current = false;
+      }
+    });
 
     // Cleanup function
     return () => {
