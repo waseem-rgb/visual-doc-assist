@@ -55,7 +55,11 @@ export const loadImageFromStorage = async (
 
       if (data) {
         const url = URL.createObjectURL(data);
-        console.log(`✅ SUCCESS: Found "${filename}"`);
+        console.log(`✅ SUCCESS: Found "${filename}" - Created blob URL:`, url);
+        
+        // Add a small delay to ensure the blob URL is ready
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
         return { url, filename };
       }
     } catch (err) {

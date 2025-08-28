@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -37,6 +37,8 @@ const InteractiveSymptomSelector = ({ bodyPart, patientData, onBack }: Interacti
   const [loadingDiagnosis, setLoadingDiagnosis] = useState(false);
   const [showClinicalForm, setShowClinicalForm] = useState(false);
   const [prescriptionSubmitted, setPrescriptionSubmitted] = useState(false);
+  const [imageError, setImageError] = useState<string | null>(null);
+  const blobUrlRef = useRef<string | null>(null);
   const { toast } = useToast();
 
   // Clinical history form state
@@ -111,19 +113,64 @@ const InteractiveSymptomSelector = ({ bodyPart, patientData, onBack }: Interacti
     fetchSymptomImage();
   }, [bodyPart]);
 
+  // Cleanup blob URLs when component unmounts or bodyPart changes
+  useEffect(() => {
+    return () => {
+      if (blobUrlRef.current && blobUrlRef.current.startsWith('blob:')) {
+        try {
+          URL.revokeObjectURL(blobUrlRef.current);
+          console.log('🧹 Cleaned up blob URL:', blobUrlRef.current);
+        } catch (error) {
+          console.warn('Failed to revoke blob URL:', error);
+        }
+        blobUrlRef.current = null;
+      }
+    };
+  }, [bodyPart]);
+
   const fetchSymptomImage = async () => {
     try {
       setLoading(true);
+      setImageError(null);
+      console.log(`🔄 Fetching image for: ${bodyPart}`);
+      
+      // Clean up previous blob URL if it exists
+      if (blobUrlRef.current && blobUrlRef.current.startsWith('blob:')) {
+        try {
+          URL.revokeObjectURL(blobUrlRef.current);
+          console.log('🧹 Cleaned up previous blob URL:', blobUrlRef.current);
+        } catch (error) {
+          console.warn('Failed to revoke previous blob URL:', error);
+        }
+        blobUrlRef.current = null;
+      }
       
       const result = await loadImageFromStorage(bodyPart);
       
       if (result.url && result.filename) {
         setImageUrl(result.url);
+        blobUrlRef.current = result.url; // Store for cleanup
+        console.log('✅ Image loaded successfully:', result.filename);
         // Open lightbox immediately once image is loaded
         setLightboxOpen(true);
+      } else {
+        console.error('❌ Failed to load image:', result.error);
+        setImageError(result.error || 'Failed to load image');
+        // Still allow user to proceed without image
+        toast({
+          title: "Image Not Available",
+          description: "The symptom diagram couldn't be loaded, but you can still describe your symptoms.",
+          variant: "destructive"
+        });
       }
     } catch (err) {
-      console.error("Error loading image:", err);
+      console.error("💥 Error loading image:", err);
+      setImageError(err instanceof Error ? err.message : 'Unknown error');
+      toast({
+        title: "Loading Error",
+        description: "There was an error loading the symptom diagram. You can still proceed with describing your symptoms.",
+        variant: "destructive"
+      });
     } finally {
       setLoading(false);
     }
@@ -290,7 +337,7 @@ const InteractiveSymptomSelector = ({ bodyPart, patientData, onBack }: Interacti
     }));
   };
 
-  if (loading) {
+  if (!imageUrl && !imageError) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center space-y-4">
@@ -301,23 +348,65 @@ const InteractiveSymptomSelector = ({ bodyPart, patientData, onBack }: Interacti
     );
   }
 
-  if (!imageUrl) {
+  // Show fallback when image fails to load but still allow symptom selection
+  if (!imageUrl && imageError) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Card className="w-full max-w-2xl">
-          <CardHeader>
-            <CardTitle className="text-center">Image Not Available</CardTitle>
-          </CardHeader>
-          <CardContent className="text-center space-y-4">
-            <p className="text-muted-foreground">
-              No symptom diagram found for "{bodyPart}".
-            </p>
-            <Button onClick={onBack} variant="outline">
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Go Back
-            </Button>
-          </CardContent>
-        </Card>
+      <div className="min-h-screen bg-background">
+        {/* Header */}
+        <div className="sticky top-0 z-40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
+          <div className="container mx-auto px-4 py-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-4">
+                <Button onClick={onBack} variant="ghost" size="sm">
+                  <ArrowLeft className="mr-2 h-4 w-4" />
+                  Back to Body Map
+                </Button>
+                <div>
+                  <h1 className="text-2xl font-bold">{bodyPart} Symptoms</h1>
+                  <p className="text-sm text-muted-foreground">
+                    Patient: {patientData.name} | Age: {patientData.age} | Gender: {patientData.gender}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Main Content */}
+        <div className="container mx-auto px-4 py-6">
+          <div className="max-w-4xl mx-auto">
+            <Card className="p-6">
+              <CardContent className="text-center space-y-6">
+                <div className="bg-yellow-50 p-6 rounded-lg border border-yellow-200">
+                  <h2 className="text-xl font-semibold mb-4 text-yellow-800">Image Not Available</h2>
+                  <p className="text-yellow-700 mb-4">
+                    The symptom diagram for "{bodyPart}" couldn't be loaded, but you can still describe your symptoms from the list below.
+                  </p>
+                </div>
+                
+                {/* Symptom List */}
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold">Please select your symptom:</h3>
+                  <div className="grid gap-3">
+                    {symptoms.map((symptom) => (
+                      <Button
+                        key={symptom.id}
+                        variant="outline"
+                        className="text-left h-auto p-4 whitespace-normal"
+                        onClick={() => {
+                          setFinalSelection(symptom);
+                          handleContinueToNextStep();
+                        }}
+                      >
+                        {symptom.text}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
       </div>
     );
   }
