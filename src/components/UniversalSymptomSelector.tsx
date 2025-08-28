@@ -606,37 +606,41 @@ const UniversalSymptomSelector = ({
           </div>
 
           {/* Right Side - Symptom List */}
-          <div className={`${isFullscreen ? 'w-1/6' : 'w-1/5'} bg-background border-l border-border flex flex-col`}>
-            <div className="p-4 border-b border-border">
+          <div className={`${isFullscreen ? 'w-1/6' : 'w-1/5'} bg-background border-l border-border flex flex-col min-h-0`}>
+            <div className="p-4 border-b border-border flex-shrink-0">
               <h3 className="text-lg font-semibold text-foreground mb-2">Available Symptoms</h3>
               <p className="text-sm text-muted-foreground">
                 Select a symptom from the list below or click on the image
               </p>
             </div>
 
-            <ScrollArea className="flex-1 p-4">
-              {isLoadingSymptoms ? (
-                <div className="flex items-center justify-center py-8">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+            <div className="flex-1 min-h-0">
+              <ScrollArea className="h-full">
+                <div className="p-4">
+                  {isLoadingSymptoms ? (
+                    <div className="flex items-center justify-center py-8">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {availableSymptoms.map((symptom) => (
+                        <Card
+                          key={symptom.id}
+                          className="cursor-pointer border border-border hover:border-primary/50 hover:shadow-md transition-all duration-200 active:scale-95"
+                          onClick={() => handleFallbackSymptomClick(symptom)}
+                        >
+                          <CardContent className="p-3">
+                            <p className="text-sm text-foreground leading-relaxed">
+                              {symptom.text}
+                            </p>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                  )}
                 </div>
-              ) : (
-                <div className="space-y-3">
-                  {availableSymptoms.map((symptom) => (
-                    <Card
-                      key={symptom.id}
-                      className="cursor-pointer border border-border hover:border-primary/50 transition-colors"
-                      onClick={() => handleFallbackSymptomClick(symptom)}
-                    >
-                      <CardContent className="p-4">
-                        <p className="text-sm text-foreground leading-relaxed">
-                          {symptom.text}
-                        </p>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              )}
-            </ScrollArea>
+              </ScrollArea>
+            </div>
           </div>
         </div>
 
