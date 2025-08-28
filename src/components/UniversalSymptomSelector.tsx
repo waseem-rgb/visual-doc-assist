@@ -1,6 +1,6 @@
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { Canvas as FabricCanvas, FabricImage, Point } from 'fabric';
+import { fabric } from 'fabric';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -39,9 +39,9 @@ const UniversalSymptomSelector = ({
   initialSymptoms = []
 }: UniversalSymptomSelectorProps) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const fabricCanvasRef = useRef<FabricCanvas | null>(null);
+  const fabricCanvasRef = useRef<fabric.Canvas | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const imageRef = useRef<FabricImage | null>(null);
+  const imageRef = useRef<fabric.Image | null>(null);
   const symptomListRef = useRef<HTMLDivElement>(null);
   const symptomRailRef = useRef<HTMLDivElement>(null);
 
@@ -58,47 +58,7 @@ const UniversalSymptomSelector = ({
   const { toast } = useToast();
 
   const getImagePath = useCallback(() => {
-    console.log('getImagePath - bodyPart:', bodyPart, 'view:', view, 'gender:', gender);
-    
-    // Map body parts to actual asset names
-    let assetName = bodyPart.toLowerCase().replace(/\s+/g, '-').replace('physical', '').replace(/-+$/, '');
-    
-    // Handle special mappings
-    const bodyPartMappings: { [key: string]: string } = {
-      'ear': 'head',
-      'eye': 'head',
-      'nose': 'head',
-      'mouth': 'head',
-      'face': 'head',
-      'neck': 'head',
-      'throat': 'head',
-      'shoulder': 'arms',
-      'elbow': 'arms',
-      'wrist': 'arms',
-      'hand': 'arms',
-      'finger': 'arms',
-      'hip': 'legs',
-      'knee': 'legs',
-      'ankle': 'legs',
-      'foot': 'legs',
-      'toe': 'legs',
-      'back': 'chest',
-      'spine': 'chest',
-      'stomach': 'abdomen',
-      'belly': 'abdomen'
-    };
-    
-    // Check if we need to map the body part
-    for (const [key, value] of Object.entries(bodyPartMappings)) {
-      if (assetName.includes(key)) {
-        assetName = value;
-        break;
-      }
-    }
-    
-    const basePath = `/src/assets/${assetName}-${view}-${gender}.jpg`;
-    
-    console.log('Generated image path:', basePath);
+    const basePath = `/src/assets/${bodyPart}-${view}-${gender}.jpg`;
     return basePath;
   }, [bodyPart, view, gender]);
 
@@ -145,7 +105,7 @@ const UniversalSymptomSelector = ({
       fabricCanvasRef.current.dispose();
     }
 
-    const canvas = new FabricCanvas(canvasRef.current, {
+    const canvas = new fabric.Canvas(canvasRef.current, {
       selection: false,
       preserveObjectStacking: true,
       allowTouchScrolling: false,
@@ -157,106 +117,56 @@ const UniversalSymptomSelector = ({
 
     // Disable text selection on canvas
     canvas.getElement().style.userSelect = 'none';
-    (canvas.getElement().style as any).webkitUserSelect = 'none';
+    canvas.getElement().style.webkitUserSelect = 'none';
+    canvas.getElement().style.msUserSelect = 'none';
+    canvas.getElement().style.mozUserSelect = 'none';
 
     fabricCanvasRef.current = canvas;
 
     // Load the body image
     const imagePath = getImagePath();
-    console.log('🔍 Attempting to load image from:', imagePath);
-    console.log('🔍 Body part mapping - original:', bodyPart, 'mapped path:', imagePath);
-    
-    FabricImage.fromURL(imagePath, { crossOrigin: 'anonymous' })
-      .then((img) => {
-        console.log('✅ Image loaded successfully:', imagePath, 'Size:', img.width, 'x', img.height);
-        if (!canvas || !containerRef.current) return;
+    fabric.Image.fromURL(imagePath, (img) => {
+      if (!canvas || !containerRef.current) return;
 
-        const containerWidth = containerRef.current.offsetWidth * 0.75;
-        const containerHeight = containerRef.current.offsetHeight * 0.9;
-        
-        const scale = Math.min(
-          containerWidth / (img.width || 1),
-          containerHeight / (img.height || 1)
-        ) * 0.8;
+      const containerWidth = containerRef.current.offsetWidth * 0.75;
+      const containerHeight = containerRef.current.offsetHeight * 0.9;
+      
+      const scale = Math.min(
+        containerWidth / (img.width || 1),
+        containerHeight / (img.height || 1)
+      ) * 0.8;
 
-        img.set({
-          left: (containerWidth - (img.width || 0) * scale) / 2,
-          top: (containerHeight - (img.height || 0) * scale) / 2,
-          scaleX: scale,
-          scaleY: scale,
-          selectable: false,
-          evented: false,
-          hoverCursor: 'default',
-          moveCursor: 'default'
-        });
-
-        imageRef.current = img;
-        canvas.add(img);
-        canvas.renderAll();
-      })
-      .catch((error) => {
-        console.error('❌ Failed to load image:', imagePath, error);
-        console.log('🔧 Trying alternative paths...');
-        
-        // Try different path variations
-        const altPaths = [
-          imagePath.replace('/src/assets/', '/src/assets/'),
-          imagePath.replace('/src/', './src/'),
-          imagePath.replace('.jpg', '.png'),
-          imagePath.replace('/src/assets/', '/assets/'),
-          imagePath.replace('/src/assets/', '')
-        ];
-        
-        console.log('🔧 Alternative paths to try:', altPaths);
-        
-        // Try each alternative path
-        const tryNextPath = (pathIndex = 0) => {
-          if (pathIndex >= altPaths.length) {
-            console.error('❌ All image paths failed for:', bodyPart);
-            return;
-          }
-          
-          const currentPath = altPaths[pathIndex];
-          console.log(`🔧 Trying path ${pathIndex + 1}/${altPaths.length}:`, currentPath);
-          
-          FabricImage.fromURL(currentPath, { crossOrigin: 'anonymous' })
-            .then((img) => {
-              console.log('✅ Success with alternative path:', currentPath);
-              if (!canvas || !containerRef.current) return;
-
-              const containerWidth = containerRef.current.offsetWidth * 0.75;
-              const containerHeight = containerRef.current.offsetHeight * 0.9;
-              
-              const scale = Math.min(
-                containerWidth / (img.width || 1),
-                containerHeight / (img.height || 1)
-              ) * 0.8;
-
-              img.set({
-                left: (containerWidth - (img.width || 0) * scale) / 2,
-                top: (containerHeight - (img.height || 0) * scale) / 2,
-                scaleX: scale,
-                scaleY: scale,
-                selectable: false,
-                evented: false,
-                hoverCursor: 'default',
-                moveCursor: 'default'
-              });
-
-              imageRef.current = img;
-              canvas.add(img);
-              canvas.renderAll();
-            })
-            .catch((err) => {
-              console.log(`❌ Path ${pathIndex + 1} failed:`, currentPath, err);
-              tryNextPath(pathIndex + 1);
-            });
-        };
-        
-        tryNextPath();
+      img.set({
+        left: (containerWidth - (img.width || 0) * scale) / 2,
+        top: (containerHeight - (img.height || 0) * scale) / 2,
+        scaleX: scale,
+        scaleY: scale,
+        selectable: false,
+        evented: false,
+        hoverCursor: 'crosshair',
+        moveCursor: 'crosshair'
       });
 
-    // Disable canvas interactions - no click handlers
+      imageRef.current = img;
+      canvas.add(img);
+      canvas.renderAll();
+    }, { crossOrigin: 'anonymous' });
+
+    // Handle canvas clicks
+    canvas.on('mouse:down', (event) => {
+      if (!event.e || !imageRef.current) return;
+
+      const pointer = canvas.getPointer(event.e);
+      console.log('Canvas clicked at:', pointer);
+      
+      // For now, just select the first available symptom as an example
+      if (availableSymptoms.length > 0 && !selectedSymptom) {
+        const firstSymptom = availableSymptoms[0].Symptoms;
+        setSelectedSymptom(firstSymptom);
+        scrollToSymptom(firstSymptom);
+        setShowConfirmation(true);
+      }
+    });
 
     // Enable zoom with mouse wheel
     canvas.on('mouse:wheel', (opt) => {
@@ -267,7 +177,7 @@ const UniversalSymptomSelector = ({
       if (zoom > 3) zoom = 3;
       if (zoom < 0.3) zoom = 0.3;
       
-      canvas.zoomToPoint(new Point(opt.e.offsetX, opt.e.offsetY), zoom);
+      canvas.zoomToPoint({ x: opt.e.offsetX, y: opt.e.offsetY }, zoom);
       setZoomLevel(zoom);
       opt.e.preventDefault();
       opt.e.stopPropagation();
@@ -350,7 +260,7 @@ const UniversalSymptomSelector = ({
   const resetZoom = () => {
     if (fabricCanvasRef.current) {
       fabricCanvasRef.current.setZoom(1);
-      fabricCanvasRef.current.absolutePan(new Point(0, 0));
+      fabricCanvasRef.current.absolutePan({ x: 0, y: 0 });
       setZoomLevel(1);
     }
   };
@@ -411,15 +321,17 @@ const UniversalSymptomSelector = ({
           <div className={`${viewMode === 'column' ? (isFullscreen ? 'w-5/6' : 'w-4/5') : 'w-full'} relative bg-gray-50 select-none`} ref={containerRef}>
             <canvas
               ref={canvasRef}
-              className="w-full h-full cursor-default select-none"
+              className="w-full h-full cursor-crosshair select-none"
               style={{ 
                 userSelect: 'none',
-                WebkitUserSelect: 'none'
+                WebkitUserSelect: 'none',
+                msUserSelect: 'none',
+                MozUserSelect: 'none'
               }}
             />
             
-            {/* Canvas Controls - Hidden */}
-            <div className="hidden absolute top-4 left-4 flex flex-col gap-2 bg-white/90 backdrop-blur-sm rounded-lg p-2 shadow-lg">
+            {/* Canvas Controls */}
+            <div className="absolute top-4 left-4 flex flex-col gap-2 bg-white/90 backdrop-blur-sm rounded-lg p-2 shadow-lg">
               <Button variant="outline" size="sm" onClick={handleZoomIn}>
                 <ZoomIn className="h-4 w-4" />
               </Button>
@@ -431,8 +343,8 @@ const UniversalSymptomSelector = ({
               </Button>
             </div>
 
-            {/* Zoom Level Indicator - Hidden */}
-            <div className="hidden absolute top-4 right-4 bg-white/90 backdrop-blur-sm rounded-lg px-3 py-1 text-sm font-medium shadow-lg">
+            {/* Zoom Level Indicator */}
+            <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm rounded-lg px-3 py-1 text-sm font-medium shadow-lg">
               {Math.round(zoomLevel * 100)}%
             </div>
 
@@ -481,11 +393,11 @@ const UniversalSymptomSelector = ({
 
               <div 
                 ref={symptomListRef}
-                className="flex-1 min-h-0 overflow-y-auto overscroll-contain scroll-smooth" 
-                style={{ scrollBehavior: 'smooth', maxHeight: 'calc(100vh - 300px)' }}
+                className="flex-1 min-h-0 overflow-y-auto overscroll-contain" 
+                style={{ scrollBehavior: 'smooth' }}
                 onWheel={(e) => e.stopPropagation()}
               >
-                <div className="p-4 space-y-3 pb-8">
+                <div className="p-4 space-y-3">
                   {isLoadingSymptoms ? (
                     <div className="flex items-center justify-center py-8">
                       <div className="text-center">
