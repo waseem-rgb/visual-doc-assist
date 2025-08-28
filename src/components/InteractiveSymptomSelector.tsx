@@ -1,9 +1,15 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, Stethoscope } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { ArrowLeft, Stethoscope, Clock } from "lucide-react";
 import { loadImageFromStorage } from "@/lib/storageUtils";
 import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 import UniversalSymptomSelector from "./UniversalSymptomSelector";
 
 interface InteractiveSymptomSelectorProps {
@@ -29,6 +35,20 @@ const InteractiveSymptomSelector = ({ bodyPart, patientData, onBack }: Interacti
   const [finalSelection, setFinalSelection] = useState<{id: string, text: string} | null>(null);
   const [diagnosis, setDiagnosis] = useState<string | null>(null);
   const [loadingDiagnosis, setLoadingDiagnosis] = useState(false);
+  const [showClinicalForm, setShowClinicalForm] = useState(false);
+  const [prescriptionSubmitted, setPrescriptionSubmitted] = useState(false);
+  const { toast } = useToast();
+
+  // Clinical history form state
+  const [clinicalData, setClinicalData] = useState({
+    symptomDuration: '',
+    durationUnit: 'days',
+    chronicIllness: [] as string[],
+    drugAllergies: '',
+    smoking: '',
+    alcohol: '',
+    mobileNumber: ''
+  });
 
   // Universal symptom definitions - works for any body part
   const getUniversalSymptoms = (bodyPart: string): SymptomItem[] => {
@@ -158,12 +178,55 @@ const InteractiveSymptomSelector = ({ bodyPart, patientData, onBack }: Interacti
   };
 
   const handleRequestPrescription = () => {
-    // TODO: Implement prescription request functionality
-    console.log("Prescription requested for:", {
+    setShowClinicalForm(true);
+  };
+
+  const handleClinicalFormSubmit = () => {
+    // Validate required fields
+    if (!clinicalData.mobileNumber.trim()) {
+      toast({
+        title: "Required Field Missing",
+        description: "Mobile number is required to proceed.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Validate mobile number format (basic validation)
+    const mobilePattern = /^[0-9]{10,15}$/;
+    if (!mobilePattern.test(clinicalData.mobileNumber)) {
+      toast({
+        title: "Invalid Mobile Number",
+        description: "Please enter a valid mobile number.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    console.log("Prescription requested with clinical data:", {
       patient: patientData,
       symptom: finalSelection,
-      diagnosis: diagnosis
+      diagnosis: diagnosis,
+      clinicalHistory: clinicalData
     });
+
+    setPrescriptionSubmitted(true);
+    setShowClinicalForm(false);
+
+    toast({
+      title: "Prescription Request Submitted",
+      description: "Your prescription will be generated within 15 minutes. You will be notified on your mobile number.",
+      duration: 5000
+    });
+  };
+
+  const handleChronicIllnessChange = (illness: string, checked: boolean) => {
+    setClinicalData(prev => ({
+      ...prev,
+      chronicIllness: checked 
+        ? [...prev.chronicIllness, illness]
+        : prev.chronicIllness.filter(item => item !== illness)
+    }));
   };
 
   if (loading) {
@@ -308,14 +371,193 @@ const InteractiveSymptomSelector = ({ bodyPart, patientData, onBack }: Interacti
                   onClick={handleRequestPrescription}
                   size="lg"
                   className="w-full max-w-sm bg-gradient-to-r from-primary to-primary-glow hover:shadow-lg transition-all duration-300"
+                  disabled={prescriptionSubmitted}
                 >
-                  Request Prescription
+                  {prescriptionSubmitted ? "Prescription Requested" : "Request Prescription"}
                 </Button>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Prescription Status */}
+          {prescriptionSubmitted && (
+            <Card className="p-6 mt-6">
+              <CardContent className="text-center space-y-4">
+                <div className="flex items-center justify-center mb-4">
+                  <Clock className="h-8 w-8 text-green-600 mr-2" />
+                  <h3 className="text-lg font-semibold text-green-600">Prescription Being Prepared</h3>
+                </div>
+                <div className="bg-green-50 p-6 rounded-lg">
+                  <p className="text-gray-700 leading-relaxed">
+                    Your prescription request has been submitted successfully. 
+                    Our medical team is reviewing your case and will send the prescription 
+                    to your mobile number within 15 minutes.
+                  </p>
+                </div>
+                <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                  <p className="text-sm text-blue-800">
+                    <strong>Note:</strong> Please keep your mobile phone accessible. 
+                    You will receive the prescription via SMS or WhatsApp.
+                  </p>
+                </div>
               </CardContent>
             </Card>
           )}
         </div>
       </div>
+
+      {/* Clinical History Form Modal */}
+      {showClinicalForm && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <Card className="w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <CardHeader>
+              <CardTitle className="text-xl text-center">Clinical History</CardTitle>
+              <p className="text-sm text-muted-foreground text-center">
+                Please provide the following information to complete your prescription request
+              </p>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* Duration of Symptoms */}
+              <div className="space-y-2">
+                <Label htmlFor="symptom-duration">
+                  Duration of Symptoms <span className="text-muted-foreground">(Optional)</span>
+                </Label>
+                <div className="flex gap-2">
+                  <Input
+                    id="symptom-duration"
+                    type="number"
+                    placeholder="Enter duration"
+                    value={clinicalData.symptomDuration}
+                    onChange={(e) => setClinicalData(prev => ({ ...prev, symptomDuration: e.target.value }))}
+                    className="flex-1"
+                  />
+                  <Select 
+                    value={clinicalData.durationUnit} 
+                    onValueChange={(value) => setClinicalData(prev => ({ ...prev, durationUnit: value }))}
+                  >
+                    <SelectTrigger className="w-24">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="days">Days</SelectItem>
+                      <SelectItem value="weeks">Weeks</SelectItem>
+                      <SelectItem value="months">Months</SelectItem>
+                      <SelectItem value="years">Years</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              {/* Chronic Illness */}
+              <div className="space-y-3">
+                <Label>
+                  Any Chronic Illness <span className="text-muted-foreground">(Optional - Select all that apply)</span>
+                </Label>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {['Hypertension', 'Diabetes mellitus', 'Hypothyroidism', 'Asthma', 'Tuberculosis'].map((illness) => (
+                    <div key={illness} className="flex items-center space-x-2">
+                      <Checkbox
+                        id={illness}
+                        checked={clinicalData.chronicIllness.includes(illness)}
+                        onCheckedChange={(checked) => handleChronicIllnessChange(illness, checked as boolean)}
+                      />
+                      <Label htmlFor={illness} className="text-sm">{illness}</Label>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Drug Allergies */}
+              <div className="space-y-2">
+                <Label htmlFor="drug-allergies">
+                  Allergy to any Drug <span className="text-muted-foreground">(Optional)</span>
+                </Label>
+                <Input
+                  id="drug-allergies"
+                  placeholder="Enter any known drug allergies"
+                  value={clinicalData.drugAllergies}
+                  onChange={(e) => setClinicalData(prev => ({ ...prev, drugAllergies: e.target.value }))}
+                />
+              </div>
+
+              {/* Smoking History */}
+              <div className="space-y-3">
+                <Label>
+                  History of Smoking <span className="text-muted-foreground">(Optional)</span>
+                </Label>
+                <RadioGroup 
+                  value={clinicalData.smoking} 
+                  onValueChange={(value) => setClinicalData(prev => ({ ...prev, smoking: value }))}
+                >
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="yes" id="smoking-yes" />
+                    <Label htmlFor="smoking-yes">Yes</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="no" id="smoking-no" />
+                    <Label htmlFor="smoking-no">No</Label>
+                  </div>
+                </RadioGroup>
+              </div>
+
+              {/* Alcohol History */}
+              <div className="space-y-3">
+                <Label>
+                  History of Alcoholism <span className="text-muted-foreground">(Optional)</span>
+                </Label>
+                <RadioGroup 
+                  value={clinicalData.alcohol} 
+                  onValueChange={(value) => setClinicalData(prev => ({ ...prev, alcohol: value }))}
+                >
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="yes" id="alcohol-yes" />
+                    <Label htmlFor="alcohol-yes">Yes</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="no" id="alcohol-no" />
+                    <Label htmlFor="alcohol-no">No</Label>
+                  </div>
+                </RadioGroup>
+              </div>
+
+              {/* Mobile Number */}
+              <div className="space-y-2">
+                <Label htmlFor="mobile-number">
+                  Mobile Number <span className="text-red-500">*</span>
+                </Label>
+                <Input
+                  id="mobile-number"
+                  type="tel"
+                  placeholder="Enter your mobile number"
+                  value={clinicalData.mobileNumber}
+                  onChange={(e) => setClinicalData(prev => ({ ...prev, mobileNumber: e.target.value }))}
+                  className="w-full"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Required field. You will receive your prescription on this number.
+                </p>
+              </div>
+
+              {/* Form Actions */}
+              <div className="flex gap-3 pt-4">
+                <Button 
+                  variant="outline" 
+                  onClick={() => setShowClinicalForm(false)}
+                  className="flex-1"
+                >
+                  Cancel
+                </Button>
+                <Button 
+                  onClick={handleClinicalFormSubmit}
+                  className="flex-1 bg-gradient-to-r from-primary to-primary-glow"
+                >
+                  Submit & Request Prescription
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
       {/* Fullscreen Universal Selector */}
       {imageUrl && (
