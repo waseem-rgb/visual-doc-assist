@@ -36,6 +36,12 @@ interface PrescriptionRequest {
   status: 'pending' | 'in_progress' | 'completed';
   created_at: string;
   assigned_doctor_id: string | null;
+  is_referral?: boolean;
+  referral_type?: string | null;
+  patient_phone?: string;
+  clinical_history?: string;
+  chief_complaint?: string;
+  physical_examination?: string;
 }
 
 interface DoctorProfile {
@@ -58,52 +64,73 @@ const DoctorDashboard = () => {
 
   const checkAuthAndFetchData = async () => {
     try {
-      console.log("Dashboard loading - bypassing auth checks");
+      console.log("Dashboard loading - fetching real data");
       
-      // Skip auth checks for now - set mock doctor profile
+      // Set doctor profile (temporarily hardcoded - in production would come from auth)
       setDoctorProfile({
         full_name: "Dr. Waseem Ahmed", 
         specialization: "General Medicine",
         license_number: "MD12345"
       });
 
-      // Mock some sample prescription requests for testing
-      const mockRequests: PrescriptionRequest[] = [
-        {
-          id: "1",
-          patient_name: "John Doe",
-          patient_age: "35",
-          patient_gender: "male",
-          body_part: "chest",
-          symptoms: "Chest pain and shortness of breath",
-          probable_diagnosis: "Possible angina",
-          short_summary: "Patient reports chest pain during physical activity",
-          basic_investigations: "ECG, Chest X-ray, Cardiac enzymes",
-          common_treatments: "Rest, Nitrates, Beta-blockers",
-          prescription_required: true,
-          status: 'pending' as const,
-          created_at: new Date().toISOString(),
-          assigned_doctor_id: null
-        },
-        {
-          id: "2", 
-          patient_name: "Jane Smith",
-          patient_age: "28",
-          patient_gender: "female",
-          body_part: "head",
-          symptoms: "Severe headache and nausea",
-          probable_diagnosis: "Migraine",
-          short_summary: "Recurring headaches with photophobia",
-          basic_investigations: "Neurological examination",
-          common_treatments: "Sumatriptan, Rest in dark room",
-          prescription_required: true,
-          status: 'in_progress' as const,
-          created_at: new Date().toISOString(),
-          assigned_doctor_id: "doc1"
-        }
-      ];
-      
-      setRequests(mockRequests);
+      // Fetch real prescription requests from Supabase
+      const { data: requestsData, error: requestsError } = await supabase
+        .from("prescription_requests")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (requestsError) {
+        console.error("Error fetching requests:", requestsError);
+        throw requestsError;
+      }
+
+      // Process requests and determine prescription requirement based on New Master data
+      const processedRequests = await Promise.all(
+        (requestsData || []).map(async (request) => {
+          // Check New Master table for prescription requirement logic
+          const { data: masterData, error: masterError } = await supabase
+            .from("New Master")
+            .select("*")
+            .ilike("Probable Diagnosis", `%${request.probable_diagnosis}%`)
+            .limit(1);
+
+          if (masterError) {
+            console.error("Error fetching master data:", masterError);
+          }
+
+          // Determine if prescription is required or referral based on "prescription_Y-N" column
+          const masterRecord = masterData?.[0];
+          let prescriptionRequired = true;
+          let isReferral = false;
+
+          if (masterRecord && masterRecord["prescription_Y-N"]) {
+            const prescriptionStatus = masterRecord["prescription_Y-N"].toLowerCase();
+            
+            // If it contains "doctors review and prescription", it needs prescription
+            if (prescriptionStatus.includes("doctors review and prescription")) {
+              prescriptionRequired = true;
+              isReferral = false;
+            }
+            // If it contains specialist names, it's a referral
+            else if (prescriptionStatus.includes("cardiologist") || 
+                     prescriptionStatus.includes("ent specialist") || 
+                     prescriptionStatus.includes("dermatologist") ||
+                     prescriptionStatus.includes("specialist")) {
+              prescriptionRequired = false;
+              isReferral = true;
+            }
+          }
+
+          return {
+            ...request,
+            prescription_required: prescriptionRequired,
+            is_referral: isReferral,
+            referral_type: isReferral ? masterRecord?.["prescription_Y-N"] : null
+          };
+        })
+      );
+
+      setRequests(processedRequests);
       
     } catch (error) {
       console.error("Error fetching data:", error);
