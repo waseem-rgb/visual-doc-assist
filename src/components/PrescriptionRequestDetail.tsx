@@ -137,8 +137,25 @@ const PrescriptionRequestDetail = ({ request, onBack, onUpdate }: PrescriptionRe
 
       if (updateError) throw updateError;
 
-      // TODO: Call edge function to generate PDF
-      // This would invoke the PDF generation service
+      // Generate PDF after prescription is created
+      try {
+        const { data: pdfData, error: pdfError } = await supabase.functions.invoke('generate-prescription-pdf', {
+          body: {
+            requestId: request.id,
+            doctorId: user?.id
+          }
+        });
+
+        if (pdfError) {
+          console.error('PDF generation error:', pdfError);
+          // Don't throw error here - prescription is still valid without PDF initially
+        } else {
+          console.log('PDF generated successfully:', pdfData?.pdfUrl);
+        }
+      } catch (pdfError) {
+        console.error('Failed to generate PDF:', pdfError);
+        // Continue - prescription creation was successful
+      }
       
       toast({
         title: "Prescription Generated",

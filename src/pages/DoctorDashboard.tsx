@@ -236,7 +236,7 @@ const DoctorDashboard = () => {
 
         const { data, error } = await supabase.functions.invoke('generate-prescription-pdf', {
           body: {
-            requestId: request.prescription.id,
+            requestId: request.id,
             doctorId: user?.id
           }
         });
