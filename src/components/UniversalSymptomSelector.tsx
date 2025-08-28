@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { X, ZoomIn, ZoomOut, Maximize, Minimize } from "lucide-react";
+import { X, ZoomIn, ZoomOut, Maximize, Minimize, Move } from "lucide-react";
 import { Canvas as FabricCanvas, Circle } from "fabric";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
@@ -50,6 +50,9 @@ const UniversalSymptomSelector = ({
   const [showSymptomPopover, setShowSymptomPopover] = useState(false);
   const [popoverPosition, setPopoverPosition] = useState({ x: 0, y: 0 });
   const [clickPosition, setClickPosition] = useState<{ x: number, y: number } | null>(null);
+  const [isPanning, setIsPanning] = useState(false);
+  const [panOffset, setPanOffset] = useState({ x: 0, y: 0 });
+  const [lastPanPoint, setLastPanPoint] = useState({ x: 0, y: 0 });
 
   // Handle image load event with dynamic sizing for fullscreen desktop
   const handleImageLoad = (e: React.SyntheticEvent<HTMLImageElement>) => {
@@ -116,12 +119,72 @@ const UniversalSymptomSelector = ({
       setIsFullscreen(true); // Keep fullscreen as default
       setShowSymptomPopover(false);
       setClickPosition(null);
+      setIsPanning(false);
+      setPanOffset({ x: 0, y: 0 });
       if (fabricCanvas) {
         fabricCanvas.dispose();
         setFabricCanvas(null);
       }
     }
   }, [open]);
+
+  // Handle panning functionality
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if (e.button === 1 || e.ctrlKey || e.metaKey) { // Middle mouse or Ctrl+click for panning
+      setIsPanning(true);
+      setLastPanPoint({ x: e.clientX, y: e.clientY });
+      e.preventDefault();
+    }
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (isPanning) {
+      const deltaX = e.clientX - lastPanPoint.x;
+      const deltaY = e.clientY - lastPanPoint.y;
+      
+      setPanOffset(prev => ({
+        x: prev.x + deltaX,
+        y: prev.y + deltaY
+      }));
+      
+      setLastPanPoint({ x: e.clientX, y: e.clientY });
+    }
+  };
+
+  const handleMouseUp = () => {
+    setIsPanning(false);
+  };
+
+  // Add global mouse event listeners for panning
+  useEffect(() => {
+    const handleGlobalMouseMove = (e: MouseEvent) => {
+      if (isPanning) {
+        const deltaX = e.clientX - lastPanPoint.x;
+        const deltaY = e.clientY - lastPanPoint.y;
+        
+        setPanOffset(prev => ({
+          x: prev.x + deltaX,
+          y: prev.y + deltaY
+        }));
+        
+        setLastPanPoint({ x: e.clientX, y: e.clientY });
+      }
+    };
+
+    const handleGlobalMouseUp = () => {
+      setIsPanning(false);
+    };
+
+    if (isPanning) {
+      document.addEventListener('mousemove', handleGlobalMouseMove);
+      document.addEventListener('mouseup', handleGlobalMouseUp);
+    }
+
+    return () => {
+      document.removeEventListener('mousemove', handleGlobalMouseMove);
+      document.removeEventListener('mouseup', handleGlobalMouseUp);
+    };
+  }, [isPanning, lastPanPoint]);
 
   // Initialize Fabric canvas after image loads and DOM is ready
   useEffect(() => {
@@ -336,7 +399,7 @@ const UniversalSymptomSelector = ({
               </div>
             </div>
 
-            {/* Zoom Controls */}
+            {/* Zoom and Pan Controls */}
             <div className="absolute top-20 right-4 z-40 flex flex-col space-y-2">
               <Button onClick={() => handleZoom('in')} size="sm" variant="outline">
                 <ZoomIn className="h-3 w-3" />
@@ -349,6 +412,15 @@ const UniversalSymptomSelector = ({
               </Button>
               <div className="text-xs text-center bg-background/80 rounded px-2 py-1">
                 {Math.round(zoomLevel * 100)}%
+              </div>
+              <div className="border-t pt-2">
+                <div className="text-xs text-center bg-background/80 rounded px-2 py-1 mb-1">
+                  <Move className="h-3 w-3 mx-auto mb-1" />
+                  Drag to Pan
+                </div>
+                <p className="text-xs text-center text-muted-foreground">
+                  Ctrl+Drag or Middle Click
+                </p>
               </div>
             </div>
 
@@ -363,10 +435,15 @@ const UniversalSymptomSelector = ({
               >
                 <div 
                   ref={containerRef}
-                  className="relative border-2 border-gray-200 rounded-lg shadow-lg bg-white inline-block"
+                  className="relative border-2 border-gray-200 rounded-lg shadow-lg bg-white inline-block select-none"
                   style={{ 
-                    transformOrigin: 'center'
+                    transformOrigin: 'center',
+                    transform: `translate(${panOffset.x}px, ${panOffset.y}px)`,
+                    cursor: isPanning ? 'grabbing' : 'grab'
                   }}
+                  onMouseDown={handleMouseDown}
+                  onMouseMove={handleMouseMove}
+                  onMouseUp={handleMouseUp}
                 >
                 {/* Background Image */}
                 {imageUrl && (
@@ -403,7 +480,7 @@ const UniversalSymptomSelector = ({
                      style={{
                        width: displayDimensions.width,
                        height: displayDimensions.height,
-                       zIndex: 10
+                       zIndex: 50 // Higher z-index to ensure it appears above the image
                      }}
                      onMouseEnter={() => console.log('🖱️ Mouse entered canvas')}
                      onMouseLeave={() => console.log('🖱️ Mouse left canvas')}
