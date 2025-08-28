@@ -9,14 +9,19 @@ export const generateImageFilenames = (bodyPart: string): string[] => {
   const bodyPartLower = bodyPart.toLowerCase().trim();
   const bodyPartOriginal = bodyPart.trim();
   
-  return [
+  // Also try title case and other common variations
+  const bodyPartTitle = bodyPart.trim().split(' ').map(word => 
+    word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+  ).join(' ');
+  
+  const allVariations = [
     // PRIORITY 1: Exact match format as seen in storage: "EYE VISION.png"
     `${bodyPartUpper}.png`,
-    `${bodyPartUpper}.PNG`, // Try uppercase extension
+    `${bodyPartUpper}.PNG`, 
     `${bodyPartUpper}.jpg`,
-    `${bodyPartUpper}.JPG`, // Try uppercase extension
+    `${bodyPartUpper}.JPG`, 
     `${bodyPartUpper}.jpeg`,
-    `${bodyPartUpper}.JPEG`, // Try uppercase extension
+    `${bodyPartUpper}.JPEG`, 
     
     // PRIORITY 2: Original case with spaces
     `${bodyPartOriginal}.png`,
@@ -26,7 +31,15 @@ export const generateImageFilenames = (bodyPart: string): string[] => {
     `${bodyPartOriginal}.jpeg`,
     `${bodyPartOriginal}.JPEG`,
     
-    // PRIORITY 3: Lowercase variations
+    // PRIORITY 3: Title Case variations (Eye Vision)
+    `${bodyPartTitle}.png`,
+    `${bodyPartTitle}.PNG`,
+    `${bodyPartTitle}.jpg`,
+    `${bodyPartTitle}.JPG`,
+    `${bodyPartTitle}.jpeg`,
+    `${bodyPartTitle}.JPEG`,
+    
+    // PRIORITY 4: Lowercase variations
     `${bodyPartLower}.png`,
     `${bodyPartLower}.PNG`,
     `${bodyPartLower}.jpg`,
@@ -34,7 +47,7 @@ export const generateImageFilenames = (bodyPart: string): string[] => {
     `${bodyPartLower}.jpeg`,
     `${bodyPartLower}.JPEG`,
     
-    // PRIORITY 4: Underscore variations
+    // PRIORITY 5: Underscore variations
     `${bodyPartUpper.replace(/\s+/g, '_')}.png`, // EYE_VISION.png
     `${bodyPartUpper.replace(/\s+/g, '_')}.PNG`,
     `${bodyPartUpper.replace(/\s+/g, '_')}.jpg`,
@@ -43,8 +56,12 @@ export const generateImageFilenames = (bodyPart: string): string[] => {
     `${bodyPartLower.replace(/\s+/g, '_')}.PNG`,
     `${bodyPartLower.replace(/\s+/g, '_')}.jpg`,
     `${bodyPartLower.replace(/\s+/g, '_')}.JPG`,
+    `${bodyPartTitle.replace(/\s+/g, '_')}.png`, // Eye_Vision.png
+    `${bodyPartTitle.replace(/\s+/g, '_')}.PNG`,
+    `${bodyPartTitle.replace(/\s+/g, '_')}.jpg`,
+    `${bodyPartTitle.replace(/\s+/g, '_')}.JPG`,
     
-    // PRIORITY 5: Dash variations  
+    // PRIORITY 6: Dash variations  
     `${bodyPartLower.replace(/\s+/g, '-')}.png`, // eye-vision.png
     `${bodyPartLower.replace(/\s+/g, '-')}.PNG`,
     `${bodyPartLower.replace(/\s+/g, '-')}.jpg`,
@@ -53,7 +70,28 @@ export const generateImageFilenames = (bodyPart: string): string[] => {
     `${bodyPartUpper.replace(/\s+/g, '-')}.PNG`,
     `${bodyPartUpper.replace(/\s+/g, '-')}.jpg`,
     `${bodyPartUpper.replace(/\s+/g, '-')}.JPG`,
+    `${bodyPartTitle.replace(/\s+/g, '-')}.png`, // Eye-Vision.png
+    `${bodyPartTitle.replace(/\s+/g, '-')}.PNG`,
+    `${bodyPartTitle.replace(/\s+/g, '-')}.jpg`,
+    `${bodyPartTitle.replace(/\s+/g, '-')}.JPG`,
+    
+    // PRIORITY 7: No spaces (concatenated)
+    `${bodyPartUpper.replace(/\s+/g, '')}.png`, // EYEVISION.png
+    `${bodyPartUpper.replace(/\s+/g, '')}.PNG`,
+    `${bodyPartUpper.replace(/\s+/g, '')}.jpg`,
+    `${bodyPartUpper.replace(/\s+/g, '')}.JPG`,
+    `${bodyPartLower.replace(/\s+/g, '')}.png`, // eyevision.png
+    `${bodyPartLower.replace(/\s+/g, '')}.PNG`,
+    `${bodyPartLower.replace(/\s+/g, '')}.jpg`,
+    `${bodyPartLower.replace(/\s+/g, '')}.JPG`,
+    `${bodyPartTitle.replace(/\s+/g, '')}.png`, // EyeVision.png
+    `${bodyPartTitle.replace(/\s+/g, '')}.PNG`,
+    `${bodyPartTitle.replace(/\s+/g, '')}.jpg`,
+    `${bodyPartTitle.replace(/\s+/g, '')}.JPG`,
   ];
+  
+  // Remove duplicates while preserving order
+  return [...new Set(allVariations)];
 };
 
 /**
