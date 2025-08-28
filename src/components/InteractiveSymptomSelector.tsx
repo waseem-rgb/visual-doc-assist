@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft, Stethoscope } from "lucide-react";
 import { loadImageFromStorage } from "@/lib/storageUtils";
 import { supabase } from "@/integrations/supabase/client";
-import FullscreenSymptomLightbox from "./FullscreenSymptomLightbox";
+import UniversalSymptomSelector from "./UniversalSymptomSelector";
 
 interface InteractiveSymptomSelectorProps {
   bodyPart: string;
@@ -16,13 +16,10 @@ interface InteractiveSymptomSelectorProps {
   onBack: () => void;
 }
 
-interface TextArea {
+interface SymptomItem {
   id: string;
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-  symptomText: string;
+  text: string;
+  category?: string;
 }
 
 const InteractiveSymptomSelector = ({ bodyPart, patientData, onBack }: InteractiveSymptomSelectorProps) => {
@@ -33,82 +30,62 @@ const InteractiveSymptomSelector = ({ bodyPart, patientData, onBack }: Interacti
   const [diagnosis, setDiagnosis] = useState<string | null>(null);
   const [loadingDiagnosis, setLoadingDiagnosis] = useState(false);
 
-  // Define text areas dynamically based on body part
-  const getTextAreasForBodyPart = (bodyPart: string): TextArea[] => {
-    switch(bodyPart.toUpperCase()) {
-      case 'HAIR AND SCALP':
-        return [
-          { id: "hair-loss-general", x: 200, y: 150, width: 180, height: 120, 
-            symptomText: "Problems with hair loss, hair thinning or receding hairline. May occur gradually over time or suddenly. Common in both men and women, affecting confidence and appearance." },
-          { id: "scalp-conditions", x: 400, y: 140, width: 180, height: 100, 
-            symptomText: "Scalp problems including dryness, itching, flaking, or irritation. May include dandruff, seborrheic dermatitis, or other scalp conditions causing discomfort." },
-          { id: "hair-texture-changes", x: 150, y: 280, width: 200, height: 80, 
-            symptomText: "Changes in hair texture including hair becoming coarse, fine, brittle, or losing its natural shine. May be accompanied by increased hair breakage." },
-          { id: "scalp-skin-changes", x: 380, y: 260, width: 200, height: 100, 
-            symptomText: "Visible changes to scalp skin including redness, scaling, patches of different color or texture. May involve areas where hair growth has stopped." },
-          { id: "patchy-hair-loss", x: 220, y: 380, width: 160, height: 80, 
-            symptomText: "Patchy areas of hair loss creating bald spots or uneven hair distribution. Different from general thinning, these are distinct areas without hair." },
-          { id: "scalp-sensitivity", x: 400, y: 380, width: 180, height: 80, 
-            symptomText: "Scalp sensitivity or pain when touching the head or hair. May include burning, stinging, or tender sensations when brushing or washing hair." },
-          { id: "excessive-hair-shedding", x: 170, y: 480, width: 200, height: 80, 
-            symptomText: "Excessive daily hair shedding beyond normal amounts. Noticing significantly more hair in brush, on pillow, or in shower drain than usual." },
-          { id: "scalp-odor-discharge", x: 390, y: 480, width: 190, height: 80, 
-            symptomText: "Unusual scalp odor or discharge. May include oily, flaky, or crusty substances on the scalp that create an unpleasant smell or appearance." }
-        ];
-      case 'MALE GENITALS':
-        return [
-          { id: "penile-issues", x: 300, y: 150, width: 200, height: 150, 
-            symptomText: "Discharge from penis, burning during urination, or pain. May be clear, white, yellow, or green discharge." },
-          { id: "testicular-problems", x: 250, y: 350, width: 300, height: 200, 
-            symptomText: "Pain or discomfort in one or both testicles. Swelling of testicles or scrotum. May be sudden or gradual onset." },
-          { id: "genital-sores", x: 200, y: 200, width: 400, height: 250, 
-            symptomText: "Sores, ulcers, or lesions on the penis, testicles, or surrounding area. May be painful or painless." },
-          { id: "urinary-problems", x: 300, y: 100, width: 200, height: 100, 
-            symptomText: "Burning, stinging, or pain during urination. Increased frequency of urination or difficulty urinating." },
-          { id: "erectile-issues", x: 280, y: 180, width: 240, height: 180, 
-            symptomText: "Difficulty achieving or maintaining an erection sufficient for sexual intercourse." },
-        ];
-      case 'EAR PHYSICAL':
-      case 'EAR HEARING':
-        return [
-          { id: "hearing-loss-gradual", x: 50, y: 280, width: 200, height: 80, 
-            symptomText: "Gradually increasing hearing loss affecting both ears. Develops with advancing age. Higher notes affected initially, then lower notes. Background noise makes it harder to hear conversation." },
-          { id: "blocked-ear", x: 230, y: 290, width: 180, height: 60, 
-            symptomText: "Blocked ear with possible mild discomfort and a reduction in hearing." },
-          { id: "reduced-hearing", x: 50, y: 380, width: 200, height: 60, 
-            symptomText: "Reduced hearing (such as needing the volume high on the television); speech that is quieter than normal. May have had a recent cold. More common in children." },
-          { id: "hearing-loss-unequal", x: 230, y: 340, width: 180, height: 80, 
-            symptomText: "Increasing level of hearing loss affecting both ears; may be unequal. Hearing may be improved when there is a noisy background. Tinnitus (noises in ears) and vertigo (dizziness) may be present." },
-          { id: "vertigo-dizziness", x: 50, y: 450, width: 200, height: 80, 
-            symptomText: "Vertigo (dizziness), worsened by change of head position; tinnitus (noises in ears); hearing loss. Fever, and feeling of fullness or pressure in the ear may also be present." },
-          { id: "one-sided-hearing-loss", x: 230, y: 430, width: 180, height: 80, 
-            symptomText: "One-sided, slowly developing hearing loss with tinnitus (noises in ears). Loss of balance may develop along with headaches and numbness or weakness of the face on the affected side." },
-          { id: "attacks-dizziness", x: 50, y: 540, width: 200, height: 60, 
-            symptomText: "Attacks of dizziness, hearing loss, and tinnitus (noises in ears). Lasts between a few minutes and several days." },
-          { id: "sudden-hearing-loss", x: 230, y: 520, width: 180, height: 60, 
-            symptomText: "Sudden hearing loss, usually on one side only. See doctor soon." },
-          { id: "hearing-loss-brief-pain", x: 230, y: 590, width: 180, height: 60, 
-            symptomText: "Slight hearing loss following brief, intense pain. There may be slight bleeding or discharge from ear." },
-          { id: "sudden-dizziness-nausea", x: 50, y: 620, width: 200, height: 60, 
-            symptomText: "Sudden onset of dizziness with nausea and vomiting. Associated with feeling of being unsteady." },
-          { id: "noises-in-ears", x: 520, y: 350, width: 200, height: 80, 
-            symptomText: "Development of noises that are coming from inside the head and not from outside. Nature of sounds may vary, including ringing, whistling, hissing. May be associated hearing loss." },
-          { id: "vertigo-with-tinnitus", x: 520, y: 450, width: 200, height: 80, 
-            symptomText: "Dizziness, worsened by change of head position; tinnitus; hearing loss. Fever, and feeling of fullness or pressure in the ear may also be present." },
-          { id: "attacks-vertigo-tinnitus", x: 520, y: 540, width: 200, height: 60, 
-            symptomText: "Attacks of dizziness, hearing loss, and tinnitus. Lasts between a few minutes and several days." },
-          { id: "balance-loss-headaches", x: 520, y: 620, width: 200, height: 80, 
-            symptomText: "One-sided, slowly developing hearing loss with tinnitus. Loss of balance may develop along with headaches and numbness or weakness of face on the affected side." }
-        ];
-      default:
-        return [
-          { id: "general-pain", x: 300, y: 300, width: 200, height: 100, 
-            symptomText: "General pain or discomfort in the affected area. Please describe your symptoms to a healthcare provider." },
-        ];
+  // Universal symptom definitions - works for any body part
+  const getUniversalSymptoms = (bodyPart: string): SymptomItem[] => {
+    const bodyPartUpper = bodyPart.toUpperCase();
+    
+    // Define symptoms based on body part categories
+    if (bodyPartUpper.includes('HAIR') || bodyPartUpper.includes('SCALP')) {
+      return [
+        { id: "hair-loss-general", text: "Hair loss, hair thinning, or receding hairline that occurs gradually over time or suddenly" },
+        { id: "scalp-conditions", text: "Scalp problems including dryness, itching, flaking, or irritation with possible dandruff" },
+        { id: "hair-texture-changes", text: "Changes in hair texture - hair becoming coarse, fine, brittle, or losing natural shine" },
+        { id: "scalp-skin-changes", text: "Visible changes to scalp skin including redness, scaling, or patches of different color/texture" },
+        { id: "patchy-hair-loss", text: "Patchy areas of hair loss creating bald spots or uneven hair distribution" },
+        { id: "scalp-sensitivity", text: "Scalp sensitivity or pain when touching head or hair, burning or stinging sensations" },
+        { id: "excessive-shedding", text: "Excessive daily hair shedding - more hair than usual in brush, on pillow, or in shower" },
+        { id: "scalp-odor", text: "Unusual scalp odor or discharge, oily/flaky substances creating unpleasant smell" }
+      ];
+    } else if (bodyPartUpper.includes('EAR')) {
+      return [
+        { id: "hearing-loss-gradual", text: "Gradually increasing hearing loss affecting both ears, difficulty with conversation in noise" },
+        { id: "blocked-ear", text: "Blocked ear sensation with mild discomfort and reduced hearing" },
+        { id: "reduced-hearing", text: "Reduced hearing requiring high TV volume, quieter speech, may follow recent cold" },
+        { id: "hearing-unequal", text: "Unequal hearing loss in both ears, improved hearing in noisy backgrounds, tinnitus" },
+        { id: "vertigo-dizziness", text: "Vertigo worsened by head position changes, tinnitus, hearing loss, ear pressure" },
+        { id: "hearing-one-sided", text: "One-sided hearing loss with tinnitus, balance issues, headaches, facial numbness" },
+        { id: "dizziness-attacks", text: "Attacks of dizziness, hearing loss, and tinnitus lasting minutes to days" },
+        { id: "sudden-hearing-loss", text: "Sudden hearing loss, usually one-sided - requires immediate medical attention" },
+        { id: "ear-pain-bleeding", text: "Hearing loss following brief intense pain, possible bleeding or discharge from ear" },
+        { id: "sudden-dizziness-nausea", text: "Sudden dizziness with nausea, vomiting, and feeling unsteady" },
+        { id: "tinnitus-noises", text: "Noises from inside head - ringing, whistling, hissing sounds, possible hearing loss" }
+      ];
+    } else if (bodyPartUpper.includes('GENITAL') || bodyPartUpper.includes('MALE')) {
+      return [
+        { id: "penile-discharge", text: "Discharge from penis with burning during urination - clear, white, yellow, or green" },
+        { id: "testicular-pain", text: "Pain or discomfort in one or both testicles, swelling of testicles or scrotum" },
+        { id: "genital-sores", text: "Sores, ulcers, or lesions on penis, testicles, or surrounding area - painful or painless" },
+        { id: "urinary-burning", text: "Burning, stinging, or pain during urination, increased frequency or difficulty urinating" },
+        { id: "erectile-dysfunction", text: "Difficulty achieving or maintaining erection sufficient for sexual intercourse" },
+        { id: "scrotal-swelling", text: "Swelling in scrotum, feeling of heaviness or dragging sensation" },
+        { id: "groin-pain", text: "Pain in groin area that may radiate to testicles or lower abdomen" }
+      ];
+    } else {
+      // Generic symptoms for any other body part
+      return [
+        { id: "pain-aching", text: "Persistent pain, aching, or discomfort in this area" },
+        { id: "swelling-inflammation", text: "Swelling, inflammation, or visible enlargement" },
+        { id: "skin-changes", text: "Changes in skin color, texture, or appearance" },
+        { id: "numbness-tingling", text: "Numbness, tingling, or loss of sensation" },
+        { id: "stiffness-mobility", text: "Stiffness or reduced range of motion" },
+        { id: "warmth-heat", text: "Unusual warmth or heat in the area" },
+        { id: "discharge-bleeding", text: "Any unusual discharge, bleeding, or fluid" },
+        { id: "itching-irritation", text: "Itching, burning, or general irritation" }
+      ];
     }
   };
 
-  const textAreas: TextArea[] = getTextAreasForBodyPart(bodyPart);
+  const symptoms: SymptomItem[] = getUniversalSymptoms(bodyPart);
 
   useEffect(() => {
     fetchSymptomImage();
@@ -340,15 +317,15 @@ const InteractiveSymptomSelector = ({ bodyPart, patientData, onBack }: Interacti
         </div>
       </div>
 
-      {/* Fullscreen Lightbox */}
+      {/* Fullscreen Universal Selector */}
       {imageUrl && (
-        <FullscreenSymptomLightbox
+        <UniversalSymptomSelector
           open={lightboxOpen}
           onClose={() => setLightboxOpen(false)}
           imageUrl={imageUrl}
           bodyPart={bodyPart}
           patientData={patientData}
-          textAreas={textAreas}
+          symptoms={symptoms}
           onSymptomSubmit={handleSymptomSubmit}
         />
       )}
