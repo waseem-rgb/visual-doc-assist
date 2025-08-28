@@ -291,8 +291,16 @@ async function generateProfessionalPDF(data: any): Promise<Uint8Array> {
     const pdfDoc = await PDFDocument.create();
     const page = pdfDoc.addPage([595.28, 841.89]); // A4 size
     
-    const timesRoman = await pdfDoc.embedFont(StandardFonts.TimesRoman);
-    const timesBold = await pdfDoc.embedFont(StandardFonts.TimesBold);
+    // Use built-in fonts to avoid loading errors
+    let timesRoman, timesBold;
+    try {
+      timesRoman = await pdfDoc.embedFont(StandardFonts.TimesRoman);
+      timesBold = await pdfDoc.embedFont(StandardFonts.TimesBold);
+    } catch (fontError) {
+      console.log('Font loading failed, using Helvetica as fallback');
+      timesRoman = await pdfDoc.embedFont(StandardFonts.Helvetica);
+      timesBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+    }
     
     const { width, height } = page.getSize();
     
@@ -433,7 +441,8 @@ async function generateProfessionalPDF(data: any): Promise<Uint8Array> {
       try {
         const medications = JSON.parse(data.prescription.medications);
         medications.forEach((med: any, index: number) => {
-          page.drawText(`${index + 1}. ${med.name || med.medication_name || 'Medication'}`, {
+          const medName = med.name || med.medication_name || 'Medication';
+          page.drawText(`${index + 1}. ${medName}`, {
             x: 70,
             y: currentY,
             size: 12,
@@ -442,6 +451,7 @@ async function generateProfessionalPDF(data: any): Promise<Uint8Array> {
           });
           currentY -= 15;
           
+          // Enhanced medication details
           if (med.prescribed_dosage || med.dosage) {
             page.drawText(`   Dosage: ${med.prescribed_dosage || med.dosage}`, {
               x: 90,
@@ -464,6 +474,17 @@ async function generateProfessionalPDF(data: any): Promise<Uint8Array> {
             currentY -= 12;
           }
           
+          if (med.duration) {
+            page.drawText(`   Duration: ${med.duration}`, {
+              x: 90,
+              y: currentY,
+              size: 11,
+              font: timesRoman,
+              color: rgb(0.1, 0.1, 0.1),
+            });
+            currentY -= 12;
+          }
+          
           if (med.instructions) {
             const instLines = wrapText(`Instructions: ${med.instructions}`, 60);
             for (const line of instLines) {
@@ -477,9 +498,23 @@ async function generateProfessionalPDF(data: any): Promise<Uint8Array> {
               currentY -= 12;
             }
           }
+          
+          // Add category for custom medications
+          if (med.category === 'Custom Medication') {
+            page.drawText(`   (Custom prescribed medication)`, {
+              x: 90,
+              y: currentY,
+              size: 9,
+              font: timesRoman,
+              color: rgb(0.4, 0.4, 0.4),
+            });
+            currentY -= 10;
+          }
+          
           currentY -= 10;
         });
       } catch (e) {
+        console.error('Error parsing medications:', e);
         page.drawText('No medications prescribed', {
           x: 70,
           y: currentY,

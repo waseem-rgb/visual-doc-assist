@@ -73,30 +73,43 @@ export const SafeCanvasWrapper = ({
       
       console.log('🖼️ [SAFE CANVAS] Loading image:', imageUrl.substring(0, 50) + '...');
 
-      // Load image
+      // Load image with better error handling
+      console.log('🖼️ [SAFE CANVAS] Attempting to load image from:', imageUrl);
+      
       const img = await FabricImage.fromURL(imageUrl, {
         crossOrigin: imageUrl.startsWith('http') ? 'anonymous' : undefined
       });
 
       if (!mountedRef.current || !fabricCanvasRef.current) {
+        console.log('🚫 [SAFE CANVAS] Component unmounted during image load');
         return;
       }
 
-      // Scale and position image
-      const scaleX = width / img.width!;
-      const scaleY = height / img.height!;
+      console.log('📏 [SAFE CANVAS] Image loaded. Dimensions:', img.width, 'x', img.height);
+
+      // Calculate scale to fit image properly
+      const imgWidth = img.width || 1;
+      const imgHeight = img.height || 1;
+      const scaleX = width / imgWidth;
+      const scaleY = height / imgHeight;
       const scale = Math.min(scaleX, scaleY, 1);
+      
+      console.log('🔧 [SAFE CANVAS] Scaling image by:', scale);
       
       img.scale(scale);
       img.set({
-        left: (width - img.width! * scale) / 2,
-        top: (height - img.height! * scale) / 2,
+        left: (width - imgWidth * scale) / 2,
+        top: (height - imgHeight * scale) / 2,
         selectable: false,
-        evented: false
+        evented: false,
+        opacity: 1 // Ensure full opacity
       });
 
       fabricCanvas.add(img);
+      fabricCanvas.sendObjectToBack(img); // Ensure image is behind interactive elements
       fabricCanvas.renderAll();
+      
+      console.log('✅ [SAFE CANVAS] Image added to canvas and rendered');
 
       console.log('✅ [SAFE CANVAS] Canvas ready');
       

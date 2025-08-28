@@ -42,6 +42,15 @@ const MedicationSelector = ({ onMedicationsChange, disabled = false }: Medicatio
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
+  const [showCustomMed, setShowCustomMed] = useState(false);
+  const [customMedication, setCustomMedication] = useState({
+    name: "",
+    strength: "",
+    dosage: "",
+    frequency: "Twice daily",
+    duration: "7 days",
+    instructions: "Take with food"
+  });
   const [loadingAI, setLoadingAI] = useState<{ [key: number]: boolean }>({});
   const [aiInsights, setAiInsights] = useState<{ [key: number]: string }>({});
   const { toast } = useToast();
@@ -111,6 +120,50 @@ const MedicationSelector = ({ onMedicationsChange, disabled = false }: Medicatio
     setShowSearch(false);
   };
 
+  const addCustomMedication = () => {
+    if (!customMedication.name || !customMedication.strength) {
+      toast({
+        title: "Missing Information",
+        description: "Please provide medication name and strength.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const customMed: PrescribedMedication = {
+      id: `custom-${Date.now()}`,
+      name: customMedication.name,
+      generic_name: "",
+      brand_names: "",
+      category: "Custom Medication",
+      dosage_form: "",
+      common_dosages: customMedication.strength,
+      indication: "",
+      contraindication: "",
+      side_effects: "",
+      prescribed_dosage: `${customMedication.strength} ${customMedication.dosage}`,
+      frequency: customMedication.frequency,
+      duration: customMedication.duration,
+      instructions: customMedication.instructions,
+    };
+
+    setPrescribedMedications(prev => [...prev, customMed]);
+    setCustomMedication({
+      name: "",
+      strength: "",
+      dosage: "",
+      frequency: "Twice daily",
+      duration: "7 days",
+      instructions: "Take with food"
+    });
+    setShowCustomMed(false);
+    
+    toast({
+      title: "Custom Medication Added",
+      description: `${customMedication.name} has been added to the prescription.`,
+    });
+  };
+
   const removeMedication = (index: number) => {
     setPrescribedMedications(prev => prev.filter((_, i) => i !== index));
   };
@@ -156,7 +209,7 @@ const MedicationSelector = ({ onMedicationsChange, disabled = false }: Medicatio
 
   return (
     <div className="space-y-4">
-      {/* Add Medication Button */}
+      {/* Add Medication Buttons */}
       {!disabled && (
         <div className="flex gap-2">
           <Button
@@ -166,7 +219,16 @@ const MedicationSelector = ({ onMedicationsChange, disabled = false }: Medicatio
             className="flex items-center gap-2"
           >
             <Plus className="h-4 w-4" />
-            Add Medication
+            Add from Database
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowCustomMed(!showCustomMed)}
+            className="flex items-center gap-2"
+          >
+            <Plus className="h-4 w-4" />
+            Add Custom Medication
           </Button>
         </div>
       )}
@@ -227,6 +289,103 @@ const MedicationSelector = ({ onMedicationsChange, disabled = false }: Medicatio
                   )}
                 </div>
               )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Custom Medication Form */}
+      {showCustomMed && !disabled && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <Pill className="h-5 w-5" />
+              Add Custom Medication
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="custom-med-name">Medication Name *</Label>
+                  <Input
+                    id="custom-med-name"
+                    value={customMedication.name}
+                    onChange={(e) => setCustomMedication(prev => ({ ...prev, name: e.target.value }))}
+                    placeholder="e.g., Paracetamol"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="custom-med-strength">Strength *</Label>
+                  <Input
+                    id="custom-med-strength"
+                    value={customMedication.strength}
+                    onChange={(e) => setCustomMedication(prev => ({ ...prev, strength: e.target.value }))}
+                    placeholder="e.g., 500mg"
+                  />
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <Label htmlFor="custom-med-dosage">Dosage Form</Label>
+                  <Input
+                    id="custom-med-dosage"
+                    value={customMedication.dosage}
+                    onChange={(e) => setCustomMedication(prev => ({ ...prev, dosage: e.target.value }))}
+                    placeholder="e.g., Tablet, Capsule"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="custom-med-frequency">Frequency</Label>
+                  <Select
+                    value={customMedication.frequency}
+                    onValueChange={(value) => setCustomMedication(prev => ({ ...prev, frequency: value }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Once daily">Once daily</SelectItem>
+                      <SelectItem value="Twice daily">Twice daily</SelectItem>
+                      <SelectItem value="Three times daily">Three times daily</SelectItem>
+                      <SelectItem value="Four times daily">Four times daily</SelectItem>
+                      <SelectItem value="As needed">As needed</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label htmlFor="custom-med-duration">Duration</Label>
+                  <Input
+                    id="custom-med-duration"
+                    value={customMedication.duration}
+                    onChange={(e) => setCustomMedication(prev => ({ ...prev, duration: e.target.value }))}
+                    placeholder="e.g., 7 days"
+                  />
+                </div>
+              </div>
+              
+              <div>
+                <Label htmlFor="custom-med-instructions">Instructions</Label>
+                <Textarea
+                  id="custom-med-instructions"
+                  value={customMedication.instructions}
+                  onChange={(e) => setCustomMedication(prev => ({ ...prev, instructions: e.target.value }))}
+                  placeholder="Special instructions..."
+                  className="resize-none"
+                  rows={2}
+                />
+              </div>
+              
+              <div className="flex gap-2">
+                <Button onClick={addCustomMedication} className="flex items-center gap-2">
+                  <Plus className="h-4 w-4" />
+                  Add Custom Medication
+                </Button>
+                <Button variant="outline" onClick={() => setShowCustomMed(false)}>
+                  Cancel
+                </Button>
+              </div>
             </div>
           </CardContent>
         </Card>
