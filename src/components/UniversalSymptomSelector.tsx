@@ -46,83 +46,104 @@ const UniversalSymptomSelector = ({
   const [imageLoaded, setImageLoaded] = useState(false);
   const [imageDimensions, setImageDimensions] = useState({ width: 0, height: 0 });
 
-  // Initialize image and overlay canvas
+  // Simplified image loading approach
   useEffect(() => {
-    if (!open || !imageUrl || !containerRef.current) {
-      console.log('Image initialization skipped:', { open, imageUrl, container: !!containerRef.current });
+    if (!open || !imageUrl) {
+      console.log('❌ Image loading skipped:', { open, imageUrl });
       return;
     }
 
-    console.log('🖼️ Loading image:', imageUrl);
+    console.log('🔄 Starting image load for:', imageUrl);
     setImageLoaded(false);
-
-    // Create and load the image
-    const img = new Image();
-    img.crossOrigin = 'anonymous';
     
-    img.onload = () => {
-      console.log('✅ Image loaded successfully:', img.naturalWidth, 'x', img.naturalHeight);
-      setImageDimensions({ width: img.naturalWidth, height: img.naturalHeight });
-      setImageLoaded(true);
-      
-      // Initialize canvas after image is loaded
-      if (canvasRef.current) {
-        const canvas = new FabricCanvas(canvasRef.current, {
-          width: img.naturalWidth,
-          height: img.naturalHeight,
-          selection: false,
-          hoverCursor: 'pointer',
-          moveCursor: 'pointer',
-          backgroundColor: 'transparent'
+    // Reset dimensions while loading
+    setImageDimensions({ width: 0, height: 0 });
+
+  }, [open, imageUrl]);
+
+  // Handle image load event
+  const handleImageLoad = (e: React.SyntheticEvent<HTMLImageElement>) => {
+    const img = e.currentTarget;
+    console.log('✅ Image loaded successfully:', img.naturalWidth, 'x', img.naturalHeight);
+    
+    setImageDimensions({ 
+      width: img.naturalWidth, 
+      height: img.naturalHeight 
+    });
+    setImageLoaded(true);
+
+    // Initialize canvas after image loads
+    if (canvasRef.current && img.naturalWidth > 0) {
+      const canvas = new FabricCanvas(canvasRef.current, {
+        width: img.naturalWidth,
+        height: img.naturalHeight,
+        selection: false,
+        hoverCursor: 'pointer',
+        moveCursor: 'pointer',
+        backgroundColor: 'transparent'
+      });
+
+      // Handle canvas clicks
+      canvas.on('mouse:down', (event) => {
+        if (!selectedSymptom) return;
+
+        const pointer = canvas.getPointer(event.e);
+        
+        if (highlightCircle) {
+          canvas.remove(highlightCircle);
+        }
+
+        const circle = new Circle({
+          left: pointer.x - 12,
+          top: pointer.y - 12,
+          radius: 12,
+          fill: 'rgba(34, 197, 94, 0.8)',
+          stroke: '#ffffff',
+          strokeWidth: 3,
+          selectable: false,
+          evented: false
         });
 
-        // Handle canvas clicks to place markers
-        canvas.on('mouse:down', (event) => {
-          if (!selectedSymptom) return;
+        canvas.add(circle);
+        setHighlightCircle(circle);
+        canvas.renderAll();
+      });
 
-          const pointer = canvas.getPointer(event.e);
-          
-          // Remove existing highlight circle
-          if (highlightCircle) {
-            canvas.remove(highlightCircle);
-          }
+      setFabricCanvas(canvas);
+      console.log('🎨 Canvas initialized with dimensions:', img.naturalWidth, 'x', img.naturalHeight);
+    }
+  };
 
-          // Create selection marker
-          const circle = new Circle({
-            left: pointer.x - 12,
-            top: pointer.y - 12,
-            radius: 12,
-            fill: 'rgba(34, 197, 94, 0.8)',
-            stroke: '#ffffff',
-            strokeWidth: 3,
-            selectable: false,
-            evented: false
-          });
+  // Handle image load error
+  const handleImageError = (e: React.SyntheticEvent<HTMLImageElement>) => {
+    console.error('❌ Image failed to load:', e.currentTarget.src);
+    setImageLoaded(false);
+    setImageDimensions({ width: 0, height: 0 });
+  };
 
-          canvas.add(circle);
-          setHighlightCircle(circle);
-          canvas.renderAll();
-        });
-
-        setFabricCanvas(canvas);
-      }
-    };
-    
-    img.onerror = (error) => {
-      console.error('❌ Failed to load image:', error);
-      setImageLoaded(false);
-    };
-    
-    img.src = imageUrl;
-
+  // Cleanup canvas when component unmounts or imageUrl changes
+  useEffect(() => {
     return () => {
       if (fabricCanvas) {
         fabricCanvas.dispose();
+        setFabricCanvas(null);
       }
     };
-  }, [open, imageUrl]);
+  }, [fabricCanvas]);
 
-  // Handle zoom controls
+  // Reset state when dialog closes
+  useEffect(() => {
+    if (!open) {
+      setImageLoaded(false);
+      setSelectedSymptom(null);
+      setHighlightCircle(null);
+      setZoomLevel(1);
+      if (fabricCanvas) {
+        fabricCanvas.dispose();
+        setFabricCanvas(null);
+      }
+    }
+  }, [open, fabricCanvas]);
   const handleZoom = (direction: 'in' | 'out' | 'reset') => {
     if (!containerRef.current) return;
 
@@ -236,6 +257,8 @@ const UniversalSymptomSelector = ({
                     src={imageUrl}
                     alt={`${bodyPart} symptom diagram`}
                     className="block max-w-none"
+                    onLoad={handleImageLoad}
+                    onError={handleImageError}
                     style={{
                       width: imageDimensions.width || 'auto',
                       height: imageDimensions.height || 'auto',
