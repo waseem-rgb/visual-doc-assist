@@ -87,25 +87,31 @@ export const SafeCanvasWrapper = ({
 
       console.log('📏 [SAFE CANVAS] Image loaded. Dimensions:', img.width, 'x', img.height);
 
-      // Calculate scale to fill the canvas area properly
+      // Calculate scale to cover the canvas area completely
       const imgWidth = img.width || 1;
       const imgHeight = img.height || 1;
       const scaleX = width / imgWidth;
       const scaleY = height / imgHeight;
-      // Use max instead of min to ensure image covers the full area
-      const scale = Math.max(scaleX, scaleY, 0.8);
+      // Use max to ensure image covers the full canvas area (no gaps)
+      const scale = Math.max(scaleX, scaleY);
       
       console.log('🔧 [SAFE CANVAS] Image dimensions:', imgWidth, 'x', imgHeight);
       console.log('🔧 [SAFE CANVAS] Canvas dimensions:', width, 'x', height);
       console.log('🔧 [SAFE CANVAS] Scaling image by:', scale);
       
+      // Apply scale and center the image
+      const scaledWidth = imgWidth * scale;
+      const scaledHeight = imgHeight * scale;
+      
       img.scale(scale);
       img.set({
-        left: (width - imgWidth * scale) / 2,
-        top: (height - imgHeight * scale) / 2,
+        left: (width - scaledWidth) / 2,
+        top: (height - scaledHeight) / 2,
         selectable: false,
         evented: false,
-        opacity: 1 // Ensure full opacity
+        opacity: 1,
+        originX: 'left',
+        originY: 'top'
       });
 
       fabricCanvas.add(img);

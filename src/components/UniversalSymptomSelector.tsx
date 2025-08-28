@@ -55,6 +55,9 @@ const UniversalSymptomSelector = ({
   onSymptomSubmit
 }: UniversalSymptomSelectorProps) => {
   const selectionMarkerRef = useRef<Circle | null>(null);
+  const fabricCanvasRef = useRef<FabricCanvas | null>(null);
+  const fabricImageRef = useRef<FabricImage | null>(null);
+  const textRegionsRef = useRef<TextRegion[]>([]);
   const [fabricCanvas, setFabricCanvas] = useState<FabricCanvas | null>(null);
   const [fabricImage, setFabricImage] = useState<FabricImage | null>(null);
   const [selectedSymptom, setSelectedSymptom] = useState<SymptomItem | null>(null);
@@ -169,9 +172,15 @@ const UniversalSymptomSelector = ({
     }
   }, [bodyPart]);
 
+  // Update refs when data changes
+  useEffect(() => {
+    textRegionsRef.current = textRegions;
+  }, [textRegions]);
+
   // Canvas event handlers
   const handleCanvasReady = (canvas: FabricCanvas) => {
     console.log('✅ [SAFE] Canvas is ready for interaction');
+    fabricCanvasRef.current = canvas;
     setFabricCanvas(canvas);
     
     // Add event listeners
@@ -180,6 +189,7 @@ const UniversalSymptomSelector = ({
 
   const handleImageLoaded = (canvas: FabricCanvas, image: FabricImage) => {
     console.log('✅ [SAFE] Image loaded successfully');
+    fabricImageRef.current = image;
     setFabricImage(image);
     setImageLoaded(true);
     setImageFailed(false);
@@ -245,25 +255,37 @@ const UniversalSymptomSelector = ({
 
     // Helper function for hover effects
     const handleCanvasHover = (pointer: { x: number; y: number }, canvas: FabricCanvas) => {
+      // Use refs for stable access to current data
+      const currentRegions = textRegionsRef.current;
+      const currentImage = fabricImageRef.current;
+      
       // Find matching symptom region
-      const matchedRegion = textRegions.find(region => {
-        const imgBounds = fabricImage;
-        if (!imgBounds) return false;
+      const matchedRegion = currentRegions.find(region => {
+        if (!currentImage) return false;
         
-        const imgLeft = imgBounds.left!;
-        const imgTop = imgBounds.top!;
-        const imgWidth = imgBounds.width! * imgBounds.scaleX!;
-        const imgHeight = imgBounds.height! * imgBounds.scaleY!;
+        const imgLeft = currentImage.left!;
+        const imgTop = currentImage.top!;
+        const imgWidth = currentImage.width! * currentImage.scaleX!;
+        const imgHeight = currentImage.height! * currentImage.scaleY!;
         
         const regionLeft = imgLeft + (region.coordinates.xPct / 100) * imgWidth;
         const regionTop = imgTop + (region.coordinates.yPct / 100) * imgHeight;
         const regionWidth = (region.coordinates.wPct / 100) * imgWidth;
         const regionHeight = (region.coordinates.hPct / 100) * imgHeight;
         
-        return pointer.x >= regionLeft && 
+        const isInRegion = pointer.x >= regionLeft && 
                pointer.x <= regionLeft + regionWidth &&
                pointer.y >= regionTop && 
                pointer.y <= regionTop + regionHeight;
+        
+        if (isInRegion) {
+          console.log('🎯 [HOVER] Found region:', region.text, 'at coords:', {
+            pointer, 
+            region: { left: regionLeft, top: regionTop, width: regionWidth, height: regionHeight }
+          });
+        }
+        
+        return isInRegion;
       });
 
       // Remove existing hover indicator
@@ -274,11 +296,12 @@ const UniversalSymptomSelector = ({
 
       // Add new hover indicator if hovering over a region
       if (matchedRegion && !isSubmitted) {
+        console.log('🔵 [HOVER] Creating blue dot at:', pointer);
         hoverIndicator = new Circle({
           left: pointer.x - 8,
           top: pointer.y - 8,
           radius: 8,
-          fill: 'rgba(59, 130, 246, 0.8)',
+          fill: 'rgba(59, 130, 246, 0.9)',
           stroke: '#ffffff',
           strokeWidth: 2,
           selectable: false,
@@ -315,28 +338,38 @@ const UniversalSymptomSelector = ({
   const handleCanvasClick = (pointer: { x: number; y: number }) => {
     console.log('🖱️ Click detected at:', pointer);
     
+    // Use refs for stable access to current data
+    const currentRegions = textRegionsRef.current;
+    const currentImage = fabricImageRef.current;
+    
     // Find matching symptom region
-    const matchedRegion = textRegions.find(region => {
-      const imgBounds = fabricImage;
-      if (!imgBounds) return false;
+    const matchedRegion = currentRegions.find(region => {
+      if (!currentImage) return false;
       
-      const imgLeft = imgBounds.left!;
-      const imgTop = imgBounds.top!;
-      const imgWidth = imgBounds.width! * imgBounds.scaleX!;
-      const imgHeight = imgBounds.height! * imgBounds.scaleY!;
+      const imgLeft = currentImage.left!;
+      const imgTop = currentImage.top!;
+      const imgWidth = currentImage.width! * currentImage.scaleX!;
+      const imgHeight = currentImage.height! * currentImage.scaleY!;
       
       const regionLeft = imgLeft + (region.coordinates.xPct / 100) * imgWidth;
       const regionTop = imgTop + (region.coordinates.yPct / 100) * imgHeight;
       const regionWidth = (region.coordinates.wPct / 100) * imgWidth;
       const regionHeight = (region.coordinates.hPct / 100) * imgHeight;
       
-      return pointer.x >= regionLeft && 
+      const isInRegion = pointer.x >= regionLeft && 
              pointer.x <= regionLeft + regionWidth &&
              pointer.y >= regionTop && 
              pointer.y <= regionTop + regionHeight;
+      
+      if (isInRegion) {
+        console.log('🎯 [CLICK] Found region:', region.text);
+      }
+      
+      return isInRegion;
     });
 
     if (matchedRegion) {
+      console.log('✅ [CLICK] Selected region:', matchedRegion.text);
       setSelectedSymptom({
         id: matchedRegion.id,
         text: matchedRegion.text,
@@ -344,12 +377,11 @@ const UniversalSymptomSelector = ({
         summary: matchedRegion.summary
       });
     } else {
-      // Show fallback options
+      console.log('❌ [CLICK] No region found at click position');
       setSelectedSymptom(null);
     }
 
     // Position and show confirmation popover  
-    // Note: We'll show popover at a fixed position since we don't have canvasRef
     setClickPosition(pointer);
     setPopoverPosition({ 
       x: Math.min(window.innerWidth / 2, window.innerWidth - 340), 
