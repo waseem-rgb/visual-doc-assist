@@ -132,7 +132,8 @@ const InteractiveSymptomSelector = ({ bodyPart, patientData, onBack }: Interacti
     try {
       setLoading(true);
       setImageError(null);
-      console.log(`🔄 Fetching image for: ${bodyPart}`);
+      console.log(`🎯 [IMAGE FETCH START] Fetching image for: "${bodyPart}"`);
+      console.log(`📍 [BODY PART INFO] Original: "${bodyPart}", Length: ${bodyPart.length}, Trimmed: "${bodyPart.trim()}"`);
       
       // Clean up previous blob URL if it exists (only blob URLs need cleanup now)
       if (blobUrlRef.current && blobUrlRef.current.startsWith('blob:')) {
@@ -145,44 +146,48 @@ const InteractiveSymptomSelector = ({ bodyPart, patientData, onBack }: Interacti
         blobUrlRef.current = null;
       }
       
-      const result = await loadImageFromStorage(bodyPart);
+      console.log(`🔍 [STARTING SEARCH] About to call loadImageFromStorage for "${bodyPart}"`);
+      const result = await loadImageFromStorage(bodyPart, 'Symptom_Images');
+      console.log(`📋 [SEARCH RESULT]`, result);
       
       if (result.url && result.filename) {
+        console.log(`✅ [IMAGE SUCCESS] Setting image URL:`, result.url.substring(0, 100) + '...');
         setImageUrl(result.url);
+        
         // Only track blob URLs for cleanup, signed URLs and data URLs are self-managing
         if (result.url.startsWith('blob:')) {
           blobUrlRef.current = result.url;
         }
-        console.log('✅ Image loaded successfully:', result.filename);
+        
+        console.log('📸 [PRELOAD START] Testing image loading before opening lightbox');
         
         // Preload image to ensure it's ready before opening lightbox
         const img = new Image();
         img.onload = () => {
-          console.log('📸 Image preloaded successfully, opening lightbox');
+          console.log('✅ [PRELOAD SUCCESS] Image preloaded successfully, opening lightbox');
           setLightboxOpen(true);
         };
         img.onerror = (error) => {
-          console.warn('⚠️ Image preload failed, but opening lightbox anyway:', error);
+          console.warn('⚠️ [PRELOAD FAILED] Image preload failed, but opening lightbox anyway:', error);
           setLightboxOpen(true);
         };
         img.src = result.url;
       } else {
-        console.error('❌ Failed to load specific image:', result.error);
+        console.error('❌ [IMAGE FAILED] Failed to load specific image:', result.error);
         
         // Try fallback to generic head image for eye-related symptoms
         if (bodyPart.toUpperCase().includes('EYE') || bodyPart.toUpperCase().includes('VISION')) {
-          console.log('🔄 Attempting fallback to head-front-detailed.jpg for eye symptoms');
+          console.log('🔄 [FALLBACK] Attempting fallback to head-front-detailed for eye symptoms');
           try {
-            // Use one of the existing head images as fallback
             const fallbackResult = await loadImageFromStorage('head-front-detailed', 'Symptom_Images');
             if (fallbackResult.url) {
               setImageUrl(fallbackResult.url);
-              console.log('✅ Using head image as fallback for eye symptoms');
+              console.log('✅ [FALLBACK SUCCESS] Using head image as fallback for eye symptoms');
               setLightboxOpen(true);
               return;
             }
           } catch (fallbackError) {
-            console.log('❌ Fallback image also failed:', fallbackError);
+            console.log('❌ [FALLBACK FAILED] Fallback image also failed:', fallbackError);
           }
         }
         
@@ -195,7 +200,7 @@ const InteractiveSymptomSelector = ({ bodyPart, patientData, onBack }: Interacti
         });
       }
     } catch (err) {
-      console.error("💥 Error loading image:", err);
+      console.error("💥 [FETCH ERROR] Unexpected error loading image:", err);
       setImageError(err instanceof Error ? err.message : 'Unknown error');
       toast({
         title: "Loading Error",
@@ -204,6 +209,7 @@ const InteractiveSymptomSelector = ({ bodyPart, patientData, onBack }: Interacti
       });
     } finally {
       setLoading(false);
+      console.log(`🏁 [FETCH COMPLETE] Image fetch process completed for "${bodyPart}"`);
     }
   };
 

@@ -266,87 +266,101 @@ const UniversalSymptomSelector = ({
         return;
       }
 
-      // Load image into Fabric canvas with retry logic
-      try {
-        console.log('🖼️ Attempting to load image into Fabric:', imageUrl.substring(0, 50) + '...');
-        
-        const loadWithTimeoutAndRetry = async (url: string, timeout: number = 15000, maxRetries: number = 2): Promise<FabricImage> => {
-          for (let attempt = 0; attempt <= maxRetries; attempt++) {
-            try {
-              console.log(`📸 Loading attempt ${attempt + 1}/${maxRetries + 1} for image`);
-              
-              const img = await new Promise<FabricImage>((resolve, reject) => {
-                const timer = setTimeout(() => {
-                  reject(new Error(`Image loading timeout after ${timeout}ms on attempt ${attempt + 1}`));
-                }, timeout);
-                
-                const loadOptions = url.startsWith('http') ? { crossOrigin: 'anonymous' as const } : {};
-                FabricImage.fromURL(url, loadOptions).then((fabricImg) => {
-                  clearTimeout(timer);
-                  console.log(`✅ Fabric image loaded successfully on attempt ${attempt + 1}`);
-                  resolve(fabricImg);
-                }).catch((error) => {
-                  clearTimeout(timer);
-                  console.error(`❌ Fabric image load failed on attempt ${attempt + 1}:`, error);
-                  reject(error);
-                });
-              });
-              
-              return img; // Success, return the image
-              
-            } catch (error) {
-              console.error(`🔄 Attempt ${attempt + 1} failed:`, error);
-              
-              // If this is a signed HTTPS URL and we've failed, try to convert to data URL as last resort
-              if (attempt === maxRetries && url.startsWith('https://') && url.includes('supabase')) {
-                try {
-                  console.log('🔄 Final attempt: Converting signed URL to data URL for better compatibility');
-                  const response = await fetch(url);
-                  const blob = await response.blob();
-                  const dataUrl = await new Promise<string>((resolve, reject) => {
-                    const reader = new FileReader();
-                    reader.onload = () => resolve(reader.result as string);
-                    reader.onerror = reject;
-                    reader.readAsDataURL(blob);
-                  });
-                  
-                  // Try one more time with the data URL
-                  const img = await new Promise<FabricImage>((resolve, reject) => {
-                    const timer = setTimeout(() => {
-                      reject(new Error(`Final data URL attempt timeout after ${timeout}ms`));
-                    }, timeout);
-                    
-                    FabricImage.fromURL(dataUrl).then((fabricImg) => {
-                      clearTimeout(timer);
-                      console.log(`✅ Fabric image loaded with data URL fallback`);
-                      resolve(fabricImg);
-                    }).catch((error) => {
-                      clearTimeout(timer);
-                      reject(error);
-                    });
-                  });
-                  
-                  return img;
-                  
-                } catch (fallbackError) {
-                  console.error('💥 Data URL fallback also failed:', fallbackError);
-                  throw new Error(`All loading strategies failed. Original error: ${error}. Fallback error: ${fallbackError}`);
-                }
-              }
-              
-              if (attempt === maxRetries) {
-                throw error; // Re-throw the last error if all attempts failed
-              }
-              
-              // Wait a bit before next attempt
-              await new Promise(resolve => setTimeout(resolve, 1000 * (attempt + 1)));
-            }
-          }
+        // Load image into Fabric canvas with enhanced retry and logging
+        try {
+          console.log(`🖼️ [FABRIC LOAD START] Loading image into Fabric canvas`);
+          console.log(`📋 [IMAGE INFO] URL type: ${imageUrl.startsWith('data:') ? 'Data URL' : imageUrl.startsWith('blob:') ? 'Blob URL' : imageUrl.startsWith('https://') ? 'HTTPS URL' : 'Other'}`);
+          console.log(`📏 [IMAGE URL] Length: ${imageUrl.length}, Preview: ${imageUrl.substring(0, 100)}...`);
           
-          throw new Error('Unexpected error in retry logic');
-        };
-        
-        const img = await loadWithTimeoutAndRetry(imageUrl);
+          const loadWithTimeoutAndRetry = async (url: string, timeout: number = 15000, maxRetries: number = 3): Promise<FabricImage> => {
+            for (let attempt = 0; attempt <= maxRetries; attempt++) {
+              try {
+                console.log(`📸 [FABRIC ATTEMPT ${attempt + 1}/${maxRetries + 1}] Loading image into canvas`);
+                
+                const img = await new Promise<FabricImage>((resolve, reject) => {
+                  const timer = setTimeout(() => {
+                    reject(new Error(`Image loading timeout after ${timeout}ms on attempt ${attempt + 1}`));
+                  }, timeout);
+                  
+                  const loadOptions = url.startsWith('http') ? { crossOrigin: 'anonymous' as const } : {};
+                  console.log(`⚙️ [FABRIC OPTIONS] Using options:`, loadOptions);
+                  
+                  FabricImage.fromURL(url, loadOptions).then((fabricImg) => {
+                    clearTimeout(timer);
+                    console.log(`✅ [FABRIC SUCCESS] Image loaded successfully on attempt ${attempt + 1}`);
+                    console.log(`📊 [IMAGE DIMS] Width: ${fabricImg.width}, Height: ${fabricImg.height}`);
+                    resolve(fabricImg);
+                  }).catch((error) => {
+                    clearTimeout(timer);
+                    console.error(`❌ [FABRIC FAILED] Load failed on attempt ${attempt + 1}:`, error);
+                    reject(error);
+                  });
+                });
+                
+                return img; // Success, return the image
+                
+              } catch (error) {
+                console.error(`🔄 [FABRIC RETRY] Attempt ${attempt + 1} failed:`, error);
+                
+                // If this is a signed HTTPS URL and we've failed, try to convert to data URL as last resort
+                if (attempt === maxRetries && url.startsWith('https://') && url.includes('supabase')) {
+                  try {
+                    console.log('🔄 [FALLBACK] Final attempt: Converting signed URL to data URL for better compatibility');
+                    const response = await fetch(url);
+                    const blob = await response.blob();
+                    console.log(`📦 [BLOB INFO] Fetched blob: ${blob.size} bytes, type: ${blob.type}`);
+                    
+                    const dataUrl = await new Promise<string>((resolve, reject) => {
+                      const reader = new FileReader();
+                      reader.onload = () => resolve(reader.result as string);
+                      reader.onerror = reject;
+                      reader.readAsDataURL(blob);
+                    });
+                    
+                    console.log(`📋 [DATA URL] Converted to data URL: ${dataUrl.length} characters`);
+                    
+                    // Try one more time with the data URL
+                    const img = await new Promise<FabricImage>((resolve, reject) => {
+                      const timer = setTimeout(() => {
+                        reject(new Error(`Final data URL attempt timeout after ${timeout}ms`));
+                      }, timeout);
+                      
+                      FabricImage.fromURL(dataUrl).then((fabricImg) => {
+                        clearTimeout(timer);
+                        console.log(`✅ [FALLBACK SUCCESS] Image loaded with data URL fallback`);
+                        resolve(fabricImg);
+                      }).catch((error) => {
+                        clearTimeout(timer);
+                        console.error(`❌ [FALLBACK FAILED] Data URL attempt failed:`, error);
+                        reject(error);
+                      });
+                    });
+                    
+                    return img;
+                    
+                  } catch (fallbackError) {
+                    console.error('💥 [FALLBACK ERROR] Data URL fallback also failed:', fallbackError);
+                    throw new Error(`All loading strategies failed. Original error: ${error}. Fallback error: ${fallbackError}`);
+                  }
+                }
+                
+                if (attempt === maxRetries) {
+                  console.error(`💥 [FINAL FAILURE] All ${maxRetries + 1} attempts failed`);
+                  throw error; // Re-throw the last error if all attempts failed
+                }
+                
+                // Wait before next attempt
+                const waitTime = 1000 * (attempt + 1);
+                console.log(`⏳ [WAITING] Waiting ${waitTime}ms before next attempt`);
+                await new Promise(resolve => setTimeout(resolve, waitTime));
+              }
+            }
+            
+            throw new Error('Unexpected error in retry logic');
+          };
+          
+          console.log(`🚀 [LOAD START] Starting image load with retry logic`);
+          const img = await loadWithTimeoutAndRetry(imageUrl);
         
         if (isCleanedUp) {
           canvas.dispose();
