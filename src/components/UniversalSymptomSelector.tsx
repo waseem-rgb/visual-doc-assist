@@ -606,7 +606,7 @@ const UniversalSymptomSelector = ({
           </div>
 
           {/* Right Side - Symptom List */}
-          <div className={`${isFullscreen ? 'w-1/6' : 'w-1/5'} bg-background border-l border-border flex flex-col min-h-0`}>
+          <div className={`${isFullscreen ? 'w-1/6' : 'w-1/5'} bg-background border-l border-border flex flex-col h-full`}>
             <div className="p-4 border-b border-border flex-shrink-0">
               <h3 className="text-lg font-semibold text-foreground mb-2">Available Symptoms</h3>
               <p className="text-sm text-muted-foreground">
@@ -614,15 +614,15 @@ const UniversalSymptomSelector = ({
               </p>
             </div>
 
-            <div className="flex-1 min-h-0">
-              <ScrollArea className="h-full">
-                <div className="p-4">
+            <div className="flex-1 overflow-hidden">
+              <ScrollArea className="h-full w-full">
+                <div className="p-4 space-y-3">
                   {isLoadingSymptoms ? (
                     <div className="flex items-center justify-center py-8">
                       <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
                     </div>
                   ) : (
-                    <div className="space-y-3">
+                    <>
                       {availableSymptoms.map((symptom) => (
                         <Card
                           key={symptom.id}
@@ -636,7 +636,7 @@ const UniversalSymptomSelector = ({
                           </CardContent>
                         </Card>
                       ))}
-                    </div>
+                    </>
                   )}
                 </div>
               </ScrollArea>
