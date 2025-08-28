@@ -43,6 +43,7 @@ const UniversalSymptomSelector = ({
   view = 'front',
   onSymptomsSelected,
   initialSymptoms = [],
+  imageUrl,
   ...otherProps
 }: UniversalSymptomSelectorProps) => {
   const isDialogOpen = isOpen || open || false;
@@ -218,19 +219,26 @@ const UniversalSymptomSelector = ({
           {/* Left Side - Static Image */}
           <div className={`${viewMode === 'column' ? (isFullscreen ? 'w-3/4' : 'w-3/4') : 'w-full'} relative bg-gray-50 select-none h-full`} ref={containerRef}>
             <div className="w-full h-full flex items-center justify-center p-4">
-              <img
-                ref={imageRef}
-                src={getImagePath()}
-                alt={`${bodyPart} ${view} view`}
-                className="max-w-full max-h-full object-contain cursor-crosshair select-none"
-                onClick={handleImageClick}
-                style={{ 
-                  userSelect: 'none',
-                  WebkitUserSelect: 'none',
-                  msUserSelect: 'none',
-                  MozUserSelect: 'none'
-                }}
-              />
+              {imageUrl ? (
+                <img
+                  ref={imageRef}
+                  src={imageUrl}
+                  alt={`${bodyPart} ${view} view`}
+                  className="max-w-full max-h-full object-contain cursor-crosshair select-none"
+                  onClick={handleImageClick}
+                  style={{ 
+                    userSelect: 'none',
+                    WebkitUserSelect: 'none',
+                    msUserSelect: 'none',
+                    MozUserSelect: 'none'
+                  }}
+                />
+              ) : (
+                <div className="text-center text-muted-foreground p-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"></div>
+                  <p>Loading image...</p>
+                </div>
+              )}
             </div>
 
             {/* Confirmation Popup */}
