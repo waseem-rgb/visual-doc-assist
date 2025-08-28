@@ -58,9 +58,36 @@ const UniversalSymptomSelector = ({
   const { toast } = useToast();
 
   const getImagePath = useCallback(async () => {
-    const { loadImageFromStorage } = await import('@/lib/storageUtils');
-    const result = await loadImageFromStorage(bodyPart, 'Symptom_Images');
-    return result.url;
+    try {
+      const { loadImageFromStorage } = await import('@/lib/storageUtils');
+      
+      // Try multiple filename variations based on the body part
+      const searchTerms = [
+        bodyPart, // Original body part name
+        bodyPart.toLowerCase(),
+        bodyPart.replace(/\s+/g, ''), // Remove spaces
+        bodyPart.replace(/\s+/g, '-'), // Replace spaces with dashes
+        bodyPart.replace(/\s+/g, '_'), // Replace spaces with underscores
+      ];
+
+      for (const searchTerm of searchTerms) {
+        console.log(`🔍 Trying to load image for: "${searchTerm}"`);
+        const result = await loadImageFromStorage(searchTerm, 'Symptom_Images');
+        if (result.url) {
+          console.log(`✅ Found image: ${result.url}`);
+          return result.url;
+        }
+      }
+      
+      // If no specific image found, try generic body diagram
+      console.log('🔄 Falling back to generic body diagram');
+      const fallbackResult = await loadImageFromStorage('body-diagram-front', 'Symptom_Images');
+      return fallbackResult.url;
+      
+    } catch (error) {
+      console.error('❌ Error in getImagePath:', error);
+      return null;
+    }
   }, [bodyPart]);
 
   const fetchSymptoms = useCallback(async () => {
@@ -134,18 +161,27 @@ const UniversalSymptomSelector = ({
 
     // Load the body image
     try {
+      console.log(`📸 Starting image load for: ${bodyPart}`);
       const imagePath = await getImagePath();
+      console.log(`🎯 Image path result: ${imagePath || 'NULL'}`);
+      
       if (imagePath) {
+        console.log(`🔄 Loading image from: ${imagePath}`);
         FabricImage.fromURL(imagePath, { crossOrigin: 'anonymous' }).then((img) => {
           if (!canvas || !containerRef.current) return;
+          
+          console.log(`📐 Image loaded - Size: ${img.width}x${img.height}`);
+          console.log(`📦 Container size: ${containerWidth}x${containerHeight}`);
 
-          const maxWidth = containerWidth * 0.9;
-          const maxHeight = containerHeight * 0.9;
+          const maxWidth = containerWidth * 0.85;
+          const maxHeight = containerHeight * 0.85;
           
           const scale = Math.min(
             maxWidth / (img.width || 1),
             maxHeight / (img.height || 1)
           );
+          
+          console.log(`🔍 Calculated scale: ${scale}`);
 
           img.set({
             left: (containerWidth - (img.width || 0) * scale) / 2,
@@ -161,12 +197,20 @@ const UniversalSymptomSelector = ({
           imageRef.current = img;
           canvas.add(img);
           canvas.renderAll();
+          console.log('✅ Image successfully added to canvas');
         }).catch((error) => {
-          console.error('Error loading image:', error);
+          console.error('❌ Fabric image loading error:', error);
+          // Add a placeholder or error message to canvas
+          canvas.renderAll();
         });
+      } else {
+        console.warn('⚠️ No image path available, rendering empty canvas');
+        // Still render the canvas so zoom controls work
+        canvas.renderAll();
       }
     } catch (error) {
-      console.error('Error getting image path:', error);
+      console.error('💥 Error in image loading process:', error);
+      canvas.renderAll();
     }
 
     // Handle canvas clicks - disabled for now to focus on list selection
