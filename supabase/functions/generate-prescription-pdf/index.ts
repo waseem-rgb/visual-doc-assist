@@ -1,5 +1,6 @@
+import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-import { encode } from 'https://deno.land/std@0.182.0/encoding/base64.ts'
+import { PDFDocument, rgb, StandardFonts } from 'https://esm.sh/pdf-lib@1.17.1'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -86,15 +87,13 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Generate HTML content for the prescription
-    const htmlContent = generatePrescriptionHTML({
-      prescription,
-      doctor,
-      request: prescription.prescription_requests
+    // Generate professional PDF
+    console.log('Generating professional PDF...');
+    const pdfContent = await generateProfessionalPDF({ 
+      prescription, 
+      doctor, 
+      request: prescription.prescription_requests 
     });
-
-    // Convert HTML to PDF (simplified version - in production, you'd use a proper PDF library)
-    const pdfContent = await generatePDFFromHTML(htmlContent);
     
     // Upload PDF to storage
     const fileName = `prescription-${requestId}-${Date.now()}.pdf`;
@@ -300,11 +299,336 @@ function generatePrescriptionHTML(data: any): string {
   `;
 }
 
-// Simplified PDF generation - in production, use a proper PDF library
-async function generatePDFFromHTML(html: string): Promise<Uint8Array> {
-  // For now, we'll create a simple text-based "PDF" 
-  // In production, you'd integrate with a proper HTML-to-PDF service
-  const textContent = html.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
-  const encoder = new TextEncoder();
-  return encoder.encode(`%PDF-1.4\n1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n\n2 0 obj\n<< /Type /Pages /Kids [3 0 R] /Count 1 >>\nendobj\n\n3 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R >>\nendobj\n\n4 0 obj\n<< /Length ${textContent.length} >>\nstream\nBT\n/F1 12 Tf\n50 750 Td\n(${textContent}) Tj\nET\nendstream\nendobj\n\nxref\n0 5\n0000000000 65535 f\n0000000009 00000 n\n0000000058 00000 n\n0000000115 00000 n\n0000000201 00000 n\ntrailer\n<< /Size 5 /Root 1 0 R >>\nstartxref\n${300 + textContent.length}\n%%EOF`);
+// Generate professional prescription PDF with medical styling
+async function generateProfessionalPDF(data: any): Promise<Uint8Array> {
+  try {
+    const pdfDoc = await PDFDocument.create();
+    const page = pdfDoc.addPage([595.28, 841.89]); // A4 size
+    
+    const timesRoman = await pdfDoc.embedFont(StandardFonts.TimesRoman);
+    const timesBold = await pdfDoc.embedFont(StandardFonts.TimesBold);
+    
+    const { width, height } = page.getSize();
+    
+    // Medical green header (light medical green)
+    page.drawRectangle({
+      x: 0,
+      y: height - 120,
+      width: width,
+      height: 120,
+      color: rgb(0.88, 0.95, 0.88), // Light medical green
+    });
+    
+    // Off-white background for the rest
+    page.drawRectangle({
+      x: 0,
+      y: 0,
+      width: width,
+      height: height - 120,
+      color: rgb(0.98, 0.98, 0.96), // Off-white
+    });
+    
+    let currentY = height - 30;
+    
+    // Header - Clinic Name
+    page.drawText('VrDoc - Medical Prescription', {
+      x: 50,
+      y: currentY,
+      size: 24,
+      font: timesBold,
+      color: rgb(0.2, 0.5, 0.2), // Dark green
+    });
+    
+    currentY -= 30;
+    
+    // Doctor Information
+    page.drawText(`Dr. ${data.doctor?.full_name || 'Doctor Name'}`, {
+      x: 50,
+      y: currentY,
+      size: 14,
+      font: timesBold,
+      color: rgb(0.2, 0.5, 0.2),
+    });
+    
+    currentY -= 20;
+    page.drawText(`Specialization: ${data.doctor?.specialization || 'General Medicine'}`, {
+      x: 50,
+      y: currentY,
+      size: 12,
+      font: timesRoman,
+      color: rgb(0.2, 0.5, 0.2),
+    });
+    
+    currentY -= 15;
+    page.drawText(`License: ${data.doctor?.license_number || 'N/A'}`, {
+      x: 50,
+      y: currentY,
+      size: 12,
+      font: timesRoman,
+      color: rgb(0.2, 0.5, 0.2),
+    });
+    
+    // Date (top right)
+    page.drawText(`Date: ${new Date().toLocaleDateString()}`, {
+      x: width - 150,
+      y: height - 30,
+      size: 12,
+      font: timesRoman,
+      color: rgb(0.2, 0.5, 0.2),
+    });
+    
+    currentY -= 40; // Move to body section
+    
+    // Patient Information Section
+    page.drawText('PATIENT INFORMATION', {
+      x: 50,
+      y: currentY,
+      size: 14,
+      font: timesBold,
+      color: rgb(0.1, 0.1, 0.1),
+    });
+    
+    currentY -= 25;
+    page.drawText(`Name: ${data.prescription?.patient_name || 'N/A'}`, {
+      x: 70,
+      y: currentY,
+      size: 12,
+      font: timesRoman,
+      color: rgb(0.1, 0.1, 0.1),
+    });
+    
+    currentY -= 20;
+    page.drawText(`Age: ${data.prescription?.patient_age || 'N/A'}    Gender: ${data.prescription?.patient_gender || 'N/A'}`, {
+      x: 70,
+      y: currentY,
+      size: 12,
+      font: timesRoman,
+      color: rgb(0.1, 0.1, 0.1),
+    });
+    
+    currentY -= 35;
+    
+    // Diagnosis Section
+    page.drawText('DIAGNOSIS', {
+      x: 50,
+      y: currentY,
+      size: 14,
+      font: timesBold,
+      color: rgb(0.1, 0.1, 0.1),
+    });
+    
+    currentY -= 25;
+    const diagnosis = data.prescription?.diagnosis || data.request?.probable_diagnosis || 'To be determined';
+    const diagnosisLines = wrapText(diagnosis, 65);
+    for (const line of diagnosisLines) {
+      page.drawText(line, {
+        x: 70,
+        y: currentY,
+        size: 12,
+        font: timesRoman,
+        color: rgb(0.1, 0.1, 0.1),
+      });
+      currentY -= 15;
+    }
+    
+    currentY -= 20;
+    
+    // Medications Section
+    page.drawText('MEDICATIONS', {
+      x: 50,
+      y: currentY,
+      size: 14,
+      font: timesBold,
+      color: rgb(0.1, 0.1, 0.1),
+    });
+    
+    currentY -= 25;
+    if (data.prescription?.medications) {
+      try {
+        const medications = JSON.parse(data.prescription.medications);
+        medications.forEach((med: any, index: number) => {
+          page.drawText(`${index + 1}. ${med.name || med.medication_name || 'Medication'}`, {
+            x: 70,
+            y: currentY,
+            size: 12,
+            font: timesBold,
+            color: rgb(0.1, 0.1, 0.1),
+          });
+          currentY -= 15;
+          
+          if (med.prescribed_dosage || med.dosage) {
+            page.drawText(`   Dosage: ${med.prescribed_dosage || med.dosage}`, {
+              x: 90,
+              y: currentY,
+              size: 11,
+              font: timesRoman,
+              color: rgb(0.1, 0.1, 0.1),
+            });
+            currentY -= 12;
+          }
+          
+          if (med.frequency) {
+            page.drawText(`   Frequency: ${med.frequency}`, {
+              x: 90,
+              y: currentY,
+              size: 11,
+              font: timesRoman,
+              color: rgb(0.1, 0.1, 0.1),
+            });
+            currentY -= 12;
+          }
+          
+          if (med.instructions) {
+            const instLines = wrapText(`Instructions: ${med.instructions}`, 60);
+            for (const line of instLines) {
+              page.drawText(`   ${line}`, {
+                x: 90,
+                y: currentY,
+                size: 11,
+                font: timesRoman,
+                color: rgb(0.1, 0.1, 0.1),
+              });
+              currentY -= 12;
+            }
+          }
+          currentY -= 10;
+        });
+      } catch (e) {
+        page.drawText('No medications prescribed', {
+          x: 70,
+          y: currentY,
+          size: 12,
+          font: timesRoman,
+          color: rgb(0.5, 0.5, 0.5),
+        });
+        currentY -= 20;
+      }
+    } else {
+      page.drawText('No medications prescribed', {
+        x: 70,
+        y: currentY,
+        size: 12,
+        font: timesRoman,
+        color: rgb(0.5, 0.5, 0.5),
+      });
+      currentY -= 20;
+    }
+    
+    currentY -= 20;
+    
+    // Instructions Section
+    if (data.prescription?.instructions) {
+      page.drawText('INSTRUCTIONS', {
+        x: 50,
+        y: currentY,
+        size: 14,
+        font: timesBold,
+        color: rgb(0.1, 0.1, 0.1),
+      });
+      
+      currentY -= 25;
+      const instructionLines = wrapText(data.prescription.instructions, 65);
+      for (const line of instructionLines) {
+        page.drawText(line, {
+          x: 70,
+          y: currentY,
+          size: 12,
+          font: timesRoman,
+          color: rgb(0.1, 0.1, 0.1),
+        });
+        currentY -= 15;
+      }
+      currentY -= 20;
+    }
+    
+    // Investigations Section
+    if (data.request?.basic_investigations) {
+      page.drawText('INVESTIGATIONS', {
+        x: 50,
+        y: currentY,
+        size: 14,
+        font: timesBold,
+        color: rgb(0.1, 0.1, 0.1),
+      });
+      
+      currentY -= 25;
+      const investigationLines = wrapText(data.request.basic_investigations, 65);
+      for (const line of investigationLines) {
+        page.drawText(line, {
+          x: 70,
+          y: currentY,
+          size: 12,
+          font: timesRoman,
+          color: rgb(0.1, 0.1, 0.1),
+        });
+        currentY -= 15;
+      }
+      currentY -= 20;
+    }
+    
+    // Follow-up Section
+    if (data.prescription?.follow_up_notes) {
+      page.drawText('FOLLOW-UP', {
+        x: 50,
+        y: currentY,
+        size: 14,
+        font: timesBold,
+        color: rgb(0.1, 0.1, 0.1),
+      });
+      
+      currentY -= 25;
+      const followUpLines = wrapText(data.prescription.follow_up_notes, 65);
+      for (const line of followUpLines) {
+        page.drawText(line, {
+          x: 70,
+          y: currentY,
+          size: 12,
+          font: timesRoman,
+          color: rgb(0.1, 0.1, 0.1),
+        });
+        currentY -= 15;
+      }
+    }
+    
+    // Digital Signature
+    page.drawText('Digital Signature:', {
+      x: width - 200,
+      y: 100,
+      size: 12,
+      font: timesBold,
+      color: rgb(0.2, 0.5, 0.2),
+    });
+    
+    page.drawText(`Dr. ${data.doctor?.full_name || 'Doctor Name'}`, {
+      x: width - 200,
+      y: 80,
+      size: 14,
+      font: timesBold,
+      color: rgb(0.2, 0.5, 0.2),
+    });
+    
+    return await pdfDoc.save();
+  } catch (error) {
+    console.error('Error generating PDF:', error);
+    throw error;
+  }
+}
+
+// Helper function to wrap text
+function wrapText(text: string, maxCharsPerLine: number): string[] {
+  const words = text.split(' ');
+  const lines: string[] = [];
+  let currentLine = '';
+  
+  for (const word of words) {
+    if ((currentLine + word).length <= maxCharsPerLine) {
+      currentLine += (currentLine ? ' ' : '') + word;
+    } else {
+      if (currentLine) lines.push(currentLine);
+      currentLine = word;
+    }
+  }
+  
+  if (currentLine) lines.push(currentLine);
+  return lines;
 }

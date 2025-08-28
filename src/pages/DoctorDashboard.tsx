@@ -219,39 +219,57 @@ const DoctorDashboard = () => {
     navigate("/doctor/login");
   };
 
-  const handleViewPrescription = (request: PrescriptionRequest) => {
+  const handleViewPrescription = async (request: PrescriptionRequest) => {
     if (request.prescription) {
-      // Create a detailed prescription view
-      const prescriptionDetails = {
-        patient: {
-          name: request.patient_name,
-          age: request.patient_age,
-          gender: request.patient_gender,
-        },
-        diagnosis: request.probable_diagnosis,
-        medications: request.prescription.medications,
-        instructions: request.prescription.instructions,
-        date: new Date(request.prescription.created_at).toLocaleDateString(),
-        doctorName: doctorProfile?.full_name || "Dr. Unknown",
-        licenseNumber: doctorProfile?.license_number || "N/A"
-      };
+      try {
+        // If PDF URL exists, open it directly
+        if (request.prescription.pdf_url) {
+          window.open(request.prescription.pdf_url, '_blank');
+          return;
+        }
 
-      // For now, show an alert with prescription details
-      // In the future, this could open a modal or navigate to a prescription view
-      alert(`
-PRESCRIPTION DETAILS
+        // Generate PDF if it doesn't exist
+        toast({
+          title: "Generating PDF",
+          description: "Please wait while we prepare your prescription...",
+        });
 
-Patient: ${prescriptionDetails.patient.name} (${prescriptionDetails.patient.age} years, ${prescriptionDetails.patient.gender})
-Date: ${prescriptionDetails.date}
-Diagnosis: ${prescriptionDetails.diagnosis}
+        const { data, error } = await supabase.functions.invoke('generate-prescription-pdf', {
+          body: {
+            requestId: request.prescription.id,
+            doctorId: user?.id
+          }
+        });
 
-Medications: ${prescriptionDetails.medications}
+        if (error) {
+          console.error('Error generating PDF:', error);
+          throw error;
+        }
 
-Instructions: ${prescriptionDetails.instructions}
+        if (data?.pdfUrl) {
+          // Open the generated PDF
+          window.open(data.pdfUrl, '_blank');
+          
+          // Update the local state with the PDF URL
+          setRequests(requests.map(r => 
+            r.id === request.id && r.prescription 
+              ? { ...r, prescription: { ...r.prescription, pdf_url: data.pdfUrl } }
+              : r
+          ));
 
-Prescribed by: ${prescriptionDetails.doctorName}
-License: ${prescriptionDetails.licenseNumber}
-      `);
+          toast({
+            title: "Success",
+            description: "Prescription PDF generated successfully!",
+          });
+        }
+      } catch (error) {
+        console.error('Error handling prescription:', error);
+        toast({
+          title: "Error",
+          description: "Failed to generate prescription PDF",
+          variant: "destructive",
+        });
+      }
     }
   };
 
