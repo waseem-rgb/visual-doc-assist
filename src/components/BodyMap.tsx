@@ -82,28 +82,38 @@ const BodyMap = ({ gender, patientData }: BodyMapProps) => {
     },
   });
 
-  // Filter body parts based on current view and gender with more flexible matching
+  // Filter body parts based on current view and gender with robust, case-insensitive matching
   const bodyParts = allBodyParts?.filter(part => {
-    if (!part?.Body_part || !part?.View || !part?.["Specific rules"]) return false;
+    if (!part?.Body_part || !part?.View) return false;
     
-    // More flexible view matching
-    const partView = part.View?.trim();
-    const matchesView = partView === currentView || 
-      (currentView === "Front" && partView === "Front") ||
-      (currentView === "Back view" && partView === "Back view");
+    // Robust view matching - handle different casing and formats
+    const partView = part.View?.trim().toLowerCase();
+    const currentViewLower = currentView.toLowerCase();
+    const matchesView = 
+      partView === currentViewLower ||
+      (currentViewLower === "front" && (partView === "front" || partView === "front view")) ||
+      (currentViewLower === "back view" && (partView === "back view" || partView === "back" || partView === "back_view"));
     
-    // Gender rules matching
-    const specificRules = part["Specific rules"]?.trim();
-    const genderRules = [
-      "shown to Both gender", 
-      gender === "male" ? "Only to Male patient" : "Only to Female patient"
-    ];
-    const matchesGender = genderRules.some(rule => specificRules?.includes(rule));
+    // Robust gender rules matching with fallback to "Both" if empty or unclear
+    const specificRules = part["Specific rules"]?.trim().toLowerCase() || "";
     
-    console.log(`Part: ${part.Body_part}, View: ${partView} (matches: ${matchesView}), Rules: ${specificRules} (matches: ${matchesGender})`);
+    // Default to "both" if rules are empty or unclear
+    const matchesGender = 
+      specificRules.includes("both gender") || 
+      specificRules.includes("shown to both") ||
+      specificRules === "" || // Fallback for empty rules
+      (gender === "male" && (specificRules.includes("only to male") || specificRules.includes("male patient"))) ||
+      (gender === "female" && (specificRules.includes("only to female") || specificRules.includes("female patient")));
     
-    return matchesView && matchesGender;
+    const matches = matchesView && matchesGender;
+    if (!matches) {
+      console.log(`Filtered out - Part: ${part.Body_part}, View: "${part.View}" -> ${partView} (matches view: ${matchesView}), Rules: "${part["Specific rules"]}" -> ${specificRules} (matches gender: ${matchesGender})`);
+    }
+    
+    return matches;
   }) || [];
+
+  console.log(`Total body parts for ${gender} ${currentView}: ${bodyParts.length}`);
 
   // Split body parts into left and right sides
   const leftSideBodyParts = bodyParts.slice(0, Math.ceil(bodyParts.length / 2));

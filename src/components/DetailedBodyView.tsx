@@ -207,29 +207,50 @@ const DetailedBodyView = ({
   bodyParts
 }: DetailedBodyViewProps) => {
   const parts = getQuadrantParts(quadrant, currentView).filter(part => {
-    // More robust matching - case insensitive and flexible
+    // Robust matching with expanded synonyms and case-insensitive handling
     const bodyPart = bodyParts.find(bp => {
       const dbPartName = bp.Body_part?.trim().toUpperCase();
       const coordPartName = part.name?.trim().toUpperCase();
       
-      // Direct match
+      // Direct exact match first
       if (dbPartName === coordPartName) return true;
       
-      // Handle variations and partial matches
+      // Handle variations and synonyms for head parts specifically
       if (dbPartName && coordPartName) {
-        // Handle cases like "EYE PHYSICAL LEFT" vs "EYE PHYSICAL"
-        if (coordPartName.includes("EYE") && dbPartName.includes("EYE")) {
-          if (coordPartName.includes("PHYSICAL") && dbPartName.includes("PHYSICAL")) return true;
-          if (coordPartName.includes("VISION") && dbPartName.includes("VISION")) return true;
+        // Nose matching
+        if (coordPartName === "NOSE" && (dbPartName === "NOSE" || dbPartName.includes("NASAL"))) return true;
+        
+        // Eye variations - more comprehensive
+        if (coordPartName.includes("EYE")) {
+          if (coordPartName.includes("PHYSICAL") && (dbPartName.includes("EYE") && dbPartName.includes("PHYSICAL"))) return true;
+          if (coordPartName.includes("VISION") && (dbPartName.includes("EYE") && (dbPartName.includes("VISION") || dbPartName.includes("SIGHT")))) return true;
+          // General eye match
+          if (dbPartName.includes("EYE") && !dbPartName.includes("EYEBROW")) return true;
         }
         
-        // Handle throat variations
-        if (coordPartName.includes("THROAT") && dbPartName.includes("THROAT")) return true;
+        // Throat variations - comprehensive
+        if (coordPartName.includes("THROAT")) {
+          if (dbPartName.includes("THROAT")) return true;
+          // Handle throat voice specifically
+          if (coordPartName.includes("VOICE") && dbPartName.includes("VOICE")) return true;
+        }
         
-        // Handle nose
-        if (coordPartName === "NOSE" && dbPartName === "NOSE") return true;
+        // Face and other head parts
+        if (coordPartName === "FACE" && dbPartName === "FACE") return true;
+        if (coordPartName === "MOUTH" && dbPartName === "MOUTH") return true;
+        if (coordPartName === "NECK" && dbPartName === "NECK") return true;
         
-        // Handle other exact matches
+        // Hair and scalp
+        if (coordPartName.includes("HAIR") && dbPartName.includes("HAIR")) return true;
+        if (coordPartName.includes("SCALP") && dbPartName.includes("SCALP")) return true;
+        
+        // Ear variations
+        if (coordPartName.includes("EAR")) {
+          if (coordPartName.includes("PHYSICAL") && (dbPartName.includes("EAR") && dbPartName.includes("PHYSICAL"))) return true;
+          if (coordPartName.includes("HEARING") && (dbPartName.includes("EAR") && dbPartName.includes("HEARING"))) return true;
+        }
+        
+        // All other exact matches
         if (dbPartName === coordPartName) return true;
       }
       
@@ -237,14 +258,22 @@ const DetailedBodyView = ({
     });
     
     if (!bodyPart) {
-      console.log(`No database match found for coordinate part: ${part.name}`);
+      console.log(`No database match found for coordinate part: ${part.name} (available DB parts: ${bodyParts.map(bp => bp.Body_part).join(', ')})`);
+      
+      // Safety fallback - if it's a critical head part, still show it
+      const criticalHeadParts = ["NOSE", "EYE PHYSICAL", "EYE VISION", "THROAT", "THROAT VOICE", "MOUTH", "FACE", "NECK"];
+      if (criticalHeadParts.includes(part.name)) {
+        console.log(`Allowing critical head part ${part.name} despite no DB match (safety fallback)`);
+        return true;
+      }
+      
       return false;
     }
     
-    // Check gender-specific rules
-    const specificRules = bodyPart["Specific rules"];
-    if (specificRules?.includes("Only to Male patient") && gender !== "male") return false;
-    if (specificRules?.includes("Only to Female patient") && gender !== "female") return false;
+    // Check gender-specific rules with case-insensitive matching
+    const specificRules = bodyPart["Specific rules"]?.toLowerCase() || "";
+    if (specificRules.includes("only to male") && gender !== "male") return false;
+    if (specificRules.includes("only to female") && gender !== "female") return false;
     
     return true;
   });
