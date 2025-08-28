@@ -8,6 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Canvas as FabricCanvas, Circle, FabricImage, Point } from "fabric";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { getSymptomContentForBodyPart, type SymptomContent } from "@/services/symptomService";
+import { SafeCanvasWrapper } from "./SafeCanvasWrapper";
 
 interface SymptomItem {
   id: string;
@@ -53,18 +54,11 @@ const UniversalSymptomSelector = ({
   symptoms,
   onSymptomSubmit
 }: UniversalSymptomSelectorProps) => {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const hoverCircleRef = useRef<Circle | null>(null);
-  const fabricImageRef = useRef<FabricImage | null>(null);
-  const imageReadyRef = useRef<boolean>(false);
   const selectionMarkerRef = useRef<Circle | null>(null);
-  const initializingRef = useRef<boolean>(false);
-  
   const [fabricCanvas, setFabricCanvas] = useState<FabricCanvas | null>(null);
+  const [fabricImage, setFabricImage] = useState<FabricImage | null>(null);
   const [selectedSymptom, setSelectedSymptom] = useState<SymptomItem | null>(null);
   const [zoomLevel, setZoomLevel] = useState(1);
-  const blobUrlRef = useRef<string | null>(null);
   const [imageLoaded, setImageLoaded] = useState(false);
   const [imageFailed, setImageFailed] = useState(false);
   const [canvasDimensions, setCanvasDimensions] = useState({ width: 800, height: 600 });
@@ -83,6 +77,12 @@ const UniversalSymptomSelector = ({
   const textRegions = symptomContentData?.regions || [];
   const hasRegions = textRegions.length > 0;
 
+  // Toggle fullscreen
+  const toggleFullscreen = () => {
+    setIsFullscreen(prev => !prev);
+    calculateCanvasDimensions();
+  };
+
   // Calculate canvas dimensions based on screen size
   const calculateCanvasDimensions = () => {
     const availableWidth = isFullscreen ? window.innerWidth * 0.65 : Math.min(800, window.innerWidth * 0.6);
@@ -94,64 +94,12 @@ const UniversalSymptomSelector = ({
     });
   };
 
-  // Cleanup canvas on unmount only - with proper timing to avoid React conflicts
-  useEffect(() => {
-    return () => {
-      // Delay disposal to let React handle DOM cleanup first
-      setTimeout(() => {
-        if (fabricCanvas && !fabricCanvas.disposed) {
-          try {
-            fabricCanvas.dispose();
-          } catch (error) {
-            console.warn('Canvas disposal error:', error);
-          }
-        }
-      }, 0);
-      
-      // Cleanup blob URL on unmount
-      if (blobUrlRef.current && blobUrlRef.current.startsWith('blob:')) {
-        try {
-          URL.revokeObjectURL(blobUrlRef.current);
-        } catch (error) {
-          console.warn('Failed to revoke blob URL on unmount:', error);
-        }
-      }
-    };
-  }, []);
-
-  // Toggle fullscreen
-  const toggleFullscreen = () => {
-    setIsFullscreen(prev => !prev);
-    calculateCanvasDimensions();
-  };
-
-  // Load symptom data when dialog opens or body part changes
-  useEffect(() => {
-    if (open && bodyPart) {
-      setIsLoadingSymptoms(true);
-      getSymptomContentForBodyPart(bodyPart)
-        .then((data) => {
-          setSymptomContentData(data);
-          setIsLoadingSymptoms(false);
-        })
-        .catch((error) => {
-          console.error('Failed to load symptom data:', error);
-          setSymptomContentData(null);
-          setIsLoadingSymptoms(false);
-        });
-    }
-  }, [open, bodyPart]);
-
-  // Reset state when dialog closes, imageUrl changes, or bodyPart changes
+  // Reset state when dialog closes
   useEffect(() => {
     if (!open) {
       setImageLoaded(false);
       setImageFailed(false);
-      imageReadyRef.current = false;
       setSelectedSymptom(null);
-      selectionMarkerRef.current = null;
-      hoverCircleRef.current = null;
-      fabricImageRef.current = null;
       setZoomLevel(1);
       setIsFullscreen(true);
       setShowConfirmationPopover(false);
@@ -161,40 +109,10 @@ const UniversalSymptomSelector = ({
       setSymptomContentData(null);
       setIsLoadingSymptoms(false);
       setIsSubmitted(false);
-      initializingRef.current = false;
-      
-      // Safe canvas disposal - clear the reference first to prevent multiple disposals
-      if (fabricCanvas && !fabricCanvas.disposed) {
-        const canvasToDispose = fabricCanvas;
-        setFabricCanvas(null); // Clear reference immediately
-        
-        // Dispose safely without interfering with React's DOM cleanup
-        setTimeout(() => {
-          try {
-            canvasToDispose.clear();
-            canvasToDispose.dispose();
-          } catch (error) {
-            console.warn('Canvas disposal error:', error);
-          }
-        }, 0);
-      }
-      
-      // Clean up blob URL when dialog closes or URL changes (only blob URLs need cleanup)
-      if (blobUrlRef.current && blobUrlRef.current.startsWith('blob:')) {
-        try {
-          URL.revokeObjectURL(blobUrlRef.current);
-        } catch (error) {
-          console.warn('Failed to revoke blob URL:', error);
-        }
-        blobUrlRef.current = null;
-      }
+      setFabricCanvas(null);
+      setFabricImage(null);
     }
-    
-    // Track the current blob URL for cleanup (signed URLs and data URLs don't need cleanup)
-    if (imageUrl && imageUrl.startsWith('blob:')) {
-      blobUrlRef.current = imageUrl;
-    }
-  }, [open, imageUrl, bodyPart]);
+  }, [open]);
 
   // Initialize canvas dimensions on mount and fullscreen toggle
   useEffect(() => {
@@ -213,252 +131,106 @@ const UniversalSymptomSelector = ({
     return () => window.removeEventListener('resize', handleResize);
   }, [isFullscreen]);
 
-  // Safe canvas initialization with race condition prevention
+  // Load symptom data when dialog opens or body part changes
   useEffect(() => {
-    console.log(`🎯 [CANVAS CHECK] Canvas useEffect triggered`);
-    console.log(`📋 [PARAMS] open: ${open}, imageUrl: "${imageUrl}", canvasDimensions: ${canvasDimensions.width}x${canvasDimensions.height}`);
-    console.log(`🎨 [CANVAS REF] canvasRef.current:`, !!canvasRef.current);
+    if (open && bodyPart) {
+      setIsLoadingSymptoms(true);
+      getSymptomContentForBodyPart(bodyPart)
+        .then((data) => {
+          setSymptomContentData(data);
+          setIsLoadingSymptoms(false);
+        })
+        .catch((error) => {
+          console.error('Failed to load symptom data:', error);
+          setSymptomContentData(null);
+          setIsLoadingSymptoms(false);
+        });
+    }
+  }, [open, bodyPart]);
+
+  // Canvas event handlers
+  const handleCanvasReady = (canvas: FabricCanvas) => {
+    console.log('✅ [SAFE] Canvas is ready for interaction');
+    setFabricCanvas(canvas);
     
-    if (!open || !canvasRef.current || !imageUrl || canvasDimensions.width === 0 || canvasDimensions.height === 0) {
-      console.log(`❌ [CANVAS SKIP] Skipping canvas init - missing requirements`);
-      console.log(`   - open: ${open}`);
-      console.log(`   - canvasRef: ${!!canvasRef.current}`);  
-      console.log(`   - imageUrl: "${imageUrl}"`);
-      console.log(`   - dimensions: ${canvasDimensions.width}x${canvasDimensions.height}`);
-      return;
-    }
+    // Add event listeners
+    setupCanvasEvents(canvas);
+  };
 
-    // Prevent multiple initializations
-    if (initializingRef.current) {
-      console.log('🔄 Canvas initialization already in progress, skipping');
-      return;
-    }
+  const handleImageLoaded = (canvas: FabricCanvas, image: FabricImage) => {
+    console.log('✅ [SAFE] Image loaded successfully');
+    setFabricImage(image);
+    setImageLoaded(true);
+    setImageFailed(false);
+  };
 
-    let cleanupTriggered = false;
-    initializingRef.current = true;
+  const handleCanvasError = (error: string) => {
+    console.error('💥 [SAFE] Canvas error:', error);
+    setImageFailed(true);
+    setImageLoaded(false);
+    toast({
+      title: "Canvas Error",
+      description: error,
+      variant: "destructive"
+    });
+  };
 
-    console.log('🎯 [SAFE CANVAS INIT] Starting safe canvas initialization');
-    console.log('🔗 [IMAGE URL] Full URL:', imageUrl);
+  const setupCanvasEvents = (canvas: FabricCanvas) => {
+    let isDragging = false;
+    let lastPosX = 0;
+    let lastPosY = 0;
 
-    const initCanvas = async () => {
-      try {
-        // Dispose existing canvas safely
-        if (fabricCanvas && !fabricCanvas.disposed) {
-          console.log('🧹 [SAFE CLEANUP] Disposing existing canvas');
-          const oldCanvas = fabricCanvas;
-          setFabricCanvas(null);
-          
-          // Small delay to let React handle state changes
-          await new Promise(resolve => setTimeout(resolve, 10));
-          
-          if (!cleanupTriggered) {
-            oldCanvas.clear();
-            oldCanvas.dispose();
-          }
-        }
+    // Mouse down
+    canvas.on('mouse:down', (event) => {
+      const evt = event.e as MouseEvent;
+      lastPosX = evt.clientX;
+      lastPosY = evt.clientY;
+      isDragging = false;
+    });
 
-        if (cleanupTriggered || !canvasRef.current) {
-          console.log('❌ [SAFE INIT] Aborted - cleanup triggered or no canvas ref');
-          return;
-        }
-
-        // Create new canvas
-        console.log('🎨 [SAFE CREATE] Creating new Fabric canvas');
-        const newCanvas = new FabricCanvas(canvasRef.current, {
-          width: canvasDimensions.width,
-          height: canvasDimensions.height,
-          selection: false,
-          hoverCursor: 'grab',
-          moveCursor: 'grab',
-          defaultCursor: 'grab',
-          backgroundColor: '#f8fafc',
-          enableRetinaScaling: true,
-          interactive: true,
-          allowTouchScrolling: false,
-          stopContextMenu: true,
-          fireRightClick: false,
-          fireMiddleClick: false,
-        });
-
-        if (cleanupTriggered) {
-          newCanvas.dispose();
-          return;
-        }
-
-        // Load image
-        console.log('🖼️ [SAFE LOAD] Loading image:', imageUrl.substring(0, 50) + '...');
-        const img = await FabricImage.fromURL(imageUrl, { 
-          crossOrigin: imageUrl.startsWith('http') ? 'anonymous' : undefined 
-        });
-
-        if (cleanupTriggered) {
-          newCanvas.dispose();
-          return;
-        }
-
-        // Scale and position image
-        const scaleX = canvasDimensions.width / img.width!;
-        const scaleY = canvasDimensions.height / img.height!;
-        const scale = Math.min(scaleX, scaleY, 1);
+    // Mouse move for dragging
+    canvas.on('mouse:move', (event) => {
+      const evt = event.e as MouseEvent;
+      
+      if (evt.buttons === 1) {
+        const deltaX = evt.clientX - lastPosX;
+        const deltaY = evt.clientY - lastPosY;
         
-        img.scale(scale);
-        img.set({
-          left: (canvasDimensions.width - img.width! * scale) / 2,
-          top: (canvasDimensions.height - img.height! * scale) / 2,
-          selectable: false,
-          evented: false
-        });
-
-        // Add to canvas
-        newCanvas.add(img);
-        fabricImageRef.current = img;
-
-        // Create hover circle
-        const hoverCircle = new Circle({
-          radius: 3,
-          fill: 'rgba(59, 130, 246, 0.4)',
-          stroke: '#3b82f6',
-          strokeWidth: 1,
-          selectable: false,
-          evented: false,
-          opacity: 0.9,
-          visible: false
-        });
-        newCanvas.add(hoverCircle);
-        hoverCircleRef.current = hoverCircle;
-
-        // Add event handlers
-        setupCanvasEvents(newCanvas);
-
-        if (!cleanupTriggered) {
-          setFabricCanvas(newCanvas);
-          setImageLoaded(true);
-          imageReadyRef.current = true;
-          console.log('✅ [SAFE SUCCESS] Canvas initialized successfully');
+        if (Math.abs(deltaX) > 3 || Math.abs(deltaY) > 3) {
+          isDragging = true;
+          const vpt = canvas.viewportTransform!;
+          vpt[4] += deltaX;
+          vpt[5] += deltaY;
+          canvas.requestRenderAll();
+          lastPosX = evt.clientX;
+          lastPosY = evt.clientY;
         }
-
-      } catch (error) {
-        console.error('💥 [SAFE ERROR] Canvas initialization failed:', error);
-        if (!cleanupTriggered) {
-          setImageFailed(true);
-          toast({
-            title: "Image Loading Error",
-            description: "The image couldn't be loaded, but you can still select symptoms from the list.",
-            variant: "destructive"
-          });
-        }
-      } finally {
-        initializingRef.current = false;
       }
-    };
+    });
 
-    // Setup canvas event handlers
-    const setupCanvasEvents = (canvas: FabricCanvas) => {
-      let isDragging = false;
-      let lastPosX = 0;
-      let lastPosY = 0;
-
-      // Mouse movement for hover
-      canvas.on('mouse:move', (event) => {
-        if (!imageReadyRef.current || !fabricImageRef.current || !hoverCircleRef.current || cleanupTriggered) {
-          return;
-        }
-        
-        if (isDragging) {
-          hoverCircleRef.current.set({ visible: false });
-          canvas.renderAll();
-          return;
-        }
-        
+    // Mouse up for click detection
+    canvas.on('mouse:up', (event) => {
+      if (!isDragging) {
         const pointer = canvas.getPointer(event.e);
-        const img = fabricImageRef.current;
-        const imgLeft = img.left!;
-        const imgTop = img.top!;
-        const imgWidth = img.width! * img.scaleX!;
-        const imgHeight = img.height! * img.scaleY!;
-        
-        const isWithinImage = pointer.x >= imgLeft && 
-                             pointer.x <= imgLeft + imgWidth && 
-                             pointer.y >= imgTop && 
-                             pointer.y <= imgTop + imgHeight;
-        
-        if (isWithinImage) {
-          hoverCircleRef.current.set({
-            left: pointer.x - 3,
-            top: pointer.y - 3,
-            visible: true
-          });
-          canvas.setCursor('crosshair');
-        } else {
-          hoverCircleRef.current.set({ visible: false });
-          canvas.setCursor('default');
-        }
-        
-        canvas.renderAll();
-      });
+        handleCanvasClick(pointer);
+      }
+      isDragging = false;
+    });
 
-      // Mouse down for dragging/clicking
-      canvas.on('mouse:down', (event) => {
-        const pointer = canvas.getPointer(event.e);
-        const evt = event.e as MouseEvent;
-        
-        lastPosX = evt.clientX;
-        lastPosY = evt.clientY;
-        isDragging = false;
-      });
-
-      // Mouse move for dragging
-      canvas.on('mouse:move', (event) => {
-        const evt = event.e as MouseEvent;
-        
-        if (evt.buttons === 1) { // Left mouse button pressed
-          const deltaX = evt.clientX - lastPosX;
-          const deltaY = evt.clientY - lastPosY;
-          
-          if (Math.abs(deltaX) > 3 || Math.abs(deltaY) > 3) {
-            isDragging = true;
-            const vpt = canvas.viewportTransform!;
-            vpt[4] += deltaX;
-            vpt[5] += deltaY;
-            canvas.requestRenderAll();
-            lastPosX = evt.clientX;
-            lastPosY = evt.clientY;
-          }
-        }
-      });
-
-      // Mouse up for click detection
-      canvas.on('mouse:up', (event) => {
-        if (!isDragging) {
-          const pointer = canvas.getPointer(event.e);
-          handleCanvasClick(pointer);
-        }
-        isDragging = false;
-      });
-
-      // Zoom on mouse wheel
-      canvas.on('mouse:wheel', (opt) => {
-        const delta = opt.e.deltaY;
-        let zoom = canvas.getZoom();
-        zoom *= 0.999 ** delta;
-        zoom = Math.max(0.5, Math.min(3, zoom));
-        
-        const point = new Point(opt.e.offsetX, opt.e.offsetY);
-        canvas.zoomToPoint(point, zoom);
-        setZoomLevel(zoom);
-        opt.e.preventDefault();
-        opt.e.stopPropagation();
-      });
-    };
-
-    initCanvas();
-
-    return () => {
-      console.log('🧹 [SAFE CLEANUP] Cleanup triggered');
-      cleanupTriggered = true;
-      initializingRef.current = false;
-    };
-  }, [open, imageUrl, canvasDimensions]);
+    // Zoom
+    canvas.on('mouse:wheel', (opt) => {
+      const delta = opt.e.deltaY;
+      let zoom = canvas.getZoom();
+      zoom *= 0.999 ** delta;
+      zoom = Math.max(0.5, Math.min(3, zoom));
+      
+      const point = new Point(opt.e.offsetX, opt.e.offsetY);
+      canvas.zoomToPoint(point, zoom);
+      setZoomLevel(zoom);
+      opt.e.preventDefault();
+      opt.e.stopPropagation();
+    });
+  };
 
   // Handle canvas click
   const handleCanvasClick = (pointer: { x: number; y: number }) => {
@@ -466,7 +238,7 @@ const UniversalSymptomSelector = ({
     
     // Find matching symptom region
     const matchedRegion = textRegions.find(region => {
-      const imgBounds = fabricImageRef.current;
+      const imgBounds = fabricImage;
       if (!imgBounds) return false;
       
       const imgLeft = imgBounds.left!;
@@ -497,16 +269,14 @@ const UniversalSymptomSelector = ({
       setSelectedSymptom(null);
     }
 
-    // Position and show confirmation popover
-    const rect = canvasRef.current?.getBoundingClientRect();
-    if (rect) {
-      const popoverX = Math.max(20, Math.min(rect.left + pointer.x + window.scrollX, window.innerWidth - 340));
-      const popoverY = Math.max(20, Math.min(rect.top + pointer.y + window.scrollY, window.innerHeight - 220));
-      
-      setClickPosition(pointer);
-      setPopoverPosition({ x: popoverX, y: popoverY });
-      setShowConfirmationPopover(true);
-    }
+    // Position and show confirmation popover  
+    // Note: We'll show popover at a fixed position since we don't have canvasRef
+    setClickPosition(pointer);
+    setPopoverPosition({ 
+      x: Math.min(window.innerWidth / 2, window.innerWidth - 340), 
+      y: Math.min(window.innerHeight / 2, window.innerHeight - 220) 
+    });
+    setShowConfirmationPopover(true);
   };
 
   // Handle zoom controls
@@ -641,32 +411,14 @@ const UniversalSymptomSelector = ({
 
             {/* Canvas Container */}
             <div className="pt-20 h-full flex flex-col">
-              <div ref={containerRef} className="flex-1 relative overflow-hidden">
-                {!imageLoaded && !imageFailed && (
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="text-center space-y-4">
-                      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-                      <p className="text-muted-foreground">Loading interactive diagram...</p>
-                    </div>
-                  </div>
-                )}
-
-                {imageFailed && (
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="text-center space-y-4">
-                      <FileText className="h-16 w-16 text-muted-foreground mx-auto" />
-                      <div>
-                        <p className="text-lg font-medium text-foreground">Image not available</p>
-                        <p className="text-muted-foreground">Select a symptom from the list on the right</p>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                <canvas
-                  ref={canvasRef}
-                  className={`block ${!imageLoaded ? 'hidden' : ''}`}
-                  style={{ cursor: isPanning ? 'grabbing' : 'grab' }}
+              <div className="flex-1 relative overflow-hidden">
+                <SafeCanvasWrapper
+                  imageUrl={imageUrl}
+                  width={canvasDimensions.width}
+                  height={canvasDimensions.height}
+                  onCanvasReady={handleCanvasReady}
+                  onImageLoaded={handleImageLoaded}
+                  onError={handleCanvasError}
                 />
               </div>
 
