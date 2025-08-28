@@ -13,6 +13,17 @@ interface SymptomItem {
   category?: string;
 }
 
+interface TextRegion {
+  id: string;
+  text: string;
+  coordinates: {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+  };
+}
+
 interface UniversalSymptomSelectorProps {
   open: boolean;
   onClose: () => void;
@@ -52,6 +63,46 @@ const UniversalSymptomSelector = ({
   const [popoverPosition, setPopoverPosition] = useState({ x: 0, y: 0 });
   const [clickPosition, setClickPosition] = useState<{ x: number, y: number } | null>(null);
   const [isPanning, setIsPanning] = useState(false);
+  const [detectedText, setDetectedText] = useState<string | null>(null);
+
+  // Define text regions for the NAUSEA AND VOMITING image
+  const getTextRegionsForBodyPart = (bodyPart: string): TextRegion[] => {
+    if (bodyPart === "NAUSEA AND VOMITING") {
+      return [
+        {
+          id: "nausea_general",
+          text: "Nausea, usually with earache, dizziness, and reduced hearing. Nausea, usually with dizziness and vertigo, ringing in ears and pain. Dizziness, tinnitus (ringing sounds) in both ears, and hearing loss, with feelings of nausea. Usually a long-term condition, with recurrent episodes.",
+          coordinates: { x: 430, y: 10, width: 200, height: 120 }
+        },
+        {
+          id: "gastroenteritis",
+          text: "Often one-sided headache, with blurred vision, and flashing lights. Rash, fever, headache, stiff neck, and generally unwell. Can rapidly result in unconsciousness if untreated. This is a medical emergency; dial 999",
+          coordinates: { x: 104, y: 20, width: 180, height: 100 }
+        },
+        {
+          id: "abdominal_pain",
+          text: "Pain that comes and goes, beginning in the lower back and moving to the abdomen. May need to pass urine frequently or notice blood in urine. More common in hot climates.",
+          coordinates: { x: 8, y: 200, width: 150, height: 120 }
+        },
+        {
+          id: "stomach_pain",
+          text: "Often cramping in children. Most common in the developing world. Chronic constipation causes a build-up in bowel and affects children. Failure to grow and put on weight. Abdominal pain and diarrhoea, with rash, tiredness. Common in the developing world.",
+          coordinates: { x: 650, y: 200, width: 180, height: 150 }
+        },
+        {
+          id: "blood_symptoms",
+          text: "Vomiting with flu-like symptoms, blood in urine, and back pain. More common in women. Seek medical attention soon if symptoms severe. Pain that comes and goes, beginning in the lower back and moving to the abdomen. May need to pass urine frequently or notice blood in urine. More common in hot climates.",
+          coordinates: { x: 650, y: 400, width: 200, height: 180 }
+        },
+        {
+          id: "appetite_loss",
+          text: "Loss of appetite, nausea, vomiting, fatigue, weakness, itching, lethargy, swelling, shortness of breath, muscle cramps, and headache.",
+          coordinates: { x: 650, y: 580, width: 180, height: 80 }
+        }
+      ];
+    }
+    return [];
+  };
 
   // Calculate canvas dimensions based on screen size
   const calculateCanvasDimensions = () => {
@@ -210,7 +261,7 @@ const UniversalSymptomSelector = ({
       }
     });
 
-    // Handle canvas clicks to open symptom popover
+    // Handle canvas clicks to detect text regions
     canvas.on('mouse:down', (event) => {
       if (!imageReadyRef.current || isPanning) return;
       
@@ -218,14 +269,52 @@ const UniversalSymptomSelector = ({
       const canvasElement = canvasRef.current;
       if (!canvasElement) return;
       
-      const rect = canvasElement.getBoundingClientRect();
+      // Get text regions for this body part
+      const textRegions = getTextRegionsForBodyPart(bodyPart);
       
-      setClickPosition({ x: pointer.x, y: pointer.y });
-      setPopoverPosition({ 
-        x: rect.left + pointer.x + window.scrollX, 
-        y: rect.top + pointer.y + window.scrollY
+      // Check if click is within any text region
+      const clickedRegion = textRegions.find(region => {
+        const { x, y, width, height } = region.coordinates;
+        return pointer.x >= x && pointer.x <= x + width && 
+               pointer.y >= y && pointer.y <= y + height;
       });
-      setShowSymptomPopover(true);
+      
+      if (clickedRegion) {
+        // Directly select the detected text
+        setSelectedSymptom({ id: clickedRegion.id, text: clickedRegion.text });
+        setDetectedText(clickedRegion.text);
+        setClickPosition({ x: pointer.x, y: pointer.y });
+        
+        // Remove any existing markers
+        if (highlightCircle) {
+          canvas.remove(highlightCircle);
+        }
+
+        // Create new marker at click position
+        const circle = new Circle({
+          left: pointer.x - 12,
+          top: pointer.y - 12,
+          radius: 12,
+          fill: 'rgba(239, 68, 68, 0.8)',
+          stroke: '#ffffff',
+          strokeWidth: 3,
+          selectable: false,
+          evented: false
+        });
+
+        canvas.add(circle);
+        setHighlightCircle(circle);
+        canvas.renderAll();
+      } else {
+        // No text region detected, show generic popover
+        const rect = canvasElement.getBoundingClientRect();
+        setClickPosition({ x: pointer.x, y: pointer.y });
+        setPopoverPosition({ 
+          x: rect.left + pointer.x + window.scrollX, 
+          y: rect.top + pointer.y + window.scrollY
+        });
+        setShowSymptomPopover(true);
+      }
     });
 
     // Handle panning with space key or middle mouse
@@ -459,23 +548,48 @@ const UniversalSymptomSelector = ({
               </div>
             </div>
 
-            {/* Instructions */}
-            <div className="absolute bottom-4 left-4 right-4 bg-background/95 backdrop-blur rounded-lg p-3 border">
+            {/* Instructions and Selected Symptom Display */}
+            <div className="absolute bottom-4 left-4 right-4 bg-background/95 backdrop-blur rounded-lg p-4 border max-h-48 overflow-y-auto">
               {!selectedSymptom ? (
                 <p className="text-sm text-center">
-                  <strong>Click anywhere on the image</strong> to select a symptom that matches your condition
+                  <strong>Click on any text paragraph</strong> to select that specific symptom description
                 </p>
               ) : (
-                <div className="text-sm text-center text-green-600">
-                  <p><strong>Perfect!</strong> You've selected "{selectedSymptom.text}" and placed a marker.</p>
-                  <p>Use the buttons on the right to clear or submit your selection.</p>
+                <div className="space-y-3">
+                  <div className="text-sm text-center text-green-600">
+                    <p><strong>Perfect!</strong> You've selected a symptom and placed a marker.</p>
+                  </div>
+                  <div className="bg-primary/5 p-3 rounded-lg">
+                    <h4 className="text-sm font-semibold mb-2 text-primary">Selected Symptom:</h4>
+                    <p className="text-xs text-muted-foreground leading-relaxed">
+                      {selectedSymptom.text}
+                    </p>
+                  </div>
+                  <div className="flex space-x-2">
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      className="flex-1"
+                      onClick={handleClearSelection}
+                    >
+                      Clear Selection
+                    </Button>
+                    <Button 
+                      size="sm"
+                      className="flex-1"
+                      onClick={handleSubmit}
+                      disabled={!selectedSymptom}
+                    >
+                      Submit Selection
+                    </Button>
+                  </div>
                 </div>
               )}
             </div>
           </div>
 
-          {/* Right Side - Selected Symptom Display */}
-          <div className={`${isFullscreen ? 'w-80' : 'w-80'} bg-background border-l flex flex-col`}>
+          {/* Right Side - Selected Symptom Display - Hidden to prevent overlay */}
+          <div className={`${isFullscreen ? 'w-0 overflow-hidden' : 'w-0 overflow-hidden'} bg-background border-l flex flex-col`}>
             {selectedSymptom ? (
               /* Always show selected symptom with action buttons */
               <div className="flex-1 p-4 flex flex-col">
