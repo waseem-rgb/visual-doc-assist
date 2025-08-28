@@ -6,7 +6,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { X, ZoomIn, ZoomOut, Maximize, Minimize, Move } from "lucide-react";
 import { Canvas as FabricCanvas, Circle, FabricImage, Point } from "fabric";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { getSymptomContentForBodyPart } from "@/data/symptomContent";
+import { getSymptomContentForBodyPart, type SymptomContent } from "@/services/symptomService";
 
 interface SymptomItem {
   id: string;
@@ -17,6 +17,8 @@ interface SymptomItem {
 interface TextRegion {
   id: string;
   text: string;
+  diagnosis: string;
+  summary: string;
   coordinates: {
     xPct: number;
     yPct: number;
@@ -65,9 +67,10 @@ const UniversalSymptomSelector = ({
   const [clickPosition, setClickPosition] = useState<{ x: number, y: number } | null>(null);
   const [isPanning, setIsPanning] = useState(false);
   const [detectedText, setDetectedText] = useState<string | null>(null);
+  const [symptomContentData, setSymptomContentData] = useState<SymptomContent | null>(null);
+  const [isLoadingSymptoms, setIsLoadingSymptoms] = useState(false);
 
   // Get symptom content for current body part
-  const symptomContentData = getSymptomContentForBodyPart(bodyPart);
   const textRegions = symptomContentData?.regions || [];
   const hasRegions = textRegions.length > 0;
 
@@ -97,6 +100,23 @@ const UniversalSymptomSelector = ({
     calculateCanvasDimensions();
   };
 
+  // Load symptom data when dialog opens or body part changes
+  useEffect(() => {
+    if (open && bodyPart) {
+      setIsLoadingSymptoms(true);
+      getSymptomContentForBodyPart(bodyPart)
+        .then((data) => {
+          setSymptomContentData(data);
+          setIsLoadingSymptoms(false);
+        })
+        .catch((error) => {
+          console.error('Failed to load symptom data:', error);
+          setSymptomContentData(null);
+          setIsLoadingSymptoms(false);
+        });
+    }
+  }, [open, bodyPart]);
+
   // Reset state when dialog closes, imageUrl changes, or bodyPart changes
   useEffect(() => {
     if (!open) {
@@ -112,6 +132,8 @@ const UniversalSymptomSelector = ({
       setClickPosition(null);
       setIsPanning(false);
       setDetectedText(null);
+      setSymptomContentData(null);
+      setIsLoadingSymptoms(false);
       if (fabricCanvas) {
         fabricCanvas.dispose();
         setFabricCanvas(null);
@@ -507,11 +529,13 @@ const UniversalSymptomSelector = ({
                 }}
               >
                 {/* Loading Overlay */}
-                {!imageLoaded && (
+                {(!imageLoaded || isLoadingSymptoms) && (
                   <div className="absolute inset-0 flex items-center justify-center bg-gray-100 z-10">
                     <div className="text-center">
                       <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-                      <p className="text-sm text-muted-foreground">Loading image...</p>
+                      <p className="text-sm text-muted-foreground">
+                        {isLoadingSymptoms ? 'Loading symptom data...' : 'Loading image...'}
+                      </p>
                     </div>
                   </div>
                 )}
@@ -551,6 +575,14 @@ const UniversalSymptomSelector = ({
                     <p className="text-xs text-muted-foreground leading-relaxed">
                       {selectedSymptom.text}
                     </p>
+                    {detectedText && detectedText !== selectedSymptom.text && (
+                      <div className="mt-2 pt-2 border-t">
+                        <p className="text-xs font-medium text-primary">Full Description:</p>
+                        <p className="text-xs text-muted-foreground leading-relaxed mt-1">
+                          {detectedText}
+                        </p>
+                      </div>
+                    )}
                   </div>
                   <div className="flex space-x-2">
                     <Button 
@@ -577,8 +609,8 @@ const UniversalSymptomSelector = ({
 
         </div>
 
-        {/* Symptom Selection Popover - Show only if no regions or generic fallback needed */}
-        {showSymptomPopover && (!hasRegions || symptoms.length > 0) && (
+        {/* Symptom Selection Popover - Show fallback symptoms from database when no region clicked */}
+        {showSymptomPopover && (symptomContentData?.fallbackSymptoms?.length > 0 || symptoms.length > 0) && (
           <div 
             className="fixed z-50 w-80 max-h-96 bg-popover border rounded-md shadow-md p-4"
             style={{
@@ -598,8 +630,20 @@ const UniversalSymptomSelector = ({
                   <X className="h-3 w-3" />
                 </Button>
               </div>
-              <ScrollArea className="h-80 mt-2">
+               <ScrollArea className="h-80 mt-2">
                 <div className="space-y-1">
+                  {/* Show database fallback symptoms first */}
+                  {symptomContentData?.fallbackSymptoms?.map((symptom) => (
+                    <Button
+                      key={symptom.id}
+                      variant="ghost"
+                      className="w-full h-auto p-2 text-left justify-start whitespace-normal hover:bg-primary/5 text-xs"
+                      onClick={() => handleSymptomClick(symptom)}
+                    >
+                      <span className="leading-relaxed">{symptom.text}</span>
+                    </Button>
+                  ))}
+                  {/* Show passed symptoms as backup */}
                   {symptoms.map((symptom) => (
                     <Button
                       key={symptom.id}
