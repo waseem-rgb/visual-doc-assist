@@ -31,43 +31,43 @@ const PrescriptionStatus = ({ request }: PrescriptionStatusProps) => {
     setIsDownloading(true);
     try {
       if (request.prescription.pdf_url) {
-        // For Supabase signed URLs, we need to create a fresh signed URL
+        // The pdf_url now contains just the filename/path within the bucket
         const { supabase } = await import('@/integrations/supabase/client');
         
-        // Extract the file path from the PDF URL
         let filePath = request.prescription.pdf_url;
-        if (filePath.includes('/storage/v1/object/')) {
-          // Extract path after the bucket name
-          const pathMatch = filePath.match(/\/storage\/v1\/object\/[^/]+\/[^/]+\/(.+)$/);
+        
+        // If it's a full URL, extract the filename
+        if (filePath.includes('http') || filePath.includes('/storage/v1/object/')) {
+          // Extract path after the bucket name from full URL
+          const pathMatch = filePath.match(/\/storage\/v1\/object\/[^/]+\/prescriptions\/(.+)(?:\?|$)/);
           if (pathMatch) {
             filePath = pathMatch[1];
+          } else {
+            // Try to extract filename from the end of URL
+            const urlParts = filePath.split('/');
+            const filenameWithQuery = urlParts[urlParts.length - 1];
+            filePath = filenameWithQuery.split('?')[0]; // Remove query parameters
           }
         }
         
-        try {
-          // Create a fresh signed URL
-          const { data, error } = await supabase.storage
-            .from('prescriptions')
-            .createSignedUrl(filePath, 3600); // 1 hour expiry
-          
-          if (error) {
-            console.error('Error creating signed URL:', error);
-            // Fallback to original URL
-            filePath = request.prescription.pdf_url;
-          } else {
-            filePath = data.signedUrl;
-          }
-        } catch (signedUrlError) {
-          console.warn('Failed to create signed URL, using original:', signedUrlError);
-          filePath = request.prescription.pdf_url;
+        // Create a fresh signed URL using the file path
+        const { data, error } = await supabase.storage
+          .from('prescriptions')
+          .createSignedUrl(filePath, 3600); // 1 hour expiry
+        
+        if (error) {
+          console.error('Error creating signed URL:', error);
+          throw new Error(`Failed to create download link: ${error.message}`);
         }
+        
+        const downloadUrl = data.signedUrl;
 
         // Try multiple download strategies
         const downloadStrategies = [
           // Strategy 1: Direct download link
           () => {
             const link = document.createElement('a');
-            link.href = filePath;
+            link.href = downloadUrl;
             link.target = '_blank';
             link.rel = 'noopener noreferrer';
             link.download = `prescription-${request.id}.pdf`;
@@ -77,7 +77,7 @@ const PrescriptionStatus = ({ request }: PrescriptionStatusProps) => {
           },
           // Strategy 2: Fetch and blob download
           async () => {
-            const response = await fetch(filePath);
+            const response = await fetch(downloadUrl);
             if (!response.ok) throw new Error('Network response was not ok');
             
             const blob = await response.blob();
@@ -95,7 +95,7 @@ const PrescriptionStatus = ({ request }: PrescriptionStatusProps) => {
           },
           // Strategy 3: Window.open fallback
           () => {
-            window.open(filePath, '_blank');
+            window.open(downloadUrl, '_blank');
           }
         ];
 
