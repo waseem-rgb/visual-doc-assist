@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { X, ZoomIn, ZoomOut, Maximize, Minimize } from "lucide-react";
 import { Canvas as FabricCanvas, Circle } from "fabric";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -41,19 +42,23 @@ const UniversalSymptomSelector = ({
   const [fabricCanvas, setFabricCanvas] = useState<FabricCanvas | null>(null);
   const [selectedSymptom, setSelectedSymptom] = useState<SymptomItem | null>(null);
   const [highlightCircle, setHighlightCircle] = useState<Circle | null>(null);
+  const [hoverCircle, setHoverCircle] = useState<Circle | null>(null);
   const [zoomLevel, setZoomLevel] = useState(1);
   const [imageLoaded, setImageLoaded] = useState(false);
   const [displayDimensions, setDisplayDimensions] = useState({ width: 0, height: 0 });
-  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(true); // Default to fullscreen
+  const [showSymptomPopover, setShowSymptomPopover] = useState(false);
+  const [popoverPosition, setPopoverPosition] = useState({ x: 0, y: 0 });
+  const [clickPosition, setClickPosition] = useState<{ x: number, y: number } | null>(null);
 
-  // Handle image load event with dynamic sizing
+  // Handle image load event with dynamic sizing for fullscreen desktop
   const handleImageLoad = (e: React.SyntheticEvent<HTMLImageElement>) => {
     const img = e.currentTarget;
     console.log('✅ Image loaded successfully:', img.naturalWidth, 'x', img.naturalHeight);
     
-    // Calculate dynamic display dimensions based on available space
-    const availableWidth = isFullscreen ? window.innerWidth * 0.7 : Math.min(800, window.innerWidth * 0.6);
-    const availableHeight = isFullscreen ? window.innerHeight * 0.8 : Math.min(600, window.innerHeight * 0.7);
+    // Calculate dynamic display dimensions for fullscreen desktop coverage
+    const availableWidth = isFullscreen ? window.innerWidth * 0.65 : Math.min(800, window.innerWidth * 0.6);
+    const availableHeight = isFullscreen ? window.innerHeight * 0.85 : Math.min(600, window.innerHeight * 0.7);
     
     let displayWidth = img.naturalWidth;
     let displayHeight = img.naturalHeight;
@@ -61,7 +66,7 @@ const UniversalSymptomSelector = ({
     // Scale to fit available space while maintaining aspect ratio
     const widthRatio = availableWidth / displayWidth;
     const heightRatio = availableHeight / displayHeight;
-    const scale = Math.min(widthRatio, heightRatio, 1); // Don't scale up
+    const scale = Math.min(widthRatio, heightRatio, 1.2); // Allow slight upscaling for better desktop coverage
     
     displayWidth = Math.round(displayWidth * scale);
     displayHeight = Math.round(displayHeight * scale);
@@ -84,41 +89,67 @@ const UniversalSymptomSelector = ({
         width: displayWidth,
         height: displayHeight,
         selection: false,
-        hoverCursor: 'pointer',
-        moveCursor: 'pointer',
+        hoverCursor: 'crosshair',
+        moveCursor: 'crosshair',
         backgroundColor: 'transparent'
       });
 
-      // Handle canvas clicks for marker placement
-      canvas.on('mouse:down', (event) => {
-        if (!selectedSymptom) {
-          alert('Please select a symptom from the list first!');
-          return;
-        }
+      // Create hover circle that follows cursor
+      const createHoverCircle = () => {
+        return new Circle({
+          radius: 20,
+          fill: 'rgba(59, 130, 246, 0.3)',
+          stroke: '#3b82f6',
+          strokeWidth: 2,
+          selectable: false,
+          evented: false,
+          opacity: 0.8
+        });
+      };
 
+      // Handle mouse movement for hover circle
+      canvas.on('mouse:move', (event) => {
         const pointer = canvas.getPointer(event.e);
         
-        // Remove existing marker
-        if (highlightCircle) {
-          canvas.remove(highlightCircle);
+        // Remove existing hover circle
+        if (hoverCircle) {
+          canvas.remove(hoverCircle);
         }
 
-        // Create new marker
-        const circle = new Circle({
-          left: pointer.x - 15,
-          top: pointer.y - 15,
-          radius: 15,
-          fill: 'rgba(239, 68, 68, 0.8)',
-          stroke: '#ffffff',
-          strokeWidth: 3,
-          selectable: false,
-          evented: false
+        // Create and add new hover circle at cursor position
+        const newHoverCircle = createHoverCircle();
+        newHoverCircle.set({
+          left: pointer.x - 20,
+          top: pointer.y - 20
         });
-
-        canvas.add(circle);
-        setHighlightCircle(circle);
+        
+        canvas.add(newHoverCircle);
+        setHoverCircle(newHoverCircle);
         canvas.renderAll();
-        console.log('✅ Marker placed at:', pointer.x, pointer.y);
+      });
+
+      // Handle mouse leave to remove hover circle
+      canvas.on('mouse:out', () => {
+        if (hoverCircle) {
+          canvas.remove(hoverCircle);
+          setHoverCircle(null);
+          canvas.renderAll();
+        }
+      });
+
+      // Handle canvas clicks to open symptom popover
+      canvas.on('mouse:down', (event) => {
+        const pointer = canvas.getPointer(event.e);
+        const rect = canvasRef.current!.getBoundingClientRect();
+        
+        setClickPosition({ x: pointer.x, y: pointer.y });
+        setPopoverPosition({ 
+          x: rect.left + pointer.x, 
+          y: rect.top + pointer.y 
+        });
+        setShowSymptomPopover(true);
+        
+        console.log('✅ Click detected at:', pointer.x, pointer.y);
       });
 
       setFabricCanvas(canvas);
@@ -158,8 +189,11 @@ const UniversalSymptomSelector = ({
       setImageLoaded(false);
       setSelectedSymptom(null);
       setHighlightCircle(null);
+      setHoverCircle(null);
       setZoomLevel(1);
-      setIsFullscreen(false);
+      setIsFullscreen(true); // Keep fullscreen as default
+      setShowSymptomPopover(false);
+      setClickPosition(null);
       if (fabricCanvas) {
         fabricCanvas.dispose();
         setFabricCanvas(null);
@@ -184,16 +218,34 @@ const UniversalSymptomSelector = ({
     containerRef.current.style.transform = `scale(${newZoom})`;
   };
 
-  // Handle symptom selection
+  // Handle symptom selection from popover
   const handleSymptomClick = (symptom: SymptomItem) => {
+    if (!clickPosition || !fabricCanvas) return;
+    
     setSelectedSymptom(symptom);
+    setShowSymptomPopover(false);
+    
     // Remove any existing markers
-    if (highlightCircle && fabricCanvas) {
+    if (highlightCircle) {
       fabricCanvas.remove(highlightCircle);
-      setHighlightCircle(null);
-      fabricCanvas.renderAll();
     }
-    console.log('✅ Symptom selected:', symptom.text);
+
+    // Create new marker at click position
+    const circle = new Circle({
+      left: clickPosition.x - 15,
+      top: clickPosition.y - 15,
+      radius: 15,
+      fill: 'rgba(239, 68, 68, 0.8)',
+      stroke: '#ffffff',
+      strokeWidth: 3,
+      selectable: false,
+      evented: false
+    });
+
+    fabricCanvas.add(circle);
+    setHighlightCircle(circle);
+    fabricCanvas.renderAll();
+    console.log('✅ Symptom selected and marker placed:', symptom.text);
   };
 
   // Submit selection
@@ -210,6 +262,7 @@ const UniversalSymptomSelector = ({
   // Clear selection
   const handleClearSelection = () => {
     setSelectedSymptom(null);
+    setClickPosition(null);
     if (highlightCircle && fabricCanvas) {
       fabricCanvas.remove(highlightCircle);
       setHighlightCircle(null);
@@ -226,7 +279,7 @@ const UniversalSymptomSelector = ({
       >
         <DialogTitle className="sr-only">Universal Symptom Selector - {bodyPart}</DialogTitle>
         <div id="symptom-selector-description" className="sr-only">
-          Interactive symptom selector for {bodyPart}. Select a symptom from the list and click on the image to mark the location.
+          Interactive symptom selector for {bodyPart}. Click anywhere on the image to select symptoms.
         </div>
         
         <div className="flex h-full">
@@ -242,8 +295,9 @@ const UniversalSymptomSelector = ({
                   </p>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <Button onClick={toggleFullscreen} variant="ghost" size="sm">
+                  <Button onClick={toggleFullscreen} variant="ghost" size="sm" title="Toggle Fullscreen">
                     {isFullscreen ? <Minimize className="h-4 w-4" /> : <Maximize className="h-4 w-4" />}
+                    <span className="ml-1 text-xs">Fullscreen</span>
                   </Button>
                   <Button onClick={onClose} variant="ghost" size="sm">
                     <X className="h-4 w-4" />
@@ -268,10 +322,10 @@ const UniversalSymptomSelector = ({
               </div>
             </div>
 
-            {/* Canvas Container */}
+            {/* Canvas Container - Optimized for Desktop Fullscreen */}
             <div className="flex items-center justify-center h-full pt-16 pb-4 overflow-auto">
               <div 
-                className="overflow-auto max-h-full max-w-full p-4"
+                className="overflow-auto max-h-full max-w-full p-2"
                 style={{
                   minHeight: 'fit-content',
                   minWidth: 'fit-content'
@@ -312,11 +366,11 @@ const UniversalSymptomSelector = ({
                   </div>
                 )}
                 
-                 {/* Overlay Canvas for Markers */}
+                 {/* Overlay Canvas for Hovering Circle and Markers */}
                  {imageLoaded && (
                    <canvas 
                      ref={canvasRef}
-                     className="absolute top-0 left-0 pointer-events-auto"
+                     className="absolute top-0 left-0 pointer-events-auto cursor-crosshair"
                      style={{
                        width: displayDimensions.width,
                        height: displayDimensions.height
@@ -331,53 +385,21 @@ const UniversalSymptomSelector = ({
             <div className="absolute bottom-4 left-4 right-4 bg-background/95 backdrop-blur rounded-lg p-3 border">
               {!selectedSymptom ? (
                 <p className="text-sm text-center">
-                  <strong>Step 1:</strong> Choose a symptom from the list on the right that matches your condition.
-                </p>
-              ) : !highlightCircle ? (
-                <p className="text-sm text-center text-primary">
-                  <strong>Step 2:</strong> Click on the image where you experience this symptom to place a marker.
+                  <strong>Click anywhere on the image</strong> to select a symptom that matches your condition
                 </p>
               ) : (
                 <div className="text-sm text-center text-green-600">
                   <p><strong>Perfect!</strong> You've selected "{selectedSymptom.text}" and placed a marker.</p>
-                  <p>Review your selection on the right and submit when ready.</p>
+                  <p>Use the buttons on the right to clear or submit your selection.</p>
                 </div>
               )}
             </div>
           </div>
 
-          {/* Right Side - Symptom Selection */}
+          {/* Right Side - Selected Symptom Display */}
           <div className={`${isFullscreen ? 'w-1/3' : 'w-96'} bg-background border-l flex flex-col`}>
-            {!selectedSymptom ? (
-              /* Symptom List - Show only when no symptom is selected */
-              <div className="flex-1 p-4">
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-base">Available Symptoms</CardTitle>
-                    <p className="text-xs text-muted-foreground">
-                      Click on a symptom that matches your condition
-                    </p>
-                  </CardHeader>
-                  <CardContent className="p-0">
-                    <ScrollArea className="h-96">
-                      <div className="space-y-2 p-4">
-                        {symptoms.map((symptom) => (
-                          <Button
-                            key={symptom.id}
-                            variant="outline"
-                            className="w-full h-auto p-3 text-left justify-start whitespace-normal hover:bg-primary/5"
-                            onClick={() => handleSymptomClick(symptom)}
-                          >
-                            <span className="text-xs leading-relaxed">{symptom.text}</span>
-                          </Button>
-                        ))}
-                      </div>
-                    </ScrollArea>
-                  </CardContent>
-                </Card>
-              </div>
-            ) : (
-              /* Selected Symptom Display - Show only when symptom is selected */
+            {selectedSymptom ? (
+              /* Always show selected symptom with action buttons */
               <div className="flex-1 p-4 flex flex-col">
                 <Card className="border-primary/50 flex-1">
                   <CardHeader className="pb-2">
@@ -390,23 +412,15 @@ const UniversalSymptomSelector = ({
                       </p>
                     </div>
                     
-                    {highlightCircle ? (
-                      <div className="bg-green-50 p-2 rounded-lg">
-                        <p className="text-xs text-green-700 text-center">
-                          ✓ Location marked on image
-                        </p>
-                      </div>
-                    ) : (
-                      <div className="bg-amber-50 p-2 rounded-lg">
-                        <p className="text-xs text-amber-700 text-center">
-                          Click on the image to mark the location
-                        </p>
-                      </div>
-                    )}
+                    <div className="bg-green-50 p-2 rounded-lg">
+                      <p className="text-xs text-green-700 text-center">
+                        ✓ Location marked on image
+                      </p>
+                    </div>
                   </CardContent>
                 </Card>
                 
-                {/* Action Buttons */}
+                {/* Action Buttons - Always Visible */}
                 <div className="mt-4 space-y-2">
                   <Button 
                     variant="outline" 
@@ -418,15 +432,62 @@ const UniversalSymptomSelector = ({
                   <Button 
                     className="w-full"
                     onClick={handleSubmit}
-                    disabled={!highlightCircle}
+                    disabled={!selectedSymptom}
                   >
                     Submit Selection to Know Possible Condition
                   </Button>
                 </div>
               </div>
+            ) : (
+              /* Placeholder when no symptom selected */
+              <div className="flex-1 p-4 flex items-center justify-center">
+                <div className="text-center text-muted-foreground">
+                  <div className="w-16 h-16 mx-auto mb-4 bg-primary/10 rounded-full flex items-center justify-center">
+                    <div className="w-8 h-8 bg-primary/20 rounded-full"></div>
+                  </div>
+                  <p className="text-sm">Click on the image to select a symptom</p>
+                </div>
+              </div>
             )}
           </div>
         </div>
+
+        {/* Symptom Selection Popover */}
+        <Popover open={showSymptomPopover} onOpenChange={setShowSymptomPopover}>
+          <PopoverTrigger asChild>
+            <div 
+              className="absolute pointer-events-none"
+              style={{
+                left: popoverPosition.x,
+                top: popoverPosition.y,
+                transform: 'translate(-50%, -50%)'
+              }}
+            />
+          </PopoverTrigger>
+          <PopoverContent 
+            className="w-80 max-h-96 p-2"
+            side="right"
+            align="start"
+          >
+            <div className="space-y-1">
+              <h4 className="font-medium text-sm mb-2">Select Your Symptom</h4>
+              <ScrollArea className="h-80">
+                <div className="space-y-1">
+                  {symptoms.map((symptom) => (
+                    <Button
+                      key={symptom.id}
+                      variant="ghost"
+                      className="w-full h-auto p-2 text-left justify-start whitespace-normal hover:bg-primary/5 text-xs"
+                      onClick={() => handleSymptomClick(symptom)}
+                    >
+                      <span className="leading-relaxed">{symptom.text}</span>
+                    </Button>
+                  ))}
+                </div>
+              </ScrollArea>
+            </div>
+          </PopoverContent>
+        </Popover>
       </DialogContent>
     </Dialog>
   );
