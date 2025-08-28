@@ -44,68 +44,83 @@ const UniversalSymptomSelector = ({
 
   // Initialize Fabric.js canvas
   useEffect(() => {
-    if (!canvasRef.current || !open || !imageUrl) return;
+    if (!canvasRef.current || !open || !imageUrl) {
+      console.log('Canvas initialization skipped:', { canvasRef: !!canvasRef.current, open, imageUrl });
+      return;
+    }
 
-    console.log('Initializing Fabric canvas with imageUrl:', imageUrl);
+    console.log('🎨 Initializing Fabric canvas with imageUrl:', imageUrl);
 
     const canvas = new FabricCanvas(canvasRef.current, {
       width: Math.min(window.innerWidth * 0.7, 1000),
       height: Math.min(window.innerHeight * 0.8, 700),
       selection: false,
       hoverCursor: 'pointer',
-      moveCursor: 'pointer'
+      moveCursor: 'pointer',
+      backgroundColor: '#f8f9fa'
     });
 
-    // Load background image with better error handling
-    const loadBackgroundImage = async () => {
+    console.log('📏 Canvas created with dimensions:', canvas.width, 'x', canvas.height);
+
+    // Simple direct image loading approach
+    const loadImage = async () => {
       try {
-        console.log('Loading image from URL:', imageUrl);
+        console.log('🔄 Starting image load from:', imageUrl);
         
-        // Create a regular Image element first to ensure it loads
-        const img = new Image();
-        img.crossOrigin = 'anonymous';
+        // Create Fabric Image directly from the blob URL
+        const fabricImg = await FabricImage.fromURL(imageUrl);
+        console.log('✅ Fabric image created successfully, original dimensions:', fabricImg.width, 'x', fabricImg.height);
         
-        img.onload = () => {
-          console.log('Image loaded successfully, creating Fabric image');
-          // Now create Fabric Image from the loaded image
-          FabricImage.fromURL(imageUrl, {
-            crossOrigin: 'anonymous'
-          }).then((fabricImg) => {
-            console.log('Fabric image created, dimensions:', fabricImg.width, 'x', fabricImg.height);
-            
-            // Scale image to fit canvas while maintaining aspect ratio
-            const scaleX = canvas.width! / fabricImg.width!;
-            const scaleY = canvas.height! / fabricImg.height!;
-            const scale = Math.min(scaleX, scaleY) * 0.9; // 90% to leave some margin
-            
-            fabricImg.scale(scale);
-            fabricImg.set({
-              left: (canvas.width! - fabricImg.width! * scale) / 2,
-              top: (canvas.height! - fabricImg.height! * scale) / 2,
-              selectable: false,
-              evented: false
-            });
-            
-            canvas.backgroundImage = fabricImg;
-            canvas.renderAll();
-            console.log('Background image set successfully');
-          }).catch((error) => {
-            console.error('Error creating Fabric image:', error);
-          });
-        };
+        // Calculate scaling to fit canvas
+        const canvasWidth = canvas.width!;
+        const canvasHeight = canvas.height!;
+        const imgWidth = fabricImg.width!;
+        const imgHeight = fabricImg.height!;
         
-        img.onerror = (error) => {
-          console.error('Error loading image element:', error);
-        };
+        const scaleX = canvasWidth / imgWidth;
+        const scaleY = canvasHeight / imgHeight;
+        const scale = Math.min(scaleX, scaleY) * 0.95; // Leave 5% margin
         
-        img.src = imageUrl;
+        console.log('📐 Scaling factor:', scale);
+        
+        // Apply scaling and positioning
+        fabricImg.set({
+          scaleX: scale,
+          scaleY: scale,
+          left: (canvasWidth - imgWidth * scale) / 2,
+          top: (canvasHeight - imgHeight * scale) / 2,
+          selectable: false,
+          evented: false
+        });
+        
+        // Set as background
+        canvas.backgroundImage = fabricImg;
+        canvas.renderAll();
+        console.log('🖼️ Background image set and rendered successfully');
         
       } catch (error) {
-        console.error('Error in loadBackgroundImage:', error);
+        console.error('❌ Error loading image into Fabric:', error);
+        
+        // Fallback: try adding as regular object instead of background
+        try {
+          console.log('🔄 Trying fallback approach...');
+          const fabricImg = await FabricImage.fromURL(imageUrl);
+          fabricImg.set({
+            left: 0,
+            top: 0,
+            selectable: false,
+            evented: false
+          });
+          canvas.add(fabricImg);
+          canvas.renderAll();
+          console.log('✅ Fallback image load successful');
+        } catch (fallbackError) {
+          console.error('❌ Fallback also failed:', fallbackError);
+        }
       }
     };
 
-    loadBackgroundImage();
+    loadImage();
 
     // Handle canvas clicks to place markers
     canvas.on('mouse:down', (event) => {
@@ -197,8 +212,11 @@ const UniversalSymptomSelector = ({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-[95vw] max-h-[95vh] w-full h-full p-0">
+      <DialogContent className="max-w-[95vw] max-h-[95vh] w-full h-full p-0" aria-describedby="symptom-selector-description">
         <DialogTitle className="sr-only">Universal Symptom Selector - {bodyPart}</DialogTitle>
+        <div id="symptom-selector-description" className="sr-only">
+          Interactive symptom selector for {bodyPart}. Select a symptom from the list and click on the image to mark the location.
+        </div>
         
         <div className="flex h-full">
           {/* Left Side - Interactive Canvas */}
