@@ -1,155 +1,136 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { supabase } from '@/integrations/supabase/client';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { useToast } from '@/hooks/use-toast';
-import { Stethoscope, Lock, Mail } from 'lucide-react';
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Stethoscope, Lock, Mail } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 const DoctorLogin = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
   const navigate = useNavigate();
   const { toast } = useToast();
-
-  useEffect(() => {
-    // Check if user is already logged in
-    const checkUser = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        // Check if user is a doctor
-        const { data: roles } = await supabase
-          .from('user_roles')
-          .select('role')
-          .eq('user_id', session.user.id)
-          .eq('role', 'doctor');
-        
-        if (roles && roles.length > 0) {
-          navigate('/doctor/dashboard');
-        }
-      }
-    };
-    checkUser();
-  }, [navigate]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setError("");
 
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
-        password,
+        password
       });
 
-      if (error) {
-        throw error;
-      }
+      if (error) throw error;
 
       if (data.user) {
         // Check if user has doctor role
-        const { data: roles } = await supabase
-          .from('user_roles')
-          .select('role')
-          .eq('user_id', data.user.id)
-          .eq('role', 'doctor');
+        const { data: roleData } = await supabase
+          .from("user_roles")
+          .select("role")
+          .eq("user_id", data.user.id)
+          .eq("role", "doctor")
+          .single();
 
-        if (!roles || roles.length === 0) {
+        if (!roleData) {
+          setError("Access denied. Doctor credentials required.");
           await supabase.auth.signOut();
-          toast({
-            variant: 'destructive',
-            title: 'Access Denied',
-            description: 'You do not have doctor privileges. Please contact administrator.',
-          });
           return;
         }
 
         toast({
-          title: 'Login Successful',
-          description: 'Welcome back, Doctor!',
+          title: "Login Successful",
+          description: "Welcome back, Doctor!",
         });
-        navigate('/doctor/dashboard');
+
+        navigate("/doctor/dashboard");
       }
     } catch (error: any) {
-      toast({
-        variant: 'destructive',
-        title: 'Login Failed',
-        description: error.message || 'Invalid email or password',
-      });
+      console.error("Login error:", error);
+      setError(error.message || "Invalid credentials");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleTestLogin = () => {
-    setEmail('waseem@5thvital.com');
-    setPassword('doctor123');
-  };
-
   return (
-    <div className="min-h-screen bg-gradient-primary flex items-center justify-center p-4">
-      <Card className="w-full max-w-md shadow-elegant">
-        <CardHeader className="text-center">
-          <div className="mx-auto w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mb-4">
-            <Stethoscope className="w-8 h-8 text-primary" />
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/5 to-secondary/10 p-4">
+      <Card className="w-full max-w-md shadow-lg border-primary/20">
+        <CardHeader className="text-center space-y-4">
+          <div className="flex justify-center">
+            <div className="bg-primary/10 p-4 rounded-full">
+              <Stethoscope className="h-8 w-8 text-primary" />
+            </div>
           </div>
-          <CardTitle className="text-2xl font-bold text-foreground">Doctor Login</CardTitle>
-          <CardDescription>
-            Access your medical dashboard and patient cases
-          </CardDescription>
+          <CardTitle className="text-2xl font-bold text-foreground">
+            Doctor Login
+          </CardTitle>
+          <p className="text-muted-foreground">
+            Access your medical dashboard
+          </p>
         </CardHeader>
+
         <CardContent>
           <form onSubmit={handleLogin} className="space-y-4">
+            {error && (
+              <Alert variant="destructive">
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            )}
+
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="Enter your email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="pl-10"
-                  required
-                />
-              </div>
+              <Label htmlFor="email" className="flex items-center gap-2">
+                <Mail className="h-4 w-4" />
+                Email Address
+              </Label>
+              <Input
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="doctor@example.com"
+                required
+                className="transition-smooth"
+              />
             </div>
+
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="password"
-                  type="password"
-                  placeholder="Enter your password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="pl-10"
-                  required
-                />
-              </div>
+              <Label htmlFor="password" className="flex items-center gap-2">
+                <Lock className="h-4 w-4" />
+                Password
+              </Label>
+              <Input
+                id="password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Enter your password"
+                required
+                className="transition-smooth"
+              />
             </div>
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? 'Signing in...' : 'Sign In'}
-            </Button>
-          </form>
-          
-          <div className="mt-6 pt-4 border-t border-border">
-            <Button 
-              variant="outline" 
-              onClick={handleTestLogin}
-              className="w-full text-sm"
+
+            <Button
+              type="submit"
+              className="w-full"
+              disabled={loading}
             >
-              Use Test Credentials
+              {loading ? "Signing In..." : "Sign In"}
             </Button>
-            <p className="text-xs text-muted-foreground mt-2 text-center">
-              For testing: waseem@5thvital.com / doctor123
-            </p>
-          </div>
+
+            <div className="text-center text-sm text-muted-foreground">
+              <p>Test Credentials:</p>
+              <p>Email: waseem@5thvital.com</p>
+              <p>Password: doctor123</p>
+            </div>
+          </form>
         </CardContent>
       </Card>
     </div>

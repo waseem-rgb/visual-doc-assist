@@ -1,23 +1,25 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { supabase } from '@/integrations/supabase/client';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useToast } from '@/hooks/use-toast';
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { 
-  LogOut, 
+  Stethoscope, 
   Users, 
   Clock, 
   CheckCircle, 
+  LogOut, 
+  User, 
+  Calendar,
   Phone,
   FileText,
-  User,
-  Calendar,
-  Stethoscope
-} from 'lucide-react';
-import PrescriptionRequestDetail from '@/components/PrescriptionRequestDetail';
+  Eye
+} from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import PrescriptionRequestDetail from "@/components/PrescriptionRequestDetail";
 
 interface PrescriptionRequest {
   id: string;
@@ -32,8 +34,8 @@ interface PrescriptionRequest {
   common_treatments: string;
   prescription_required: boolean;
   status: 'pending' | 'in_progress' | 'completed';
-  assigned_doctor_id: string | null;
   created_at: string;
+  assigned_doctor_id: string | null;
 }
 
 interface DoctorProfile {
@@ -45,136 +47,98 @@ interface DoctorProfile {
 const DoctorDashboard = () => {
   const [requests, setRequests] = useState<PrescriptionRequest[]>([]);
   const [doctorProfile, setDoctorProfile] = useState<DoctorProfile | null>(null);
-  const [selectedRequest, setSelectedRequest] = useState<PrescriptionRequest | null>(null);
   const [loading, setLoading] = useState(true);
-  const [stats, setStats] = useState({
-    pending: 0,
-    inProgress: 0,
-    completed: 0,
-    total: 0
-  });
-  
+  const [selectedRequest, setSelectedRequest] = useState<PrescriptionRequest | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
 
   useEffect(() => {
-    checkAuthAndLoadData();
+    checkAuthAndFetchData();
   }, []);
 
-  const checkAuthAndLoadData = async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-    
-    if (!session) {
-      navigate('/doctor/login');
-      return;
-    }
-
-    // Check doctor role
-    const { data: roles } = await supabase
-      .from('user_roles')
-      .select('role')
-      .eq('user_id', session.user.id)
-      .eq('role', 'doctor');
-
-    if (!roles || roles.length === 0) {
-      toast({
-        variant: 'destructive',
-        title: 'Access Denied',
-        description: 'You do not have doctor privileges.',
-      });
-      await supabase.auth.signOut();
-      navigate('/doctor/login');
-      return;
-    }
-
-    await Promise.all([
-      loadDoctorProfile(session.user.id),
-      loadPrescriptionRequests()
-    ]);
-    setLoading(false);
-  };
-
-  const loadDoctorProfile = async (userId: string) => {
-    const { data, error } = await supabase
-      .from('doctor_profiles')
-      .select('*')
-      .eq('id', userId)
-      .single();
-
-    if (error) {
-      console.error('Error loading doctor profile:', error);
-    } else {
-      setDoctorProfile(data);
-    }
-  };
-
-  const loadPrescriptionRequests = async () => {
-    const { data, error } = await supabase
-      .from('prescription_requests')
-      .select('*')
-      .order('created_at', { ascending: false });
-
-    if (error) {
-      console.error('Error loading requests:', error);
-      toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: 'Failed to load prescription requests.',
-      });
-    } else {
-      setRequests(data || []);
+  const checkAuthAndFetchData = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
       
-      // Calculate stats
-      const pending = data?.filter(r => r.status === 'pending').length || 0;
-      const inProgress = data?.filter(r => r.status === 'in_progress').length || 0;
-      const completed = data?.filter(r => r.status === 'completed').length || 0;
-      
-      setStats({
-        pending,
-        inProgress,
-        completed,
-        total: data?.length || 0
+      if (!user) {
+        navigate("/doctor/login");
+        return;
+      }
+
+      // Check doctor role
+      const { data: roleData } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", user.id)
+        .eq("role", "doctor")
+        .single();
+
+      if (!roleData) {
+        navigate("/doctor/login");
+        return;
+      }
+
+      // Fetch doctor profile
+      const { data: profile } = await supabase
+        .from("doctor_profiles")
+        .select("*")
+        .eq("id", user.id)
+        .single();
+
+      if (profile) {
+        setDoctorProfile(profile);
+      }
+
+      // Fetch prescription requests
+      const { data: requestsData } = await supabase
+        .from("prescription_requests")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (requestsData) {
+        setRequests(requestsData);
+      }
+    } catch (error) {
+      console.error("Error fetching data:", error);
+      toast({
+        title: "Error",
+        description: "Failed to load dashboard data",
+        variant: "destructive",
       });
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
-    navigate('/doctor/login');
-  };
-
-  const getStatusBadgeVariant = (status: string) => {
-    switch (status) {
-      case 'pending':
-        return 'destructive';
-      case 'in_progress':
-        return 'secondary';
-      case 'completed':
-        return 'default';
-      default:
-        return 'secondary';
-    }
+    navigate("/doctor/login");
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'pending':
-        return 'text-red-600';
-      case 'in_progress':
-        return 'text-yellow-600';
-      case 'completed':
-        return 'text-green-600';
-      default:
-        return 'text-gray-600';
+      case 'pending': return 'bg-yellow-500';
+      case 'in_progress': return 'bg-blue-500';
+      case 'completed': return 'bg-green-500';
+      default: return 'bg-gray-500';
     }
+  };
+
+  const getStatusCounts = () => {
+    return {
+      pending: requests.filter(r => r.status === 'pending').length,
+      in_progress: requests.filter(r => r.status === 'in_progress').length,
+      completed: requests.filter(r => r.status === 'completed').length,
+      total: requests.length,
+    };
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <Stethoscope className="w-12 h-12 text-primary mx-auto mb-4 animate-pulse" />
-          <p className="text-muted-foreground">Loading dashboard...</p>
+          <Stethoscope className="h-8 w-8 animate-pulse text-primary mx-auto mb-4" />
+          <p>Loading dashboard...</p>
         </div>
       </div>
     );
@@ -184,189 +148,201 @@ const DoctorDashboard = () => {
     return (
       <PrescriptionRequestDetail
         request={selectedRequest}
-        onBack={() => {
+        onBack={() => setSelectedRequest(null)}
+        onUpdate={(updatedRequest) => {
+          setRequests(requests.map(r => 
+            r.id === updatedRequest.id ? updatedRequest : r
+          ));
           setSelectedRequest(null);
-          loadPrescriptionRequests();
         }}
       />
     );
   }
 
+  const stats = getStatusCounts();
+
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-gradient-to-br from-background to-secondary/5">
       {/* Header */}
-      <header className="border-b bg-card shadow-soft">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+      <div className="border-b bg-background/80 backdrop-blur-sm">
+        <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
-                <Stethoscope className="w-5 h-5 text-primary" />
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                <Stethoscope className="h-8 w-8 text-primary" />
+                <h1 className="text-2xl font-bold text-foreground">VrDoc</h1>
               </div>
-              <div>
-                <h1 className="text-2xl font-bold text-foreground">Doctor Dashboard</h1>
-                {doctorProfile && (
-                  <p className="text-sm text-muted-foreground">
-                    Welcome back, {doctorProfile.full_name} • {doctorProfile.specialization}
-                  </p>
-                )}
+              <div className="hidden md:block">
+                <p className="text-lg font-semibold text-foreground">
+                  Welcome, {doctorProfile?.full_name || "Doctor"}
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  {doctorProfile?.specialization}
+                </p>
               </div>
             </div>
-            <Button variant="outline" onClick={handleSignOut}>
-              <LogOut className="w-4 h-4 mr-2" />
-              Sign Out
-            </Button>
+            
+            <div className="flex items-center gap-4">
+              <Avatar>
+                <AvatarFallback>
+                  <User className="h-4 w-4" />
+                </AvatarFallback>
+              </Avatar>
+              <Button variant="ghost" size="sm" onClick={handleSignOut}>
+                <LogOut className="h-4 w-4" />
+                Sign Out
+              </Button>
+            </div>
           </div>
         </div>
-      </header>
+      </div>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="container mx-auto p-6">
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           <Card>
             <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Total Cases</p>
-                  <p className="text-3xl font-bold text-foreground">{stats.total}</p>
+              <div className="flex items-center gap-4">
+                <div className="bg-blue-500/10 p-3 rounded-full">
+                  <Users className="h-6 w-6 text-blue-500" />
                 </div>
-                <Users className="w-8 h-8 text-primary" />
+                <div>
+                  <p className="text-2xl font-bold">{stats.total}</p>
+                  <p className="text-sm text-muted-foreground">Total Requests</p>
+                </div>
               </div>
             </CardContent>
           </Card>
-          
+
           <Card>
             <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Pending</p>
-                  <p className="text-3xl font-bold text-red-600">{stats.pending}</p>
+              <div className="flex items-center gap-4">
+                <div className="bg-yellow-500/10 p-3 rounded-full">
+                  <Clock className="h-6 w-6 text-yellow-500" />
                 </div>
-                <Clock className="w-8 h-8 text-red-600" />
+                <div>
+                  <p className="text-2xl font-bold">{stats.pending}</p>
+                  <p className="text-sm text-muted-foreground">Pending</p>
+                </div>
               </div>
             </CardContent>
           </Card>
-          
+
           <Card>
             <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">In Progress</p>
-                  <p className="text-3xl font-bold text-yellow-600">{stats.inProgress}</p>
+              <div className="flex items-center gap-4">
+                <div className="bg-blue-500/10 p-3 rounded-full">
+                  <FileText className="h-6 w-6 text-blue-500" />
                 </div>
-                <FileText className="w-8 h-8 text-yellow-600" />
+                <div>
+                  <p className="text-2xl font-bold">{stats.in_progress}</p>
+                  <p className="text-sm text-muted-foreground">In Progress</p>
+                </div>
               </div>
             </CardContent>
           </Card>
-          
+
           <Card>
             <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Completed</p>
-                  <p className="text-3xl font-bold text-green-600">{stats.completed}</p>
+              <div className="flex items-center gap-4">
+                <div className="bg-green-500/10 p-3 rounded-full">
+                  <CheckCircle className="h-6 w-6 text-green-500" />
                 </div>
-                <CheckCircle className="w-8 h-8 text-green-600" />
+                <div>
+                  <p className="text-2xl font-bold">{stats.completed}</p>
+                  <p className="text-sm text-muted-foreground">Completed</p>
+                </div>
               </div>
             </CardContent>
           </Card>
         </div>
 
-        {/* Prescription Requests */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Patient Cases</CardTitle>
-            <CardDescription>
-              Manage prescription requests and patient consultations
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Tabs defaultValue="pending" className="w-full">
-              <TabsList className="grid w-full grid-cols-3">
-                <TabsTrigger value="pending">Pending ({stats.pending})</TabsTrigger>
-                <TabsTrigger value="in_progress">In Progress ({stats.inProgress})</TabsTrigger>
-                <TabsTrigger value="completed">Completed ({stats.completed})</TabsTrigger>
-              </TabsList>
-              
-              {['pending', 'in_progress', 'completed'].map((status) => (
-                <TabsContent key={status} value={status} className="space-y-4">
-                  {requests
-                    .filter(r => r.status === status)
-                    .map((request) => (
-                      <Card key={request.id} className="hover:shadow-medium transition-shadow cursor-pointer">
-                        <CardContent className="p-6">
-                          <div className="flex items-start justify-between">
-                            <div className="flex-1">
-                              <div className="flex items-center space-x-4 mb-3">
-                                <div className="flex items-center space-x-2">
-                                  <User className="w-4 h-4 text-muted-foreground" />
-                                  <span className="font-semibold">{request.patient_name}</span>
-                                </div>
-                                <Badge variant={getStatusBadgeVariant(request.status)}>
-                                  {request.status.replace('_', ' ')}
-                                </Badge>
-                                <div className="flex items-center text-sm text-muted-foreground">
-                                  <Calendar className="w-3 h-3 mr-1" />
-                                  {new Date(request.created_at).toLocaleDateString()}
-                                </div>
+        {/* Request Tabs */}
+        <Tabs defaultValue="pending" className="w-full">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="pending">
+              Pending ({stats.pending})
+            </TabsTrigger>
+            <TabsTrigger value="in_progress">
+              In Progress ({stats.in_progress})
+            </TabsTrigger>
+            <TabsTrigger value="completed">
+              Completed ({stats.completed})
+            </TabsTrigger>
+          </TabsList>
+
+          {(['pending', 'in_progress', 'completed'] as const).map((status) => (
+            <TabsContent key={status} value={status} className="mt-6">
+              <div className="grid gap-4">
+                {requests
+                  .filter(request => request.status === status)
+                  .map((request) => (
+                    <Card key={request.id} className="hover:shadow-md transition-shadow">
+                      <CardContent className="p-6">
+                        <div className="flex items-center justify-between">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-4 mb-4">
+                              <div className="flex items-center gap-2">
+                                <User className="h-4 w-4 text-muted-foreground" />
+                                <span className="font-semibold">
+                                  {request.patient_name}
+                                </span>
                               </div>
-                              
-                              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                                <div>
-                                  <span className="text-muted-foreground">Age:</span> {request.patient_age}
-                                </div>
-                                <div>
-                                  <span className="text-muted-foreground">Gender:</span> {request.patient_gender}
-                                </div>
-                                <div>
-                                  <span className="text-muted-foreground">Body Part:</span> {request.body_part}
-                                </div>
-                                <div>
-                                  <span className="text-muted-foreground">Type:</span>{' '}
-                                  {request.prescription_required ? 'Prescription' : 'Referral'}
-                                </div>
+                              <Badge className={getStatusColor(request.status)}>
+                                {request.status.replace('_', ' ')}
+                              </Badge>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                              <div className="flex items-center gap-2">
+                                <Calendar className="h-4 w-4 text-muted-foreground" />
+                                <span>{request.patient_age} years old</span>
                               </div>
-                              
-                              {request.probable_diagnosis && (
-                                <p className="mt-3 text-sm text-muted-foreground">
-                                  <span className="font-medium">Probable Diagnosis:</span> {request.probable_diagnosis}
-                                </p>
-                              )}
+                              <div className="flex items-center gap-2">
+                                <User className="h-4 w-4 text-muted-foreground" />
+                                <span>{request.patient_gender}</span>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <FileText className="h-4 w-4 text-muted-foreground" />
+                                <span>{request.body_part}</span>
+                              </div>
                             </div>
-                            
-                            <div className="flex space-x-2 ml-4">
-                              <Button
-                                size="sm"
-                                onClick={() => setSelectedRequest(request)}
-                              >
-                                View Details
-                              </Button>
-                            </div>
+
+                            <p className="text-sm text-muted-foreground mt-2 line-clamp-2">
+                              {request.short_summary || request.symptoms}
+                            </p>
                           </div>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  
-                  {requests.filter(r => r.status === status).length === 0 && (
-                    <div className="text-center py-8">
-                      <div className={`w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center ${
-                        status === 'pending' ? 'bg-red-100' :
-                        status === 'in_progress' ? 'bg-yellow-100' : 'bg-green-100'
-                      }`}>
-                        {status === 'pending' ? <Clock className={`w-8 h-8 text-red-600`} /> :
-                         status === 'in_progress' ? <FileText className={`w-8 h-8 text-yellow-600`} /> :
-                         <CheckCircle className={`w-8 h-8 text-green-600`} />}
+
+                          <div className="flex items-center gap-2 ml-4">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setSelectedRequest(request)}
+                            >
+                              <Eye className="h-4 w-4 mr-1" />
+                              View Details
+                            </Button>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+
+                {requests.filter(request => request.status === status).length === 0 && (
+                  <Card>
+                    <CardContent className="p-12 text-center">
+                      <div className="text-muted-foreground">
+                        <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                        <p>No {status.replace('_', ' ')} requests found</p>
                       </div>
-                      <p className="text-muted-foreground">
-                        No {status.replace('_', ' ')} cases
-                      </p>
-                    </div>
-                  )}
-                </TabsContent>
-              ))}
-            </Tabs>
-          </CardContent>
-        </Card>
-      </main>
+                    </CardContent>
+                  </Card>
+                )}
+              </div>
+            </TabsContent>
+          ))}
+        </Tabs>
+      </div>
     </div>
   );
 };
