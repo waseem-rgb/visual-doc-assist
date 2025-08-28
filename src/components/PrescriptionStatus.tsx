@@ -30,9 +30,27 @@ const PrescriptionStatus = ({ request }: PrescriptionStatusProps) => {
     
     setIsDownloading(true);
     try {
-      // If PDF URL exists, open it directly
       if (request.prescription.pdf_url) {
-        window.open(request.prescription.pdf_url, '_blank');
+        // Create a temporary link element for download
+        const link = document.createElement('a');
+        link.href = request.prescription.pdf_url;
+        link.target = '_blank';
+        link.rel = 'noopener noreferrer';
+        
+        // Try to get filename from URL or use default
+        const urlParts = request.prescription.pdf_url.split('/');
+        const filename = urlParts[urlParts.length - 1] || `prescription-${request.id}.pdf`;
+        link.download = filename;
+        
+        // Append to body, click, and remove
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        toast({
+          title: "Download Started",
+          description: "Your prescription is being downloaded.",
+        });
         return;
       }
 
@@ -46,7 +64,7 @@ const PrescriptionStatus = ({ request }: PrescriptionStatusProps) => {
       console.error('Error handling prescription:', error);
       toast({
         title: "Error", 
-        description: "Failed to open prescription",
+        description: "Failed to download prescription. Please try again.",
         variant: "destructive",
       });
     } finally {

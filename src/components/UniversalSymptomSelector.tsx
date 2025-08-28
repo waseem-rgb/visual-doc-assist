@@ -58,8 +58,9 @@ const UniversalSymptomSelector = ({
   const { toast } = useToast();
 
   const getImagePath = useCallback(() => {
-    const basePath = `/src/assets/${bodyPart}-${view}-${gender}.jpg`;
-    return basePath;
+    const fileName = `${bodyPart}-${view}-${gender}.jpg`;
+    const { data } = supabase.storage.from('Symptom_Images').getPublicUrl(fileName);
+    return data.publicUrl;
   }, [bodyPart, view, gender]);
 
   const fetchSymptoms = useCallback(async () => {
@@ -211,22 +212,15 @@ const UniversalSymptomSelector = ({
   }, [isOpen, initializeCanvas, isFullscreen]);
 
   const handleSymptomClick = (symptom: string) => {
-    setSelectedSymptom(symptom);
-    setShowConfirmation(true);
-    scrollToSymptom(symptom);
-  };
-
-  const confirmSymptomSelection = () => {
-    if (selectedSymptom && !selectedSymptoms.includes(selectedSymptom)) {
-      const newSymptoms = [...selectedSymptoms, selectedSymptom];
+    if (!selectedSymptoms.includes(symptom)) {
+      const newSymptoms = [...selectedSymptoms, symptom];
       setSelectedSymptoms(newSymptoms);
       toast({
         title: "Symptom Added",
-        description: `"${selectedSymptom}" has been added to your symptoms.`,
+        description: `"${symptom}" has been added to your symptoms.`,
       });
     }
-    setSelectedSymptom('');
-    setShowConfirmation(false);
+    scrollToSymptom(symptom);
   };
 
   const removeSymptom = (symptom: string) => {
@@ -345,47 +339,13 @@ const UniversalSymptomSelector = ({
               {Math.round(zoomLevel * 100)}%
             </div>
 
-            {/* Confirmation Popup */}
-            {showConfirmation && selectedSymptom && (
-              <div className="absolute inset-0 bg-black/50 flex items-center justify-center z-50">
-                <Card className="w-96 max-w-[90vw]">
-                  <CardContent className="p-6">
-                    <h3 className="font-semibold mb-2">Confirm Symptom Selection</h3>
-                    <p className="text-sm text-muted-foreground mb-4">
-                      Do you want to add this symptom?
-                    </p>
-                    <div className="bg-muted p-3 rounded mb-4">
-                      <p className="text-sm font-medium">{selectedSymptom}</p>
-                    </div>
-                    <div className="flex gap-2 justify-end">
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => {
-                          setSelectedSymptom('');
-                          setShowConfirmation(false);
-                        }}
-                      >
-                        Cancel
-                      </Button>
-                      <Button size="sm" onClick={confirmSymptomSelection}>
-                        Add Symptom
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-            )}
           </div>
 
           {/* Right Side - Symptom List (Column View) */}
           {viewMode === 'column' && (
             <div className={`${isFullscreen ? 'w-1/6' : 'w-1/5'} bg-background border-l border-border flex flex-col min-h-0`}>
               <div className="p-4 border-b border-border flex-shrink-0">
-                <h3 className="text-lg font-semibold text-foreground mb-2">Available Symptoms</h3>
-                <p className="text-sm text-muted-foreground">
-                  Click on a symptom to select it
-                </p>
+                <h3 className="text-lg font-semibold text-foreground">Available Symptoms</h3>
               </div>
 
               <div 
@@ -412,9 +372,7 @@ const UniversalSymptomSelector = ({
                         key={index}
                         data-symptom={symptomData.Symptoms}
                         className={`p-3 rounded-lg border cursor-pointer transition-all hover:bg-accent hover:border-accent-foreground ${
-                          selectedSymptom === symptomData.Symptoms 
-                            ? 'bg-primary/10 border-primary' 
-                            : selectedSymptoms.includes(symptomData.Symptoms)
+                            selectedSymptoms.includes(symptomData.Symptoms)
                             ? 'bg-green-50 border-green-200'
                             : 'bg-card border-border hover:border-accent-foreground'
                         }`}
@@ -465,9 +423,7 @@ const UniversalSymptomSelector = ({
                         key={index}
                         data-symptom={symptomData.Symptoms}
                         className={`flex-shrink-0 p-3 rounded-lg border cursor-pointer transition-all hover:bg-accent hover:border-accent-foreground ${
-                          selectedSymptom === symptomData.Symptoms 
-                            ? 'bg-primary/10 border-primary' 
-                            : selectedSymptoms.includes(symptomData.Symptoms)
+                            selectedSymptoms.includes(symptomData.Symptoms)
                             ? 'bg-green-50 border-green-200'
                             : 'bg-card border-border hover:border-accent-foreground'
                         }`}
