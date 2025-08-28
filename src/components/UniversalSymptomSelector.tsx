@@ -45,6 +45,7 @@ const UniversalSymptomSelector = ({
   const [zoomLevel, setZoomLevel] = useState(1);
   const [imageLoaded, setImageLoaded] = useState(false);
   const [imageDimensions, setImageDimensions] = useState({ width: 0, height: 0 });
+  const [displayDimensions, setDisplayDimensions] = useState({ width: 0, height: 0 });
 
   // Simplified image loading approach
   useEffect(() => {
@@ -66,17 +67,40 @@ const UniversalSymptomSelector = ({
     const img = e.currentTarget;
     console.log('✅ Image loaded successfully:', img.naturalWidth, 'x', img.naturalHeight);
     
+    // Calculate responsive display dimensions that fit in viewport
+    const maxWidth = 600; // Max width for the image container
+    const maxHeight = 500; // Max height for the image container
+    
+    let displayWidth = img.naturalWidth;
+    let displayHeight = img.naturalHeight;
+    
+    // Scale down if image is too large, maintaining aspect ratio
+    if (displayWidth > maxWidth || displayHeight > maxHeight) {
+      const widthRatio = maxWidth / displayWidth;
+      const heightRatio = maxHeight / displayHeight;
+      const scale = Math.min(widthRatio, heightRatio);
+      
+      displayWidth = Math.round(displayWidth * scale);
+      displayHeight = Math.round(displayHeight * scale);
+    }
+    
     setImageDimensions({ 
       width: img.naturalWidth, 
       height: img.naturalHeight 
     });
+    
+    setDisplayDimensions({
+      width: displayWidth,
+      height: displayHeight
+    });
+    
     setImageLoaded(true);
 
-    // Initialize canvas after image loads
-    if (canvasRef.current && img.naturalWidth > 0) {
+    // Initialize canvas after image loads with display dimensions
+    if (canvasRef.current && displayWidth > 0) {
       const canvas = new FabricCanvas(canvasRef.current, {
-        width: img.naturalWidth,
-        height: img.naturalHeight,
+        width: displayWidth,
+        height: displayHeight,
         selection: false,
         hoverCursor: 'pointer',
         moveCursor: 'pointer',
@@ -110,7 +134,7 @@ const UniversalSymptomSelector = ({
       });
 
       setFabricCanvas(canvas);
-      console.log('🎨 Canvas initialized with dimensions:', img.naturalWidth, 'x', img.naturalHeight);
+      console.log('🎨 Canvas initialized with display dimensions:', displayWidth, 'x', displayHeight);
     }
   };
 
@@ -243,13 +267,20 @@ const UniversalSymptomSelector = ({
             {/* Canvas Container */}
             <div className="flex items-center justify-center h-full pt-16 pb-4 overflow-auto">
               <div 
-                ref={containerRef}
-                className="relative border-2 border-gray-200 rounded-lg shadow-lg bg-white"
-                style={{ 
-                  transformOrigin: 'center',
-                  transition: 'transform 0.2s ease-in-out'
+                className="overflow-auto max-h-full max-w-full p-4"
+                style={{
+                  minHeight: 'fit-content',
+                  minWidth: 'fit-content'
                 }}
               >
+                <div 
+                  ref={containerRef}
+                  className="relative border-2 border-gray-200 rounded-lg shadow-lg bg-white inline-block"
+                  style={{ 
+                    transformOrigin: 'center',
+                    transition: 'transform 0.2s ease-in-out'
+                  }}
+                >
                 {/* Background Image */}
                 {imageUrl && (
                   <img
@@ -259,11 +290,11 @@ const UniversalSymptomSelector = ({
                     className="block max-w-none"
                     onLoad={handleImageLoad}
                     onError={handleImageError}
-                    style={{
-                      width: imageDimensions.width || 'auto',
-                      height: imageDimensions.height || 'auto',
-                      display: imageLoaded ? 'block' : 'none'
-                    }}
+                     style={{
+                       width: displayDimensions.width || 'auto',
+                       height: displayDimensions.height || 'auto',
+                       display: imageLoaded ? 'block' : 'none'
+                     }}
                   />
                 )}
                 
@@ -277,17 +308,18 @@ const UniversalSymptomSelector = ({
                   </div>
                 )}
                 
-                {/* Overlay Canvas for Markers */}
-                {imageLoaded && (
-                  <canvas 
-                    ref={canvasRef}
-                    className="absolute top-0 left-0 pointer-events-auto"
-                    style={{
-                      width: imageDimensions.width,
-                      height: imageDimensions.height
-                    }}
-                  />
-                )}
+                 {/* Overlay Canvas for Markers */}
+                 {imageLoaded && (
+                   <canvas 
+                     ref={canvasRef}
+                     className="absolute top-0 left-0 pointer-events-auto"
+                     style={{
+                       width: displayDimensions.width,
+                       height: displayDimensions.height
+                     }}
+                   />
+                 )}
+                </div>
               </div>
             </div>
 
