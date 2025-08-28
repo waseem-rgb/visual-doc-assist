@@ -188,17 +188,15 @@ const GeneralSymptoms = ({ patientData }: GeneralSymptomsProps) => {
 
       {/* Universal Symptom Selector */}
       {currentSymptom && symptomImages[currentSymptom] && (
-      <UniversalSymptomSelector
-        isOpen={showSelector}
-        onClose={() => setShowSelector(false)}
-        bodyPart={currentSymptom}
-        gender={patientData.gender === 'Male' ? 'male' : 'female'}
-        view="front"
-        onSymptomsSelected={(symptoms) => {
-          console.log('Symptoms selected:', symptoms);
-          setShowSelector(false);
-        }}
-      />
+        <UniversalSymptomSelector
+          open={showSelector}
+          onClose={() => setShowSelector(false)}
+          imageUrl={symptomImages[currentSymptom]}
+          bodyPart={currentSymptom}
+          patientData={patientData}
+          symptoms={symptomContentData?.fallbackSymptoms || []}
+          onSymptomSubmit={handleSymptomSubmit}
+        />
       )}
     </div>
   );
