@@ -57,38 +57,10 @@ const UniversalSymptomSelector = ({
 
   const { toast } = useToast();
 
-  const getImagePath = useCallback(async () => {
-    try {
-      const { loadImageFromStorage } = await import('@/lib/storageUtils');
-      
-      // Try multiple filename variations based on the body part
-      const searchTerms = [
-        bodyPart, // Original body part name
-        bodyPart.toLowerCase(),
-        bodyPart.replace(/\s+/g, ''), // Remove spaces
-        bodyPart.replace(/\s+/g, '-'), // Replace spaces with dashes
-        bodyPart.replace(/\s+/g, '_'), // Replace spaces with underscores
-      ];
-
-      for (const searchTerm of searchTerms) {
-        console.log(`🔍 Trying to load image for: "${searchTerm}"`);
-        const result = await loadImageFromStorage(searchTerm, 'Symptom_Images');
-        if (result.url) {
-          console.log(`✅ Found image: ${result.url}`);
-          return result.url;
-        }
-      }
-      
-      // If no specific image found, try generic body diagram
-      console.log('🔄 Falling back to generic body diagram');
-      const fallbackResult = await loadImageFromStorage('body-diagram-front', 'Symptom_Images');
-      return fallbackResult.url;
-      
-    } catch (error) {
-      console.error('❌ Error in getImagePath:', error);
-      return null;
-    }
-  }, [bodyPart]);
+  const getImagePath = useCallback(() => {
+    const basePath = `/src/assets/${bodyPart}-${view}-${gender}.jpg`;
+    return basePath;
+  }, [bodyPart, view, gender]);
 
   const fetchSymptoms = useCallback(async () => {
     if (!bodyPart) return;
@@ -125,7 +97,7 @@ const UniversalSymptomSelector = ({
     }
   }, [isOpen, fetchSymptoms]);
 
-  const initializeCanvas = useCallback(async () => {
+  const initializeCanvas = useCallback(() => {
     if (!canvasRef.current || !containerRef.current) return;
 
     // Clean up existing canvas
@@ -133,13 +105,7 @@ const UniversalSymptomSelector = ({
       fabricCanvasRef.current.dispose();
     }
 
-    // Set canvas dimensions to match container
-    const containerWidth = containerRef.current.offsetWidth;
-    const containerHeight = containerRef.current.offsetHeight;
-
     const canvas = new FabricCanvas(canvasRef.current, {
-      width: containerWidth,
-      height: containerHeight,
       selection: false,
       preserveObjectStacking: true,
       allowTouchScrolling: false,
@@ -160,58 +126,35 @@ const UniversalSymptomSelector = ({
     fabricCanvasRef.current = canvas;
 
     // Load the body image
-    try {
-      console.log(`📸 Starting image load for: ${bodyPart}`);
-      const imagePath = await getImagePath();
-      console.log(`🎯 Image path result: ${imagePath || 'NULL'}`);
+    const imagePath = getImagePath();
+    FabricImage.fromURL(imagePath, { crossOrigin: 'anonymous' }).then((img) => {
+      if (!canvas || !containerRef.current) return;
+
+      const containerWidth = containerRef.current.offsetWidth * 0.75;
+      const containerHeight = containerRef.current.offsetHeight * 0.9;
       
-      if (imagePath) {
-        console.log(`🔄 Loading image from: ${imagePath}`);
-        FabricImage.fromURL(imagePath, { crossOrigin: 'anonymous' }).then((img) => {
-          if (!canvas || !containerRef.current) return;
-          
-          console.log(`📐 Image loaded - Size: ${img.width}x${img.height}`);
-          console.log(`📦 Container size: ${containerWidth}x${containerHeight}`);
+      const scale = Math.min(
+        containerWidth / (img.width || 1),
+        containerHeight / (img.height || 1)
+      ) * 0.8;
 
-          const maxWidth = containerWidth * 0.85;
-          const maxHeight = containerHeight * 0.85;
-          
-          const scale = Math.min(
-            maxWidth / (img.width || 1),
-            maxHeight / (img.height || 1)
-          );
-          
-          console.log(`🔍 Calculated scale: ${scale}`);
+      img.set({
+        left: (containerWidth - (img.width || 0) * scale) / 2,
+        top: (containerHeight - (img.height || 0) * scale) / 2,
+        scaleX: scale,
+        scaleY: scale,
+        selectable: false,
+        evented: false,
+        hoverCursor: 'crosshair',
+        moveCursor: 'crosshair'
+      });
 
-          img.set({
-            left: (containerWidth - (img.width || 0) * scale) / 2,
-            top: (containerHeight - (img.height || 0) * scale) / 2,
-            scaleX: scale,
-            scaleY: scale,
-            selectable: false,
-            evented: false,
-            hoverCursor: 'crosshair',
-            moveCursor: 'crosshair'
-          });
-
-          imageRef.current = img;
-          canvas.add(img);
-          canvas.renderAll();
-          console.log('✅ Image successfully added to canvas');
-        }).catch((error) => {
-          console.error('❌ Fabric image loading error:', error);
-          // Add a placeholder or error message to canvas
-          canvas.renderAll();
-        });
-      } else {
-        console.warn('⚠️ No image path available, rendering empty canvas');
-        // Still render the canvas so zoom controls work
-        canvas.renderAll();
-      }
-    } catch (error) {
-      console.error('💥 Error in image loading process:', error);
+      imageRef.current = img;
+      canvas.add(img);
       canvas.renderAll();
-    }
+    }).catch((error) => {
+      console.error('Error loading image:', error);
+    });
 
     // Handle canvas clicks - disabled for now to focus on list selection
     canvas.on('mouse:down', (event) => {
@@ -238,7 +181,7 @@ const UniversalSymptomSelector = ({
     });
 
     return canvas;
-  }, [getImagePath]);
+  }, [getImagePath, availableSymptoms, selectedSymptom]);
 
   const scrollToSymptom = (symptom: string) => {
     // Scroll in column view
@@ -268,15 +211,22 @@ const UniversalSymptomSelector = ({
   }, [isOpen, initializeCanvas, isFullscreen]);
 
   const handleSymptomClick = (symptom: string) => {
-    if (!selectedSymptoms.includes(symptom)) {
-      const newSymptoms = [...selectedSymptoms, symptom];
+    setSelectedSymptom(symptom);
+    setShowConfirmation(true);
+    scrollToSymptom(symptom);
+  };
+
+  const confirmSymptomSelection = () => {
+    if (selectedSymptom && !selectedSymptoms.includes(selectedSymptom)) {
+      const newSymptoms = [...selectedSymptoms, selectedSymptom];
       setSelectedSymptoms(newSymptoms);
       toast({
         title: "Symptom Added",
-        description: `"${symptom}" has been added to your symptoms.`,
+        description: `"${selectedSymptom}" has been added to your symptoms.`,
       });
     }
-    scrollToSymptom(symptom);
+    setSelectedSymptom('');
+    setShowConfirmation(false);
   };
 
   const removeSymptom = (symptom: string) => {
@@ -395,13 +345,47 @@ const UniversalSymptomSelector = ({
               {Math.round(zoomLevel * 100)}%
             </div>
 
+            {/* Confirmation Popup */}
+            {showConfirmation && selectedSymptom && (
+              <div className="absolute inset-0 bg-black/50 flex items-center justify-center z-50">
+                <Card className="w-96 max-w-[90vw]">
+                  <CardContent className="p-6">
+                    <h3 className="font-semibold mb-2">Confirm Symptom Selection</h3>
+                    <p className="text-sm text-muted-foreground mb-4">
+                      Do you want to add this symptom?
+                    </p>
+                    <div className="bg-muted p-3 rounded mb-4">
+                      <p className="text-sm font-medium">{selectedSymptom}</p>
+                    </div>
+                    <div className="flex gap-2 justify-end">
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => {
+                          setSelectedSymptom('');
+                          setShowConfirmation(false);
+                        }}
+                      >
+                        Cancel
+                      </Button>
+                      <Button size="sm" onClick={confirmSymptomSelection}>
+                        Add Symptom
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            )}
           </div>
 
           {/* Right Side - Symptom List (Column View) */}
           {viewMode === 'column' && (
             <div className={`${isFullscreen ? 'w-1/6' : 'w-1/5'} bg-background border-l border-border flex flex-col min-h-0`}>
               <div className="p-4 border-b border-border flex-shrink-0">
-                <h3 className="text-lg font-semibold text-foreground">Available Symptoms</h3>
+                <h3 className="text-lg font-semibold text-foreground mb-2">Available Symptoms</h3>
+                <p className="text-sm text-muted-foreground">
+                  Click on a symptom to select it
+                </p>
               </div>
 
               <div 
@@ -428,7 +412,9 @@ const UniversalSymptomSelector = ({
                         key={index}
                         data-symptom={symptomData.Symptoms}
                         className={`p-3 rounded-lg border cursor-pointer transition-all hover:bg-accent hover:border-accent-foreground ${
-                            selectedSymptoms.includes(symptomData.Symptoms)
+                          selectedSymptom === symptomData.Symptoms 
+                            ? 'bg-primary/10 border-primary' 
+                            : selectedSymptoms.includes(symptomData.Symptoms)
                             ? 'bg-green-50 border-green-200'
                             : 'bg-card border-border hover:border-accent-foreground'
                         }`}
@@ -479,7 +465,9 @@ const UniversalSymptomSelector = ({
                         key={index}
                         data-symptom={symptomData.Symptoms}
                         className={`flex-shrink-0 p-3 rounded-lg border cursor-pointer transition-all hover:bg-accent hover:border-accent-foreground ${
-                            selectedSymptoms.includes(symptomData.Symptoms)
+                          selectedSymptom === symptomData.Symptoms 
+                            ? 'bg-primary/10 border-primary' 
+                            : selectedSymptoms.includes(symptomData.Symptoms)
                             ? 'bg-green-50 border-green-200'
                             : 'bg-card border-border hover:border-accent-foreground'
                         }`}
