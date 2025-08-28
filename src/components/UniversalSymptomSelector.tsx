@@ -65,6 +65,7 @@ const UniversalSymptomSelector = ({
   const [imageLoaded, setImageLoaded] = useState(false);
   const [imageFailed, setImageFailed] = useState(false);
   const [canvasDimensions, setCanvasDimensions] = useState({ width: 800, height: 600 });
+  const canvasContainerRef = useRef<HTMLDivElement>(null);
   const [isFullscreen, setIsFullscreen] = useState(true);
   const [showConfirmationPopover, setShowConfirmationPopover] = useState(false);
   const [popoverPosition, setPopoverPosition] = useState({ x: 0, y: 0 });
@@ -89,15 +90,30 @@ const UniversalSymptomSelector = ({
   console.log(`🔍 [UniversalSymptomSelector] Body part: ${bodyPart}, Using ${symptomContentData?.fallbackSymptoms?.length ? 'Supabase' : 'prop'} symptoms (${availableSymptoms.length} items)`);
   console.log(`📋 [UniversalSymptomSelector] Available symptoms:`, availableSymptoms.map(s => s.text));
 
-  // Calculate canvas dimensions based on screen size
+  // Calculate canvas dimensions based on actual container size
   const calculateCanvasDimensions = () => {
-    const availableWidth = isFullscreen ? window.innerWidth * 0.85 : Math.min(1000, window.innerWidth * 0.75);
-    const availableHeight = isFullscreen ? window.innerHeight * 0.95 : Math.min(800, window.innerHeight * 0.85);
+    if (!canvasContainerRef.current) {
+      // Fallback to screen-based calculation
+      const availableWidth = isFullscreen ? window.innerWidth * 0.85 : Math.min(1000, window.innerWidth * 0.75);
+      const availableHeight = isFullscreen ? window.innerHeight * 0.75 : Math.min(600, window.innerHeight * 0.65);
+      
+      setCanvasDimensions({
+        width: Math.round(availableWidth),
+        height: Math.round(availableHeight)
+      });
+      return;
+    }
+
+    // Use actual container dimensions
+    const containerRect = canvasContainerRef.current.getBoundingClientRect();
+    console.log('📐 [UniversalSymptomSelector] Container dimensions:', containerRect.width, 'x', containerRect.height);
     
-    setCanvasDimensions({
-      width: Math.round(availableWidth),
-      height: Math.round(availableHeight)
-    });
+    if (containerRect.width > 0 && containerRect.height > 0) {
+      setCanvasDimensions({
+        width: Math.floor(containerRect.width),
+        height: Math.floor(containerRect.height)
+      });
+    }
   };
 
   // Toggle fullscreen
@@ -522,7 +538,11 @@ const UniversalSymptomSelector = ({
 
             {/* Canvas Container */}
             <div className="pt-20 h-full flex flex-col">
-              <div className="flex-1 relative overflow-hidden">
+              <div 
+                ref={canvasContainerRef}
+                className="flex-1 relative overflow-hidden"
+                style={{ minHeight: '400px' }}
+              >
                 <SafeCanvasWrapper
                   imageUrl={imageUrl}
                   width={canvasDimensions.width}

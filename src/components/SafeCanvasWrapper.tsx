@@ -23,7 +23,9 @@ export const SafeCanvasWrapper = ({
   const fabricCanvasRef = useRef<FabricCanvas | null>(null);
   const [isReady, setIsReady] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [actualDimensions, setActualDimensions] = useState({ width, height });
   const mountedRef = useRef(true);
+  const resizeObserverRef = useRef<ResizeObserver | null>(null);
 
   // Safe canvas creation with proper timing
   const createCanvas = useCallback(async () => {
@@ -32,14 +34,15 @@ export const SafeCanvasWrapper = ({
     }
 
     try {
-      console.log('🎨 [SAFE CANVAS] Creating canvas element');
+      console.log('🎨 [SAFE CANVAS] Creating canvas with dimensions:', actualDimensions);
       
       // Create canvas element manually to avoid React conflicts
       const canvasElement = document.createElement('canvas');
-      canvasElement.width = width;
-      canvasElement.height = height;
-      canvasElement.style.maxWidth = '100%';
-      canvasElement.style.height = 'auto';
+      canvasElement.width = actualDimensions.width;
+      canvasElement.height = actualDimensions.height;
+      canvasElement.style.width = '100%';
+      canvasElement.style.height = '100%';
+      canvasElement.style.display = 'block';
       
       // Wait for next frame to ensure DOM is ready
       await new Promise(resolve => requestAnimationFrame(resolve));
@@ -57,8 +60,8 @@ export const SafeCanvasWrapper = ({
 
       // Initialize Fabric.js canvas
       const fabricCanvas = new FabricCanvas(canvasElement, {
-        width,
-        height,
+        width: actualDimensions.width,
+        height: actualDimensions.height,
         selection: false,
         backgroundColor: '#f8fafc',
         enableRetinaScaling: true,
@@ -90,13 +93,13 @@ export const SafeCanvasWrapper = ({
       // Calculate scale to cover the canvas area completely
       const imgWidth = img.width || 1;
       const imgHeight = img.height || 1;
-      const scaleX = width / imgWidth;
-      const scaleY = height / imgHeight;
+      const scaleX = actualDimensions.width / imgWidth;
+      const scaleY = actualDimensions.height / imgHeight;
       // Use max to ensure image covers the full canvas area (no gaps)
       const scale = Math.max(scaleX, scaleY);
       
       console.log('🔧 [SAFE CANVAS] Image dimensions:', imgWidth, 'x', imgHeight);
-      console.log('🔧 [SAFE CANVAS] Canvas dimensions:', width, 'x', height);
+      console.log('🔧 [SAFE CANVAS] Canvas dimensions:', actualDimensions.width, 'x', actualDimensions.height);
       console.log('🔧 [SAFE CANVAS] Scaling image by:', scale);
       
       // Apply scale and center the image
@@ -105,8 +108,8 @@ export const SafeCanvasWrapper = ({
       
       img.scale(scale);
       img.set({
-        left: (width - scaledWidth) / 2,
-        top: (height - scaledHeight) / 2,
+        left: (actualDimensions.width - scaledWidth) / 2,
+        top: (actualDimensions.height - scaledHeight) / 2,
         selectable: false,
         evented: false,
         opacity: 1,
@@ -134,11 +137,38 @@ export const SafeCanvasWrapper = ({
       setError(errorMsg);
       onError(errorMsg);
     }
-  }, [imageUrl, width, height, onImageLoaded, onCanvasReady, onError]);
+  }, [imageUrl, actualDimensions.width, actualDimensions.height, onImageLoaded, onCanvasReady, onError]);
+
+  // Setup ResizeObserver to track container size
+  useEffect(() => {
+    if (!containerRef.current) return;
+
+    resizeObserverRef.current = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        const { width: containerWidth, height: containerHeight } = entry.contentRect;
+        console.log('📐 [SAFE CANVAS] Container resized to:', containerWidth, 'x', containerHeight);
+        
+        if (containerWidth > 0 && containerHeight > 0) {
+          setActualDimensions({
+            width: Math.floor(containerWidth),
+            height: Math.floor(containerHeight)
+          });
+        }
+      }
+    });
+
+    resizeObserverRef.current.observe(containerRef.current);
+
+    return () => {
+      if (resizeObserverRef.current) {
+        resizeObserverRef.current.disconnect();
+      }
+    };
+  }, []);
 
   // Initialize canvas with proper timing
   useEffect(() => {
-    if (!imageUrl || width === 0 || height === 0) {
+    if (!imageUrl || actualDimensions.width === 0 || actualDimensions.height === 0) {
       return;
     }
 
@@ -154,7 +184,7 @@ export const SafeCanvasWrapper = ({
     return () => {
       clearTimeout(timer);
     };
-  }, [createCanvas, imageUrl, width, height]);
+  }, [createCanvas, imageUrl, actualDimensions.width, actualDimensions.height]);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -176,7 +206,8 @@ export const SafeCanvasWrapper = ({
     <div className="relative w-full h-full">
       <div 
         ref={containerRef} 
-        className="w-full h-full flex items-center justify-center"
+        className="w-full h-full"
+        style={{ minHeight: '300px' }}
       />
       
       {!isReady && !error && (
