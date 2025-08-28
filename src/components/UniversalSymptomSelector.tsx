@@ -140,16 +140,20 @@ const UniversalSymptomSelector = ({
       // Handle canvas clicks to open symptom popover
       canvas.on('mouse:down', (event) => {
         const pointer = canvas.getPointer(event.e);
-        const rect = canvasRef.current!.getBoundingClientRect();
+        const canvasElement = canvasRef.current;
+        if (!canvasElement) return;
+        
+        const rect = canvasElement.getBoundingClientRect();
         
         setClickPosition({ x: pointer.x, y: pointer.y });
         setPopoverPosition({ 
-          x: rect.left + pointer.x, 
-          y: rect.top + pointer.y 
+          x: rect.left + (pointer.x * rect.width / canvas.width) + window.scrollX, 
+          y: rect.top + (pointer.y * rect.height / canvas.height) + window.scrollY
         });
         setShowSymptomPopover(true);
         
-        console.log('✅ Click detected at:', pointer.x, pointer.y);
+        console.log('✅ Click detected at canvas:', pointer.x, pointer.y);
+        console.log('✅ Popover position:', rect.left, rect.top);
       });
 
       setFabricCanvas(canvas);
@@ -201,9 +205,9 @@ const UniversalSymptomSelector = ({
     }
   }, [open]);
 
-  // Handle zoom
+  // Handle zoom with Fabric.js integration
   const handleZoom = (direction: 'in' | 'out' | 'reset') => {
-    if (!containerRef.current) return;
+    if (!fabricCanvas) return;
 
     let newZoom = zoomLevel;
     if (direction === 'in') {
@@ -215,7 +219,10 @@ const UniversalSymptomSelector = ({
     }
 
     setZoomLevel(newZoom);
-    containerRef.current.style.transform = `scale(${newZoom})`;
+    
+    // Apply zoom to Fabric.js canvas instead of CSS transform
+    fabricCanvas.setZoom(newZoom);
+    fabricCanvas.renderAll();
   };
 
   // Handle symptom selection from popover
@@ -335,8 +342,7 @@ const UniversalSymptomSelector = ({
                   ref={containerRef}
                   className="relative border-2 border-gray-200 rounded-lg shadow-lg bg-white inline-block"
                   style={{ 
-                    transformOrigin: 'center',
-                    transition: 'transform 0.2s ease-in-out'
+                    transformOrigin: 'center'
                   }}
                 >
                 {/* Background Image */}
@@ -373,8 +379,12 @@ const UniversalSymptomSelector = ({
                      className="absolute top-0 left-0 pointer-events-auto cursor-crosshair"
                      style={{
                        width: displayDimensions.width,
-                       height: displayDimensions.height
+                       height: displayDimensions.height,
+                       zIndex: 10
                      }}
+                     onMouseEnter={() => console.log('🖱️ Mouse entered canvas')}
+                     onMouseLeave={() => console.log('🖱️ Mouse left canvas')}
+                     onClick={() => console.log('🖱️ Canvas clicked (DOM event)')}
                    />
                  )}
                 </div>
@@ -452,26 +462,28 @@ const UniversalSymptomSelector = ({
           </div>
         </div>
 
-        {/* Symptom Selection Popover */}
-        <Popover open={showSymptomPopover} onOpenChange={setShowSymptomPopover}>
-          <PopoverTrigger asChild>
-            <div 
-              className="absolute pointer-events-none"
-              style={{
-                left: popoverPosition.x,
-                top: popoverPosition.y,
-                transform: 'translate(-50%, -50%)'
-              }}
-            />
-          </PopoverTrigger>
-          <PopoverContent 
-            className="w-80 max-h-96 p-2"
-            side="right"
-            align="start"
+        {/* Symptom Selection Popover - Fixed positioning */}
+        {showSymptomPopover && (
+          <div 
+            className="fixed z-50 w-80 max-h-96 bg-popover border rounded-md shadow-md p-4"
+            style={{
+              left: Math.min(popoverPosition.x, window.innerWidth - 320),
+              top: Math.min(popoverPosition.y, window.innerHeight - 400),
+              maxHeight: '400px'
+            }}
           >
             <div className="space-y-1">
-              <h4 className="font-medium text-sm mb-2">Select Your Symptom</h4>
-              <ScrollArea className="h-80">
+              <div className="flex items-center justify-between">
+                <h4 className="font-medium text-sm">Select Your Symptom</h4>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={() => setShowSymptomPopover(false)}
+                >
+                  <X className="h-3 w-3" />
+                </Button>
+              </div>
+              <ScrollArea className="h-80 mt-2">
                 <div className="space-y-1">
                   {symptoms.map((symptom) => (
                     <Button
@@ -486,8 +498,8 @@ const UniversalSymptomSelector = ({
                 </div>
               </ScrollArea>
             </div>
-          </PopoverContent>
-        </Popover>
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   );
