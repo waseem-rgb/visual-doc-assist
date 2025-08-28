@@ -110,19 +110,7 @@ const InteractiveSymptomSelector = ({ bodyPart, patientData, onBack }: Interacti
           blobUrlRef.current = result.url;
         }
         
-        console.log('📸 [PRELOAD START] Testing image loading before opening lightbox');
-        
-        // Preload image to ensure it's ready before opening lightbox
-        const img = new Image();
-        img.onload = () => {
-          console.log('✅ [PRELOAD SUCCESS] Image preloaded successfully, opening lightbox');
-          setLightboxOpen(true);
-        };
-        img.onerror = (error) => {
-          console.warn('⚠️ [PRELOAD FAILED] Image preload failed, but opening lightbox anyway:', error);
-          setLightboxOpen(true);
-        };
-        img.src = result.url;
+        console.log('📸 [IMAGE SET] Image URL set successfully, showing preview (not auto-opening lightbox)');
       } else {
         console.error('❌ [IMAGE FAILED] Failed to load specific image:', result.error);
         
