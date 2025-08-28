@@ -273,7 +273,14 @@ const UniversalSymptomSelector = ({
 
     // Handle mouse movement for hover circle
     canvas.on('mouse:move', (event) => {
-      if (!imageReadyRef.current || !fabricImageRef.current || !hoverCircleRef.current || isDragging || isCleanedUp) {
+      if (!imageReadyRef.current || !fabricImageRef.current || !hoverCircleRef.current || isCleanedUp) {
+        return;
+      }
+      
+      // Don't show hover circle when dragging
+      if (isDragging) {
+        hoverCircleRef.current.set({ visible: false });
+        canvas!.renderAll();
         return;
       }
       
@@ -298,8 +305,10 @@ const UniversalSymptomSelector = ({
           top: pointer.y - 3,
           visible: true
         });
+        canvas!.setCursor('crosshair');
       } else {
         hoverCircleRef.current.set({ visible: false });
+        canvas!.setCursor('default');
       }
       
       if (!isCleanedUp) {
@@ -440,9 +449,16 @@ const UniversalSymptomSelector = ({
           setShowConfirmationPopover(true);
           
         } else if (hasRegions) {
-          // No text region detected but regions exist - do nothing, just show instruction
-          setClickPosition(null);
-          setShowConfirmationPopover(false);
+          // No specific region detected but regions exist - show available regions
+          const rect = canvasRef.current?.getBoundingClientRect();
+          if (rect) {
+            setClickPosition({ x: pointer.x, y: pointer.y });
+            setPopoverPosition({ 
+              x: rect.left + pointer.x + window.scrollX, 
+              y: rect.top + pointer.y + window.scrollY
+            });
+            setShowConfirmationPopover(true);
+          }
         } else {
           // No regions exist, show fallback options
           const rect = canvasRef.current?.getBoundingClientRect();
@@ -805,7 +821,7 @@ const UniversalSymptomSelector = ({
                 </div>
               </div>
             ) : (
-              // Show fallback symptoms when no regions exist
+              // Show available symptoms based on context
               <div className="space-y-1">
                 <div className="flex items-center justify-between">
                   <h4 className="font-medium text-sm">Select Your Symptom</h4>
@@ -819,8 +835,19 @@ const UniversalSymptomSelector = ({
                 </div>
                 <ScrollArea className="h-64 mt-2">
                   <div className="space-y-1">
-                    {/* Show database fallback symptoms first */}
-                    {symptomContentData?.fallbackSymptoms?.map((symptom) => (
+                    {/* Show mapped text regions first if they exist */}
+                    {hasRegions && textRegions.map((region) => (
+                      <Button
+                        key={region.id}
+                        variant="ghost"
+                        className="w-full h-auto p-2 text-left justify-start whitespace-normal hover:bg-primary/5 text-xs"
+                        onClick={() => handleFallbackSymptomClick({ id: region.id, text: region.text })}
+                      >
+                        <span className="leading-relaxed">{region.text}</span>
+                      </Button>
+                    ))}
+                    {/* Show database fallback symptoms if no regions or as additional options */}
+                    {(!hasRegions || textRegions.length === 0) && symptomContentData?.fallbackSymptoms?.map((symptom) => (
                       <Button
                         key={symptom.id}
                         variant="ghost"
@@ -830,8 +857,8 @@ const UniversalSymptomSelector = ({
                         <span className="leading-relaxed">{symptom.text}</span>
                       </Button>
                     ))}
-                    {/* Show passed symptoms as backup */}
-                    {symptoms.map((symptom) => (
+                    {/* Show passed symptoms as final backup */}
+                    {(!hasRegions && (!symptomContentData?.fallbackSymptoms || symptomContentData.fallbackSymptoms.length === 0)) && symptoms.map((symptom) => (
                       <Button
                         key={symptom.id}
                         variant="ghost"
