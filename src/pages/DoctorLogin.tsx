@@ -25,19 +25,47 @@ const DoctorLogin = () => {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setError(""); // Clear any previous errors
+    setError("");
     
-    console.log("Doctor login bypassed - proceeding to dashboard");
-    
-    // Simulate loading for UX
-    setTimeout(() => {
+    try {
+      // Authenticate with Supabase
+      const { data, error: signInError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (signInError) throw signInError;
+
+      if (!data.user) {
+        throw new Error("Authentication failed");
+      }
+
+      // Check if user has doctor role
+      const { data: roles, error: roleError } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', data.user.id);
+
+      if (roleError) throw roleError;
+
+      const hasDocRole = roles?.some(r => r.role === 'doctor');
+      if (!hasDocRole) {
+        await supabase.auth.signOut();
+        throw new Error("Access denied - Doctor role required");
+      }
+
       toast({
         title: "Login Successful",
         description: "Welcome back, Doctor!",
       });
+      
       navigate("/doctor/dashboard");
+    } catch (error: any) {
+      setError(error.message);
+      console.error("Login error:", error);
+    } finally {
       setLoading(false);
-    }, 1000);
+    }
   };
 
   return (

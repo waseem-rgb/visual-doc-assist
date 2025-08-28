@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import type { User as AuthUser } from "@supabase/supabase-js";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -55,6 +56,7 @@ const DoctorDashboard = () => {
   const [doctorProfile, setDoctorProfile] = useState<DoctorProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedRequest, setSelectedRequest] = useState<PrescriptionRequest | null>(null);
+  const [user, setUser] = useState<AuthUser | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -64,14 +66,54 @@ const DoctorDashboard = () => {
 
   const checkAuthAndFetchData = async () => {
     try {
-      console.log("Dashboard loading - fetching real data");
+      console.log("Dashboard loading - checking authentication");
       
-      // Set doctor profile (temporarily hardcoded - in production would come from auth)
-      setDoctorProfile({
-        full_name: "Dr. Waseem Ahmed", 
-        specialization: "General Medicine",
-        license_number: "MD12345"
-      });
+      // Check if user is authenticated
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        console.log("No authenticated user found");
+        navigate("/doctor/login");
+        return;
+      }
+
+      setUser(user);
+
+      // Check if user has doctor role
+      const { data: roles, error: roleError } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', user.id);
+
+      if (roleError) throw roleError;
+
+      const hasDocRole = roles?.some(r => r.role === 'doctor');
+      if (!hasDocRole) {
+        console.log("User doesn't have doctor role");
+        await supabase.auth.signOut();
+        navigate("/doctor/login");
+        return;
+      }
+
+      // Fetch doctor profile
+      const { data: profile, error: profileError } = await supabase
+        .from('doctor_profiles')
+        .select('*')
+        .eq('id', user.id)
+        .maybeSingle();
+
+      if (profileError) throw profileError;
+
+      if (profile) {
+        setDoctorProfile(profile);
+      } else {
+        // Create default profile if none exists
+        setDoctorProfile({
+          full_name: user.email?.split('@')[0] || "Doctor",
+          specialization: "General Medicine",
+          license_number: "Pending"
+        });
+      }
 
       // Fetch real prescription requests from Supabase
       const { data: requestsData, error: requestsError } = await supabase
@@ -145,7 +187,7 @@ const DoctorDashboard = () => {
   };
 
   const handleSignOut = async () => {
-    // Simple navigation back to login without auth
+    await supabase.auth.signOut();
     navigate("/doctor/login");
   };
 
