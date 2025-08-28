@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
-import { X, ZoomIn, ZoomOut, Check } from "lucide-react";
+import { X, ZoomIn, ZoomOut, Check, Maximize, Minimize } from "lucide-react";
 import { Canvas as FabricCanvas, Circle, FabricImage } from "fabric";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
@@ -46,6 +46,7 @@ const UniversalSymptomSelector = ({
   const [imageLoaded, setImageLoaded] = useState(false);
   const [imageDimensions, setImageDimensions] = useState({ width: 0, height: 0 });
   const [displayDimensions, setDisplayDimensions] = useState({ width: 0, height: 0 });
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
   // Simplified image loading approach
   useEffect(() => {
@@ -155,6 +156,11 @@ const UniversalSymptomSelector = ({
     };
   }, [fabricCanvas]);
 
+  // Toggle fullscreen
+  const toggleFullscreen = () => {
+    setIsFullscreen(!isFullscreen);
+  };
+
   // Reset state when dialog closes
   useEffect(() => {
     if (!open) {
@@ -162,6 +168,7 @@ const UniversalSymptomSelector = ({
       setSelectedSymptom(null);
       setHighlightCircle(null);
       setZoomLevel(1);
+      setIsFullscreen(false);
       if (fabricCanvas) {
         fabricCanvas.dispose();
         setFabricCanvas(null);
@@ -224,7 +231,10 @@ const UniversalSymptomSelector = ({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-[95vw] max-h-[95vh] w-full h-full p-0" aria-describedby="symptom-selector-description">
+      <DialogContent 
+        className={`${isFullscreen ? 'max-w-screen max-h-screen w-screen h-screen' : 'max-w-[95vw] max-h-[95vh] w-full h-full'} p-0`} 
+        aria-describedby="symptom-selector-description"
+      >
         <DialogTitle className="sr-only">Universal Symptom Selector - {bodyPart}</DialogTitle>
         <div id="symptom-selector-description" className="sr-only">
           Interactive symptom selector for {bodyPart}. Select a symptom from the list and click on the image to mark the location.
@@ -242,9 +252,14 @@ const UniversalSymptomSelector = ({
                     Patient: {patientData.name} | Age: {patientData.age} | Gender: {patientData.gender}
                   </p>
                 </div>
-                <Button onClick={onClose} variant="ghost" size="sm">
-                  <X className="h-4 w-4" />
-                </Button>
+                <div className="flex items-center space-x-2">
+                  <Button onClick={toggleFullscreen} variant="ghost" size="sm">
+                    {isFullscreen ? <Minimize className="h-4 w-4" /> : <Maximize className="h-4 w-4" />}
+                  </Button>
+                  <Button onClick={onClose} variant="ghost" size="sm">
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
             </div>
 
@@ -342,55 +357,46 @@ const UniversalSymptomSelector = ({
             </div>
           </div>
 
-          {/* Right Side - Symptom List */}
-          <div className="w-96 bg-background border-l flex flex-col">
-            {/* Symptom List */}
-            <div className="flex-1 p-4">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-base">Available Symptoms</CardTitle>
-                  <p className="text-xs text-muted-foreground">
-                    Click on a symptom that matches your condition
-                  </p>
-                </CardHeader>
-                <CardContent className="p-0">
-                  <ScrollArea className="h-96">
-                    <div className="space-y-2 p-4">
-                      {symptoms.map((symptom) => (
-                        <Button
-                          key={symptom.id}
-                          variant={selectedSymptom?.id === symptom.id ? "default" : "outline"}
-                          className={`w-full h-auto p-3 text-left justify-start whitespace-normal ${
-                            hoveredSymptom === symptom.id ? 'ring-2 ring-primary/50' : ''
-                          }`}
-                          onClick={() => handleSymptomClick(symptom)}
-                          onMouseEnter={() => handleSymptomHover(symptom.id)}
-                          onMouseLeave={() => handleSymptomHover(null)}
-                        >
-                          <div className="flex items-start space-x-2">
-                            {selectedSymptom?.id === symptom.id && (
-                              <Check className="h-4 w-4 mt-1 text-primary-foreground" />
-                            )}
+          {/* Right Side - Symptom Selection */}
+          <div className={`${isFullscreen ? 'w-1/3' : 'w-96'} bg-background border-l flex flex-col`}>
+            {!selectedSymptom ? (
+              /* Symptom List - Show only when no symptom is selected */
+              <div className="flex-1 p-4">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-base">Available Symptoms</CardTitle>
+                    <p className="text-xs text-muted-foreground">
+                      Click on a symptom that matches your condition
+                    </p>
+                  </CardHeader>
+                  <CardContent className="p-0">
+                    <ScrollArea className="h-96">
+                      <div className="space-y-2 p-4">
+                        {symptoms.map((symptom) => (
+                          <Button
+                            key={symptom.id}
+                            variant="outline"
+                            className="w-full h-auto p-3 text-left justify-start whitespace-normal hover:bg-primary/5"
+                            onClick={() => handleSymptomClick(symptom)}
+                          >
                             <span className="text-xs leading-relaxed">{symptom.text}</span>
-                          </div>
-                        </Button>
-                      ))}
-                    </div>
-                  </ScrollArea>
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Selected Symptom Display */}
-            {selectedSymptom && (
-              <div className="p-4 border-t">
-                <Card className="border-primary/50">
+                          </Button>
+                        ))}
+                      </div>
+                    </ScrollArea>
+                  </CardContent>
+                </Card>
+              </div>
+            ) : (
+              /* Selected Symptom Display - Show only when symptom is selected */
+              <div className="flex-1 p-4 flex flex-col">
+                <Card className="border-primary/50 flex-1">
                   <CardHeader className="pb-2">
                     <CardTitle className="text-sm text-primary">Selected Symptom</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-3">
                     <div className="bg-primary/5 p-3 rounded-lg">
-                      <p className="text-xs text-muted-foreground leading-relaxed">
+                      <p className="text-sm text-muted-foreground leading-relaxed">
                         {selectedSymptom.text}
                       </p>
                     </div>
@@ -410,13 +416,9 @@ const UniversalSymptomSelector = ({
                     )}
                   </CardContent>
                 </Card>
-              </div>
-            )}
-
-            {/* Action Buttons */}
-            <div className="p-4 border-t space-y-2">
-              {selectedSymptom ? (
-                <>
+                
+                {/* Action Buttons */}
+                <div className="mt-4 space-y-2">
                   <Button 
                     variant="outline" 
                     className="w-full"
@@ -429,15 +431,11 @@ const UniversalSymptomSelector = ({
                     onClick={handleSubmit}
                     disabled={!highlightCircle}
                   >
-                    Submit Selection
+                    Submit Selection to Know Possible Condition
                   </Button>
-                </>
-              ) : (
-                <div className="text-center text-xs text-muted-foreground py-4">
-                  Select a symptom from the list above to continue
                 </div>
-              )}
-            </div>
+              </div>
+            )}
           </div>
         </div>
       </DialogContent>
