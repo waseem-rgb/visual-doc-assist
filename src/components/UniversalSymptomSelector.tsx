@@ -622,13 +622,11 @@ const UniversalSymptomSelector = ({
     fabricCanvas.renderAll();
   };
 
-  // Handle prescription request
-  const handleRequestPrescription = () => {
-    toast({
-      title: "Prescription Request Submitted",
-      description: "Your prescription will be generated within 15 minutes. You will be notified once it's ready.",
-      duration: 5000,
-    });
+  // Submit selection
+  const handleSubmit = () => {
+    if (selectedSymptom && selectionMarkerRef.current) {
+      setIsSubmitted(true);
+    }
   };
 
   // Handle symptom selection from fallback list (when no regions)
@@ -660,13 +658,6 @@ const UniversalSymptomSelector = ({
     fabricCanvas.add(circle);
     selectionMarkerRef.current = circle;
     fabricCanvas.renderAll();
-  };
-
-  // Submit selection
-  const handleSubmit = () => {
-    if (selectedSymptom && selectionMarkerRef.current) {
-      setIsSubmitted(true);
-    }
   };
 
   // Clear selection
@@ -851,12 +842,17 @@ const UniversalSymptomSelector = ({
                         
                         <Button 
                           size="sm"
-                          className="w-full bg-green-600 hover:bg-green-700 text-white"
-                          onClick={handleRequestPrescription}
+                          className="w-full bg-primary hover:bg-primary/90 text-white"
+                          onClick={() => {
+                            if (selectedSymptom) {
+                              onSymptomSubmit(selectedSymptom);
+                              onClose();
+                            }
+                          }}
                           disabled={!selectedSymptom}
                         >
                           <FileText className="w-3 h-3 mr-2" />
-                          Request Prescription
+                          Select This Symptom
                         </Button>
                       </div>
                     )}
