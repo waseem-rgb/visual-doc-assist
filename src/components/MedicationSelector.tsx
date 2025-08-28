@@ -7,8 +7,9 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { X, Plus, Search, Pill } from "lucide-react";
+import { X, Plus, Search, Pill, Brain, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { getMedicationInsights } from "@/utils/aiService";
 
 interface Medication {
   id: string;
@@ -41,6 +42,8 @@ const MedicationSelector = ({ onMedicationsChange, disabled = false }: Medicatio
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
+  const [loadingAI, setLoadingAI] = useState<{ [key: number]: boolean }>({});
+  const [aiInsights, setAiInsights] = useState<{ [key: number]: string }>({});
   const { toast } = useToast();
 
   useEffect(() => {
@@ -118,6 +121,29 @@ const MedicationSelector = ({ onMedicationsChange, disabled = false }: Medicatio
         i === index ? { ...med, [field]: value } : med
       )
     );
+  };
+
+  const getAIInsights = async (medicationName: string, index: number) => {
+    setLoadingAI(prev => ({ ...prev, [index]: true }));
+    
+    try {
+      const insights = await getMedicationInsights(medicationName);
+      setAiInsights(prev => ({ ...prev, [index]: insights }));
+      
+      toast({
+        title: "AI Insights Generated",
+        description: `Clinical insights for ${medicationName} have been generated.`,
+      });
+    } catch (error) {
+      console.error('Error getting AI insights:', error);
+      toast({
+        title: "Error",
+        description: "Failed to generate AI insights. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoadingAI(prev => ({ ...prev, [index]: false }));
+    }
   };
 
   if (disabled && prescribedMedications.length === 0) {
@@ -312,6 +338,44 @@ const MedicationSelector = ({ onMedicationsChange, disabled = false }: Medicatio
                     </div>
                   )}
                 </div>
+
+                {/* AI Insights Section */}
+                {!disabled && (
+                  <div className="pt-4 border-t">
+                    <div className="flex items-center justify-between mb-3">
+                      <Label className="text-sm font-medium text-muted-foreground">AI Clinical Insights</Label>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => getAIInsights(med.name, index)}
+                        disabled={loadingAI[index]}
+                        className="flex items-center gap-2"
+                      >
+                        {loadingAI[index] ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <Brain className="h-4 w-4" />
+                        )}
+                        {loadingAI[index] ? 'Generating...' : 'Get AI Insights'}
+                      </Button>
+                    </div>
+                    
+                    {aiInsights[index] && (
+                      <div className="p-3 bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 rounded-lg">
+                        <div className="flex items-center gap-2 mb-2">
+                          <Brain className="h-4 w-4 text-blue-600" />
+                          <Label className="text-sm font-medium text-blue-800">AI-Generated Clinical Summary</Label>
+                        </div>
+                        <div className="text-sm text-gray-700 whitespace-pre-wrap">
+                          {aiInsights[index]}
+                        </div>
+                        <p className="text-xs text-gray-500 mt-2 italic">
+                          *AI-generated content should not replace professional medical judgment and official prescribing information.
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                )}
               </CardContent>
             </Card>
           ))}
