@@ -159,14 +159,23 @@ const InteractiveSymptomSelector = ({ bodyPart, patientData, onBack }: Interacti
 
   // Debug logging when UniversalSymptomSelector is about to render
   useEffect(() => {
+    console.log('🔍 [PARENT DEBUG] State check for UniversalSymptomSelector rendering:');
+    console.log('   - imageUrl:', imageUrl ? `"${imageUrl.substring(0, 50)}..."` : 'NULL/UNDEFINED');
+    console.log('   - showClinicalForm:', showClinicalForm);
+    console.log('   - lightboxOpen:', lightboxOpen);
+    console.log('   - bodyPart:', bodyPart);
+    console.log('   - Will render?:', !!(imageUrl && !showClinicalForm && lightboxOpen));
+    
     if (imageUrl && !showClinicalForm && lightboxOpen) {
-      console.log('🎯 [PARENT DEBUG] About to render UniversalSymptomSelector');
+      console.log('✅ [PARENT DEBUG] About to render UniversalSymptomSelector');
       console.log('📋 [PARENT DEBUG] Props being passed:');
       console.log('   - open:', lightboxOpen);
       console.log('   - imageUrl:', imageUrl);
       console.log('   - bodyPart:', bodyPart);
       console.log('   - imageUrl type:', typeof imageUrl);
       console.log('   - imageUrl length:', imageUrl?.length);
+    } else {
+      console.log('❌ [PARENT DEBUG] UniversalSymptomSelector will NOT render');
     }
   }, [imageUrl, showClinicalForm, lightboxOpen, bodyPart]);
 
@@ -722,7 +731,7 @@ const InteractiveSymptomSelector = ({ bodyPart, patientData, onBack }: Interacti
       ) : null}
 
       {/* Fullscreen Universal Selector */}
-      {imageUrl && !showClinicalForm && (
+      {imageUrl && !showClinicalForm ? (
         <UniversalSymptomSelector
           open={lightboxOpen}
           onClose={() => setLightboxOpen(false)}
@@ -732,6 +741,15 @@ const InteractiveSymptomSelector = ({ bodyPart, patientData, onBack }: Interacti
           symptoms={symptoms}
           onSymptomSubmit={handleSymptomSubmit}
         />
+      ) : (
+        (() => {
+          console.log('🚫 [PARENT DEBUG] UniversalSymptomSelector NOT rendered:', {
+            imageUrl: !!imageUrl,
+            showClinicalForm,
+            renderCondition: !!(imageUrl && !showClinicalForm)
+          });
+          return null;
+        })()
       )}
     </div>
   );
