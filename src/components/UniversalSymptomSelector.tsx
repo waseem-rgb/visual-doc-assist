@@ -69,6 +69,9 @@ const UniversalSymptomSelector = ({
     
     // Direct mapping for specific body parts to match exact asset names
     if (part === 'HEAD' || part.includes('HEAD')) return 'head';
+    if (part === 'MOUTH' || part.includes('MOUTH') || part.includes('ORAL') || 
+        part.includes('LIPS') || part.includes('TONGUE') || part.includes('TEETH') || 
+        part.includes('GUM')) return 'mouth';
     if (part === 'CHEST' || part === 'CHEST CENTRAL' || part === 'CHEST SIDE' || 
         part === 'CHEST UPPER' || part.includes('CHEST')) return 'chest';
     if (part === 'UPPER ABDOMEN' || part === 'LOWER ABDOMEN' || part === 'ABDOMEN' || 
