@@ -235,6 +235,9 @@ const InteractiveSymptomSelector = ({ bodyPart, patientData, onBack }: Interacti
       // Determine if prescription is required (default to true if not specified)
       const prescriptionRequired = masterData?.['prescription_Y-N'] !== 'N';
 
+      // Check if user is authenticated for tracking
+      const { data: { user } } = await supabase.auth.getUser();
+
       // Store prescription request in database
       const { data, error } = await supabase
         .from('prescription_requests')
@@ -249,7 +252,9 @@ const InteractiveSymptomSelector = ({ bodyPart, patientData, onBack }: Interacti
           basic_investigations: masterData?.['Basic Investigations'] || '',
           common_treatments: masterData?.['Common Treatments'] || '',
           prescription_required: prescriptionRequired,
-          status: 'pending'
+          status: 'pending',
+          customer_id: user?.id || null, // Track customer if authenticated
+          customer_email: user?.email || null, // Track customer email if authenticated
         });
 
       if (error) {
@@ -261,8 +266,10 @@ const InteractiveSymptomSelector = ({ bodyPart, patientData, onBack }: Interacti
 
       toast({
         title: "Request Submitted Successfully",
-        description: `Your ${prescriptionRequired ? 'prescription' : 'referral'} request has been submitted. A doctor will review it within 15 minutes.`,
-        duration: 5000
+        description: user ? 
+          `Your ${prescriptionRequired ? 'prescription' : 'referral'} request has been submitted. A doctor will review it within 15 minutes. Check your dashboard for updates.` :
+          `Your ${prescriptionRequired ? 'prescription' : 'referral'} request has been submitted. A doctor will review it within 15 minutes. Sign up to track your consultations in your dashboard.`,
+        duration: 8000
       });
     } catch (error: any) {
       console.error('Error submitting prescription request:', error);

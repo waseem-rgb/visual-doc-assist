@@ -143,6 +143,8 @@ export type Database = {
           clinical_history: string | null
           common_treatments: string | null
           created_at: string
+          customer_email: string | null
+          customer_id: string | null
           id: string
           patient_age: string
           patient_gender: string
@@ -164,6 +166,8 @@ export type Database = {
           clinical_history?: string | null
           common_treatments?: string | null
           created_at?: string
+          customer_email?: string | null
+          customer_id?: string | null
           id?: string
           patient_age: string
           patient_gender: string
@@ -185,6 +189,8 @@ export type Database = {
           clinical_history?: string | null
           common_treatments?: string | null
           created_at?: string
+          customer_email?: string | null
+          customer_id?: string | null
           id?: string
           patient_age?: string
           patient_gender?: string
