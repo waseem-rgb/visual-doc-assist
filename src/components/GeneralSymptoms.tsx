@@ -64,6 +64,13 @@ const GeneralSymptoms = ({ patientData }: GeneralSymptomsProps) => {
     // Here you would typically save the symptom selection or proceed to next step
   };
 
+  const handleContinueAnalysis = () => {
+    // For now, let's simulate proceeding to next step
+    console.log('Continuing with selected symptoms:', selectedSymptoms);
+    // You could navigate to a results page or show a diagnosis
+    alert(`Analyzing symptoms: ${selectedSymptoms.join(', ')}`);
+  };
+
   // Load images for selected symptoms
   useEffect(() => {
     const loadSymptomImages = async () => {
@@ -184,7 +191,11 @@ const GeneralSymptoms = ({ patientData }: GeneralSymptomsProps) => {
 
       {selectedSymptoms.length > 0 && (
         <div className="text-center">
-          <Button className="gradient-primary" size="lg">
+          <Button 
+            className="gradient-primary" 
+            size="lg"
+            onClick={handleContinueAnalysis}
+          >
             Continue with Symptom Analysis
           </Button>
         </div>
