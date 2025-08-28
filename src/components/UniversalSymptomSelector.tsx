@@ -72,6 +72,7 @@ const UniversalSymptomSelector = ({
   const [detectedText, setDetectedText] = useState<string | null>(null);
   const [symptomContentData, setSymptomContentData] = useState<SymptomContent | null>(null);
   const [isLoadingSymptoms, setIsLoadingSymptoms] = useState(false);
+  const [isSubmitted, setIsSubmitted] = useState(false);
   const { toast } = useToast();
 
   // Get symptom content for current body part
@@ -142,6 +143,7 @@ const UniversalSymptomSelector = ({
       setDetectedText(null);
       setSymptomContentData(null);
       setIsLoadingSymptoms(false);
+      setIsSubmitted(false);
       if (fabricCanvas && !fabricCanvas.disposed) {
         try {
           fabricCanvas.dispose();
@@ -617,10 +619,7 @@ const UniversalSymptomSelector = ({
   // Submit selection
   const handleSubmit = () => {
     if (selectedSymptom && selectionMarkerRef.current) {
-      onSymptomSubmit({
-        id: selectedSymptom.id,
-        text: selectedSymptom.text
-      });
+      setIsSubmitted(true);
     }
   };
 
@@ -629,6 +628,7 @@ const UniversalSymptomSelector = ({
     setSelectedSymptom(null);
     setClickPosition(null);
     setShowConfirmationPopover(false);
+    setIsSubmitted(false);
     if (selectionMarkerRef.current && fabricCanvas) {
       fabricCanvas.remove(selectionMarkerRef.current);
       selectionMarkerRef.current = null;
@@ -749,77 +749,72 @@ const UniversalSymptomSelector = ({
                     </p>
                   </div>
                 )
-              ) : (
-                <div className="space-y-3">
-                  <div className="text-sm text-center text-green-600">
-                    <p><strong>Perfect!</strong> You've selected a symptom and placed a marker.</p>
-                  </div>
-                  <div className="bg-primary/5 p-3 rounded-lg space-y-3">
-                    <div>
+                ) : (
+                  <div className="space-y-3">
+                    <div className="text-sm text-center text-green-600">
+                      <p><strong>Perfect!</strong> You've selected a symptom and placed a marker.</p>
+                    </div>
+                    <div className="bg-primary/5 p-3 rounded-lg">
                       <h4 className="text-sm font-semibold mb-2 text-primary">Selected Symptom:</h4>
                       <p className="text-xs text-muted-foreground leading-relaxed">
                         {selectedSymptom.text}
                       </p>
                     </div>
                     
-                    {selectedSymptom.diagnosis && (
-                      <div className="border-t pt-2">
-                        <h5 className="text-xs font-semibold mb-1 text-primary">Probable Diagnosis:</h5>
-                        <p className="text-xs text-muted-foreground leading-relaxed">
-                          {selectedSymptom.diagnosis}
-                        </p>
+                    {!isSubmitted ? (
+                      // Show Clear and Submit buttons before submission
+                      <div className="flex space-x-2">
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          className="flex-1"
+                          onClick={handleClearSelection}
+                        >
+                          Clear Selection
+                        </Button>
+                        <Button 
+                          size="sm"
+                          className="flex-1"
+                          onClick={handleSubmit}
+                          disabled={!selectedSymptom}
+                        >
+                          Submit Selection
+                        </Button>
                       </div>
-                    )}
-                    
-                    {selectedSymptom.summary && (
-                      <div className="border-t pt-2">
-                        <h5 className="text-xs font-semibold mb-1 text-primary">Summary:</h5>
-                        <p className="text-xs text-muted-foreground leading-relaxed">
-                          {selectedSymptom.summary}
-                        </p>
-                      </div>
-                    )}
-                    
-                    {detectedText && detectedText !== selectedSymptom.text && (
-                      <div className="border-t pt-2">
-                        <p className="text-xs font-medium text-primary">Full Description:</p>
-                        <p className="text-xs text-muted-foreground leading-relaxed mt-1">
-                          {detectedText}
-                        </p>
+                    ) : (
+                      // Show diagnosis, summary, and prescription button after submission
+                      <div className="space-y-3">
+                        {selectedSymptom.diagnosis && (
+                          <div className="bg-blue-50 p-3 rounded-lg border border-blue-200">
+                            <h5 className="text-xs font-semibold mb-1 text-blue-800">Probable Diagnosis:</h5>
+                            <p className="text-xs text-blue-700 leading-relaxed">
+                              {selectedSymptom.diagnosis}
+                            </p>
+                          </div>
+                        )}
+                        
+                        {selectedSymptom.summary && (
+                          <div className="bg-green-50 p-3 rounded-lg border border-green-200">
+                            <h5 className="text-xs font-semibold mb-1 text-green-800">Summary:</h5>
+                            <p className="text-xs text-green-700 leading-relaxed">
+                              {selectedSymptom.summary}
+                            </p>
+                          </div>
+                        )}
+                        
+                        <Button 
+                          size="sm"
+                          className="w-full bg-green-600 hover:bg-green-700 text-white"
+                          onClick={handleRequestPrescription}
+                          disabled={!selectedSymptom}
+                        >
+                          <FileText className="w-3 h-3 mr-2" />
+                          Request Prescription
+                        </Button>
                       </div>
                     )}
                   </div>
-                  <div className="space-y-2">
-                    <Button 
-                      size="sm"
-                      className="w-full bg-green-600 hover:bg-green-700 text-white"
-                      onClick={handleRequestPrescription}
-                      disabled={!selectedSymptom}
-                    >
-                      <FileText className="w-3 h-3 mr-2" />
-                      Request Prescription
-                    </Button>
-                    <div className="flex space-x-2">
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        className="flex-1"
-                        onClick={handleClearSelection}
-                      >
-                        Clear Selection
-                      </Button>
-                      <Button 
-                        size="sm"
-                        className="flex-1"
-                        onClick={handleSubmit}
-                        disabled={!selectedSymptom}
-                      >
-                        Submit Selection
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              )}
+                )}
             </div>
           </div>
 

@@ -186,18 +186,6 @@ const GeneralSymptoms = ({ patientData }: GeneralSymptomsProps) => {
         </Card>
       )}
 
-      {selectedSymptoms.length > 0 && (
-        <div className="text-center">
-          <Button 
-            className="gradient-primary" 
-            size="lg"
-            onClick={handleContinueAnalysis}
-          >
-            Continue with Symptom Analysis
-          </Button>
-        </div>
-      )}
-
       {/* Universal Symptom Selector */}
       {currentSymptom && symptomImages[currentSymptom] && (
         <UniversalSymptomSelector
