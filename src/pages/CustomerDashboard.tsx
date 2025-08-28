@@ -377,8 +377,8 @@ const CustomerDashboard = () => {
                           View Details
                         </Button>
                         
-                        {/* Show prescription button for completed cases */}
-                        {request.status === 'completed' && request.prescription && (
+                        {/* Show prescription status for all cases */}
+                        {request.status === 'completed' && request.prescription ? (
                           <Button
                             variant="default"
                             size="sm"
@@ -388,7 +388,27 @@ const CustomerDashboard = () => {
                             <Download className="h-4 w-4 mr-1" />
                             View Prescription
                           </Button>
-                        )}
+                        ) : request.status === 'completed' && !request.prescription ? (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            disabled
+                            className="text-orange-600 border-orange-200"
+                          >
+                            <Clock className="h-4 w-4 mr-1" />
+                            Generating Prescription
+                          </Button>
+                        ) : request.status === 'pending' ? (
+                          <Badge variant="outline" className="text-yellow-600 border-yellow-200 bg-yellow-50">
+                            <Clock className="h-3 w-3 mr-1" />
+                            Awaiting Doctor Review
+                          </Badge>
+                        ) : request.status === 'in_progress' ? (
+                          <Badge variant="outline" className="text-blue-600 border-blue-200 bg-blue-50">
+                            <Stethoscope className="h-3 w-3 mr-1" />
+                            Doctor Reviewing
+                          </Badge>
+                        ) : null}
                       </div>
                     </div>
                   </CardContent>

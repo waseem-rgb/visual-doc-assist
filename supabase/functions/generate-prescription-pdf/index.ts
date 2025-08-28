@@ -38,7 +38,7 @@ Deno.serve(async (req) => {
         *,
         prescription_requests!inner(*)
       `)
-      .eq('id', requestId)
+      .eq('request_id', requestId)
       .eq('doctor_id', doctorId)
       .single();
 
@@ -71,24 +71,10 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Download prescription template from storage
-    const { data: templateData, error: templateError } = await supabase.storage
-      .from('new_prescription-templet')
-      .download('prescription_template.docx'); // Assuming the template is named this
-
-    if (templateError) {
-      console.error('Error downloading template:', templateError);
-      return new Response(
-        JSON.stringify({ error: 'Template not found' }),
-        { 
-          status: 500,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        }
-      );
-    }
+    // Generate professional PDF without template dependency
+    console.log('Generating professional PDF for prescription:', prescription.id);
 
     // Generate professional PDF
-    console.log('Generating professional PDF...');
     const pdfContent = await generateProfessionalPDF({ 
       prescription, 
       doctor, 
@@ -96,7 +82,7 @@ Deno.serve(async (req) => {
     });
     
     // Upload PDF to storage
-    const fileName = `prescription-${requestId}-${Date.now()}.pdf`;
+    const fileName = `prescription-${prescription.id}-${Date.now()}.pdf`;
     const { error: uploadError } = await supabase.storage
       .from('prescriptions')
       .upload(fileName, pdfContent, {
@@ -124,13 +110,13 @@ Deno.serve(async (req) => {
     const { error: updateError } = await supabase
       .from('prescriptions')
       .update({ pdf_url: signedUrlData?.signedUrl })
-      .eq('id', requestId);
+      .eq('id', prescription.id);
 
     if (updateError) {
       console.error('Error updating prescription with PDF URL:', updateError);
     }
 
-    console.log(`Prescription PDF generated successfully for request ${requestId}`);
+    console.log(`Prescription PDF generated successfully for prescription ${prescription.id}`);
     
     return new Response(
       JSON.stringify({ 
