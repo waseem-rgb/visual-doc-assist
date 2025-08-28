@@ -40,6 +40,7 @@ const UniversalSymptomSelector = ({
   const containerRef = useRef<HTMLDivElement>(null);
   const hoverCircleRef = useRef<Circle | null>(null);
   const fabricImageRef = useRef<FabricImage | null>(null);
+  const imageReadyRef = useRef<boolean>(false);
   const [fabricCanvas, setFabricCanvas] = useState<FabricCanvas | null>(null);
   const [selectedSymptom, setSelectedSymptom] = useState<SymptomItem | null>(null);
   const [highlightCircle, setHighlightCircle] = useState<Circle | null>(null);
@@ -82,6 +83,7 @@ const UniversalSymptomSelector = ({
   useEffect(() => {
     if (!open) {
       setImageLoaded(false);
+      imageReadyRef.current = false;
       setSelectedSymptom(null);
       setHighlightCircle(null);
       hoverCircleRef.current = null;
@@ -175,68 +177,59 @@ const UniversalSymptomSelector = ({
       canvas.add(img);
       fabricImageRef.current = img;
       setImageLoaded(true);
-      canvas.renderAll();
-
-      console.log('✅ Image added to canvas and scaled');
-    }).catch((error) => {
-      console.error('❌ Failed to load image into Fabric:', error);
-      setImageLoaded(false);
-    });
-
-    // Create hover circle that follows cursor
-    const createHoverCircle = () => {
-      console.log('🔍 Creating hover circle');
-      return new Circle({
+      imageReadyRef.current = true;
+      
+      // Create the reusable hover circle now that image is ready
+      const hoverCircle = new Circle({
         radius: 15,
         fill: 'rgba(59, 130, 246, 0.3)',
         stroke: '#3b82f6',
         strokeWidth: 2,
         selectable: false,
         evented: false,
-        opacity: 0.8
+        opacity: 0.8,
+        visible: false
       });
-    };
+      canvas.add(hoverCircle);
+      hoverCircleRef.current = hoverCircle;
+      
+      canvas.renderAll();
+      console.log('✅ Image added to canvas and hover circle created');
+    }).catch((error) => {
+      console.error('❌ Failed to load image into Fabric:', error);
+      setImageLoaded(false);
+      imageReadyRef.current = false;
+    });
 
     // Handle mouse movement for hover circle
     canvas.on('mouse:move', (event) => {
-      if (!imageLoaded || !fabricImageRef.current) {
-        console.log('🔍 Mouse move - not ready:', { imageLoaded, hasImage: !!fabricImageRef.current });
+      if (!imageReadyRef.current || !fabricImageRef.current || !hoverCircleRef.current) {
         return;
       }
       
       const pointer = canvas.getPointer(event.e);
-      console.log('🔍 Mouse move at:', pointer.x, pointer.y);
       
-      // Remove existing hover circle
-      if (hoverCircleRef.current) {
-        canvas.remove(hoverCircleRef.current);
-      }
-
-      // Create and add new hover circle at cursor position
-      const newHoverCircle = createHoverCircle();
-      newHoverCircle.set({
+      // Move the existing hover circle to cursor position
+      hoverCircleRef.current.set({
         left: pointer.x - 15,
-        top: pointer.y - 15
+        top: pointer.y - 15,
+        visible: true
       });
       
-      canvas.add(newHoverCircle);
-      hoverCircleRef.current = newHoverCircle;
       canvas.renderAll();
-      console.log('🔍 Hover circle created and added');
     });
 
-    // Handle mouse leave to remove hover circle
+    // Handle mouse leave to hide hover circle
     canvas.on('mouse:out', () => {
       if (hoverCircleRef.current) {
-        canvas.remove(hoverCircleRef.current);
-        hoverCircleRef.current = null;
+        hoverCircleRef.current.set({ visible: false });
         canvas.renderAll();
       }
     });
 
     // Handle canvas clicks to open symptom popover
     canvas.on('mouse:down', (event) => {
-      if (!imageLoaded || isPanning) return;
+      if (!imageReadyRef.current || isPanning) return;
       
       const pointer = canvas.getPointer(event.e);
       const canvasElement = canvasRef.current;
