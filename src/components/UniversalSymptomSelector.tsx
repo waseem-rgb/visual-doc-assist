@@ -58,64 +58,34 @@ const UniversalSymptomSelector = ({
   const { toast } = useToast();
 
   const getImagePath = useCallback(async () => {
-    console.log(`🔍 Loading image for bodyPart: "${bodyPart}" from Supabase storage`);
-    
     try {
-      // Try exact body part name first (e.g., "CHEST CENTRAL.png")
-      const exactFileName = `${bodyPart}.png`;
-      console.log(`🎯 Trying exact filename: ${exactFileName}`);
+      const { loadImageFromStorage } = await import('@/lib/storageUtils');
       
-      const { data: exactFile } = await supabase.storage
-        .from('Symptom_Images')
-        .getPublicUrl(exactFileName);
-      
-      if (exactFile?.publicUrl) {
-        // Test if the URL actually works
-        try {
-          const response = await fetch(exactFile.publicUrl, { method: 'HEAD' });
-          if (response.ok) {
-            console.log(`✅ Found exact match: ${exactFileName}`);
-            return exactFile.publicUrl;
-          }
-        } catch (e) {
-          console.log(`❌ Exact filename not accessible: ${exactFileName}`);
-        }
-      }
-      
-      // Fallback: try some variations
-      const variations = [
-        `${bodyPart.toUpperCase()}.png`,
-        `${bodyPart.toLowerCase()}.png`,
-        `${bodyPart.replace(/\s+/g, ' ').toUpperCase()}.png`,
-        `${bodyPart.replace(/\s+/g, '_').toUpperCase()}.png`,
-        `${bodyPart.replace(/\s+/g, '-').toUpperCase()}.png`
+      // Try multiple filename variations based on the body part
+      const searchTerms = [
+        bodyPart, // Original body part name
+        bodyPart.toLowerCase(),
+        bodyPart.replace(/\s+/g, ''), // Remove spaces
+        bodyPart.replace(/\s+/g, '-'), // Replace spaces with dashes
+        bodyPart.replace(/\s+/g, '_'), // Replace spaces with underscores
       ];
-      
-      console.log(`🔄 Trying variations:`, variations);
-      
-      for (const variation of variations) {
-        const { data } = await supabase.storage
-          .from('Symptom_Images')
-          .getPublicUrl(variation);
-        
-        if (data?.publicUrl) {
-          try {
-            const response = await fetch(data.publicUrl, { method: 'HEAD' });
-            if (response.ok) {
-              console.log(`✅ Found variation: ${variation}`);
-              return data.publicUrl;
-            }
-          } catch (e) {
-            continue;
-          }
+
+      for (const searchTerm of searchTerms) {
+        console.log(`🔍 Trying to load image for: "${searchTerm}"`);
+        const result = await loadImageFromStorage(searchTerm, 'Symptom_Images');
+        if (result.url) {
+          console.log(`✅ Found image: ${result.url}`);
+          return result.url;
         }
       }
       
-      console.log(`❌ No image found for: ${bodyPart}`);
-      return null;
+      // If no specific image found, try generic body diagram
+      console.log('🔄 Falling back to generic body diagram');
+      const fallbackResult = await loadImageFromStorage('body-diagram-front', 'Symptom_Images');
+      return fallbackResult.url;
       
     } catch (error) {
-      console.error('❌ Error loading image from storage:', error);
+      console.error('❌ Error in getImagePath:', error);
       return null;
     }
   }, [bodyPart]);
@@ -295,17 +265,7 @@ const UniversalSymptomSelector = ({
       }, 100);
       return () => clearTimeout(timer);
     }
-  }, [isOpen, initializeCanvas, isFullscreen, bodyPart, gender, view]);
-
-  // Also reinitialize when fullscreen mode changes
-  useEffect(() => {
-    if (isOpen && fabricCanvasRef.current) {
-      const timer = setTimeout(() => {
-        initializeCanvas();
-      }, 200); // Longer delay for fullscreen transitions
-      return () => clearTimeout(timer);
-    }
-  }, [isFullscreen]);
+  }, [isOpen, initializeCanvas, isFullscreen]);
 
   const handleSymptomClick = (symptom: string) => {
     if (!selectedSymptoms.includes(symptom)) {
