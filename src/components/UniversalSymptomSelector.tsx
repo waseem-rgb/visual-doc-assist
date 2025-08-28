@@ -76,6 +76,15 @@ const UniversalSymptomSelector = ({
   // Get symptom content for current body part
   const textRegions = symptomContentData?.regions || [];
   const hasRegions = textRegions.length > 0;
+  
+  // Compute available symptoms - prioritize Supabase data over props
+  const availableSymptoms = symptomContentData?.fallbackSymptoms?.length 
+    ? symptomContentData.fallbackSymptoms 
+    : symptoms;
+  
+  // Log which symptom list is being used for debugging
+  console.log(`🔍 [UniversalSymptomSelector] Body part: ${bodyPart}, Using ${symptomContentData?.fallbackSymptoms?.length ? 'Supabase' : 'prop'} symptoms (${availableSymptoms.length} items)`);
+  console.log(`📋 [UniversalSymptomSelector] Available symptoms:`, availableSymptoms.map(s => s.text));
 
   // Calculate canvas dimensions based on screen size
   const calculateCanvasDimensions = () => {
@@ -147,6 +156,18 @@ const UniversalSymptomSelector = ({
         });
     }
   }, [open, bodyPart]);
+
+  // Reset selected symptom when body part changes
+  useEffect(() => {
+    setSelectedSymptom(null);
+    setShowConfirmationPopover(false);
+    setClickPosition(null);
+    if (selectionMarkerRef.current && fabricCanvas) {
+      fabricCanvas.remove(selectionMarkerRef.current);
+      selectionMarkerRef.current = null;
+      fabricCanvas.renderAll();
+    }
+  }, [bodyPart]);
 
   // Canvas event handlers
   const handleCanvasReady = (canvas: FabricCanvas) => {
@@ -490,7 +511,7 @@ const UniversalSymptomSelector = ({
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {symptoms.map((symptom) => (
+                  {availableSymptoms.map((symptom) => (
                     <Card
                       key={symptom.id}
                       className="cursor-pointer border border-border hover:border-primary/50 transition-colors"
@@ -546,7 +567,7 @@ const UniversalSymptomSelector = ({
                     No specific symptom found for this area. Choose from common symptoms:
                   </p>
                   <div className="space-y-1 max-h-32 overflow-y-auto">
-                    {symptoms.slice(0, 3).map((symptom) => (
+                    {availableSymptoms.slice(0, 3).map((symptom) => (
                       <button
                         key={symptom.id}
                         className="block w-full text-left text-xs p-2 rounded hover:bg-muted transition-colors"
