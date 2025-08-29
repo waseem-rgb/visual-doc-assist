@@ -92,9 +92,32 @@ const PrescriptionRequestDetail = ({ request, onBack, onUpdate }: PrescriptionRe
         throw new Error("Case not found or could not be updated");
       }
 
+      // Send SMS notification to patient
+      if (request.patient_phone) {
+        try {
+          const { data: doctorProfile } = await supabase
+            .from('doctor_profiles')
+            .select('full_name')
+            .eq('id', user.id)
+            .single();
+
+          await supabase.functions.invoke('send-sms-notification', {
+            body: {
+              to: request.patient_phone,
+              type: 'case_claimed',
+              patientName: request.patient_name,
+              doctorName: doctorProfile?.full_name || 'Dr. ' + user.email?.split('@')[0]
+            }
+          });
+        } catch (smsError) {
+          console.error('Failed to send SMS notification:', smsError);
+          // Don't fail the entire operation if SMS fails
+        }
+      }
+
       toast({
         title: "Case Claimed",
-        description: "You have successfully claimed this case.",
+        description: "You have successfully claimed this case. Patient has been notified.",
       });
 
       onUpdate(data);
@@ -247,6 +270,29 @@ const PrescriptionRequestDetail = ({ request, onBack, onUpdate }: PrescriptionRe
           console.error('Failed to generate PDF:', pdfError);
         }
       }, 100); // Start after 100ms to ensure UI updates first
+
+      // Send SMS notification to patient about prescription being ready
+      if (request.patient_phone) {
+        try {
+          const { data: doctorProfile } = await supabase
+            .from('doctor_profiles')
+            .select('full_name')
+            .eq('id', user?.id)
+            .single();
+
+          await supabase.functions.invoke('send-sms-notification', {
+            body: {
+              to: request.patient_phone,
+              type: 'prescription_ready',
+              patientName: request.patient_name,
+              doctorName: doctorProfile?.full_name || 'Dr. ' + user?.email?.split('@')[0]
+            }
+          });
+        } catch (smsError) {
+          console.error('Failed to send SMS notification:', smsError);
+          // Don't fail the entire operation if SMS fails
+        }
+      }
 
       onUpdate(updatedRequest);
     } catch (error: any) {
