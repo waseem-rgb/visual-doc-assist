@@ -27,6 +27,9 @@ interface PrescriptionRequest {
   body_part: string;
   symptoms: string;
   probable_diagnosis: string;
+  database_diagnosis?: string;
+  ai_diagnosis?: string;
+  selected_diagnosis_type?: string;
   short_summary: string;
   basic_investigations: string;
   common_treatments: string;
@@ -55,6 +58,7 @@ const PrescriptionRequestDetail = ({ request, onBack, onUpdate }: PrescriptionRe
   const [followUpNotes, setFollowUpNotes] = useState("");
   const [updatedInvestigations, setUpdatedInvestigations] = useState(request.basic_investigations || "");
   const [updatedTreatments, setUpdatedTreatments] = useState(request.common_treatments || "");
+  const [selectedDiagnosis, setSelectedDiagnosis] = useState<'database' | 'ai'>('database');
   const { toast } = useToast();
 
   const handleClaimCase = async () => {
@@ -113,10 +117,11 @@ const PrescriptionRequestDetail = ({ request, onBack, onUpdate }: PrescriptionRe
           patient_name: request.patient_name,
           patient_age: request.patient_age,
           patient_gender: request.patient_gender,
-          diagnosis: request.probable_diagnosis,
+          diagnosis: selectedDiagnosis === 'ai' ? request.ai_diagnosis : request.database_diagnosis || request.probable_diagnosis,
           medications: JSON.stringify(prescribedMedications),
           instructions,
-          follow_up_notes: followUpNotes
+          follow_up_notes: followUpNotes,
+          selected_diagnosis_type: selectedDiagnosis
         })
         .select()
         .single();
@@ -129,7 +134,8 @@ const PrescriptionRequestDetail = ({ request, onBack, onUpdate }: PrescriptionRe
         .update({ 
           status: 'completed',
           basic_investigations: updatedInvestigations,
-          common_treatments: updatedTreatments
+          common_treatments: updatedTreatments,
+          selected_diagnosis_type: selectedDiagnosis
         })
         .eq("id", request.id)
         .select()
@@ -292,12 +298,66 @@ const PrescriptionRequestDetail = ({ request, onBack, onUpdate }: PrescriptionRe
                 </div>
 
                 <div>
-                  <Label className="text-sm font-semibold text-muted-foreground">
-                    Probable Diagnosis (AI Generated)
+                  <Label className="text-sm font-semibold text-muted-foreground mb-3 block">
+                    Probable Diagnosis Options
                   </Label>
-                  <p className="mt-1 p-3 bg-muted/50 rounded-md text-sm">
-                    {request.probable_diagnosis || "No diagnosis available"}
-                  </p>
+                  <div className="space-y-4">
+                    {/* Database Diagnosis */}
+                    {request.database_diagnosis && (
+                      <div className="flex items-start space-x-3 p-3 bg-muted/30 rounded-md border">
+                        <input
+                          type="checkbox"
+                          id="database-diagnosis"
+                          checked={selectedDiagnosis === 'database'}
+                          onChange={() => setSelectedDiagnosis('database')}
+                          disabled={request.status === 'completed'}
+                          className="mt-1 h-4 w-4 text-primary"
+                        />
+                        <div className="flex-1">
+                          <Label htmlFor="database-diagnosis" className="text-sm font-medium text-green-700 block mb-1">
+                            Database Diagnosis
+                          </Label>
+                          <p className="text-sm text-gray-700">
+                            {request.database_diagnosis}
+                          </p>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* AI Diagnosis */}
+                    {request.ai_diagnosis && (
+                      <div className="flex items-start space-x-3 p-3 bg-muted/30 rounded-md border">
+                        <input
+                          type="checkbox"
+                          id="ai-diagnosis"
+                          checked={selectedDiagnosis === 'ai'}
+                          onChange={() => setSelectedDiagnosis('ai')}
+                          disabled={request.status === 'completed'}
+                          className="mt-1 h-4 w-4 text-primary"
+                        />
+                        <div className="flex-1">
+                          <Label htmlFor="ai-diagnosis" className="text-sm font-medium text-blue-700 block mb-1">
+                            AI Generated Diagnosis
+                          </Label>
+                          <p className="text-sm text-gray-700">
+                            {request.ai_diagnosis}
+                          </p>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Fallback if no new diagnoses available */}
+                    {(!request.database_diagnosis && !request.ai_diagnosis) && (
+                      <div className="p-3 bg-muted/30 rounded-md border">
+                        <Label className="text-sm font-semibold text-muted-foreground block mb-1">
+                          Probable Diagnosis (Legacy)
+                        </Label>
+                        <p className="text-sm text-gray-700">
+                          {request.probable_diagnosis || "No diagnosis available"}
+                        </p>
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 <div>

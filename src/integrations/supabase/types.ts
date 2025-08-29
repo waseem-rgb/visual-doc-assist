@@ -136,6 +136,7 @@ export type Database = {
       }
       prescription_requests: {
         Row: {
+          ai_diagnosis: string | null
           assigned_doctor_id: string | null
           basic_investigations: string | null
           body_part: string
@@ -145,6 +146,7 @@ export type Database = {
           created_at: string
           customer_email: string | null
           customer_id: string | null
+          database_diagnosis: string | null
           id: string
           patient_age: string
           patient_gender: string
@@ -153,12 +155,14 @@ export type Database = {
           physical_examination: string | null
           prescription_required: boolean
           probable_diagnosis: string | null
+          selected_diagnosis_type: string | null
           short_summary: string | null
           status: Database["public"]["Enums"]["request_status"]
           symptoms: string | null
           updated_at: string
         }
         Insert: {
+          ai_diagnosis?: string | null
           assigned_doctor_id?: string | null
           basic_investigations?: string | null
           body_part: string
@@ -168,6 +172,7 @@ export type Database = {
           created_at?: string
           customer_email?: string | null
           customer_id?: string | null
+          database_diagnosis?: string | null
           id?: string
           patient_age: string
           patient_gender: string
@@ -176,12 +181,14 @@ export type Database = {
           physical_examination?: string | null
           prescription_required?: boolean
           probable_diagnosis?: string | null
+          selected_diagnosis_type?: string | null
           short_summary?: string | null
           status?: Database["public"]["Enums"]["request_status"]
           symptoms?: string | null
           updated_at?: string
         }
         Update: {
+          ai_diagnosis?: string | null
           assigned_doctor_id?: string | null
           basic_investigations?: string | null
           body_part?: string
@@ -191,6 +198,7 @@ export type Database = {
           created_at?: string
           customer_email?: string | null
           customer_id?: string | null
+          database_diagnosis?: string | null
           id?: string
           patient_age?: string
           patient_gender?: string
@@ -199,6 +207,7 @@ export type Database = {
           physical_examination?: string | null
           prescription_required?: boolean
           probable_diagnosis?: string | null
+          selected_diagnosis_type?: string | null
           short_summary?: string | null
           status?: Database["public"]["Enums"]["request_status"]
           symptoms?: string | null
@@ -224,6 +233,7 @@ export type Database = {
           pdf_url: string | null
           prescription_date: string | null
           request_id: string | null
+          selected_diagnosis_type: string | null
         }
         Insert: {
           created_at?: string
@@ -242,6 +252,7 @@ export type Database = {
           pdf_url?: string | null
           prescription_date?: string | null
           request_id?: string | null
+          selected_diagnosis_type?: string | null
         }
         Update: {
           created_at?: string
@@ -260,6 +271,7 @@ export type Database = {
           pdf_url?: string | null
           prescription_date?: string | null
           request_id?: string | null
+          selected_diagnosis_type?: string | null
         }
         Relationships: [
           {

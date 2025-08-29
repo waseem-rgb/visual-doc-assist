@@ -34,6 +34,7 @@ const InteractiveSymptomSelector = ({ bodyPart, patientData, onBack }: Interacti
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [finalSelection, setFinalSelection] = useState<{id: string, text: string} | null>(null);
   const [diagnosis, setDiagnosis] = useState<string | null>(null);
+  const [aiDiagnosis, setAiDiagnosis] = useState<string | null>(null);
   const [loadingDiagnosis, setLoadingDiagnosis] = useState(false);
   const [showClinicalForm, setShowClinicalForm] = useState(false);
   const [prescriptionSubmitted, setPrescriptionSubmitted] = useState(false);
@@ -321,7 +322,22 @@ const InteractiveSymptomSelector = ({ bodyPart, patientData, onBack }: Interacti
       // Check if user is authenticated for tracking
       const { data: { user } } = await supabase.auth.getUser();
 
-      // Store prescription request in database
+      // Generate AI diagnosis using the edge function
+      const { data: aiResponse, error: aiError } = await supabase.functions.invoke('ai-text-generation', {
+        body: {
+          prompt: `Based on these symptoms: "${fullSymptomsText}" and body part: "${bodyPart}", provide a probable diagnosis. Keep it concise and professional.`,
+          systemMessage: 'You are a medical AI assistant. Provide a probable diagnosis based on the symptoms described. Keep responses concise and note that this should not replace professional medical advice.',
+          maxTokens: 200
+        }
+      });
+
+      let generatedAiDiagnosis = 'Unable to determine diagnosis. Please consult with a healthcare provider.';
+      if (!aiError && aiResponse?.success) {
+        generatedAiDiagnosis = aiResponse.generatedText;
+        setAiDiagnosis(generatedAiDiagnosis);
+      }
+
+      // Store prescription request in database with both diagnoses
       const { data, error } = await supabase
         .from('prescription_requests')
         .insert({
@@ -330,7 +346,9 @@ const InteractiveSymptomSelector = ({ bodyPart, patientData, onBack }: Interacti
           patient_gender: patientData.gender,
           body_part: bodyPart,
           symptoms: fullSymptomsText,
-          probable_diagnosis: diagnosis || 'To be determined',
+          probable_diagnosis: diagnosis || 'To be determined', // Keep for backward compatibility
+          database_diagnosis: diagnosis || 'To be determined',
+          ai_diagnosis: generatedAiDiagnosis,
           short_summary: masterData?.['Short Summary'] || '',
           basic_investigations: masterData?.['Basic Investigations'] || '',
           common_treatments: masterData?.['Common Treatments'] || '',
