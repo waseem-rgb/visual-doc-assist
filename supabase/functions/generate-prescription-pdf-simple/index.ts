@@ -15,7 +15,7 @@ Deno.serve(async (req) => {
   try {
     const { requestId, doctorId } = await req.json();
     
-    console.log('Simple PDF generation request:', { requestId, doctorId });
+    console.log('VrDoc PDF generation request:', { requestId, doctorId });
 
     if (!requestId || !doctorId) {
       return new Response(
@@ -63,15 +63,18 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Create PDF with simplified approach
+    const requestData = prescription.prescription_requests;
+
+    // Create PDF with VrDoc template
     const pdfDoc = await PDFDocument.create();
     const page = pdfDoc.addPage([595, 842]); // A4 size
     const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
     const boldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
 
-    let yPosition = 780;
+    let yPosition = 800;
     const leftMargin = 50;
-    const pageWidth = 545;
+    const rightMargin = 545;
+    const pageWidth = 495;
 
     // Helper function to add text
     const addText = (text: string, x: number, y: number, options: any = {}) => {
@@ -84,43 +87,133 @@ Deno.serve(async (req) => {
       });
     };
 
-    // Header
-    addText('MEDICAL PRESCRIPTION', leftMargin, yPosition, { bold: true, size: 20 });
-    yPosition -= 40;
+    // Helper function to wrap text
+    const wrapText = (text: string, maxWidth: number, fontSize: number = 12) => {
+      const words = text.split(' ');
+      const lines = [];
+      let currentLine = '';
+      
+      for (const word of words) {
+        const testLine = currentLine ? `${currentLine} ${word}` : word;
+        const textWidth = testLine.length * (fontSize * 0.6); // Approximate width
+        
+        if (textWidth > maxWidth && currentLine) {
+          lines.push(currentLine);
+          currentLine = word;
+        } else {
+          currentLine = testLine;
+        }
+      }
+      
+      if (currentLine) {
+        lines.push(currentLine);
+      }
+      
+      return lines;
+    };
 
-    // Doctor Information
-    addText('Doctor Information:', leftMargin, yPosition, { bold: true, size: 14 });
-    yPosition -= 20;
-    addText(`Dr. ${doctor.full_name}`, leftMargin, yPosition);
-    yPosition -= 15;
-    addText(`Specialization: ${doctor.specialization || 'General Medicine'}`, leftMargin, yPosition);
-    yPosition -= 15;
-    addText(`License: ${doctor.license_number || 'N/A'}`, leftMargin, yPosition);
-    yPosition -= 15;
-    addText(`Phone: ${doctor.phone || 'N/A'}`, leftMargin, yPosition);
-    yPosition -= 30;
+    // 1. Green Header with VrDoc
+    page.drawRectangle({
+      x: 0,
+      y: yPosition - 5,
+      width: 595,
+      height: 50,
+      color: rgb(0.2, 0.6, 0.2), // Green color
+    });
 
-    // Patient Information
-    addText('Patient Information:', leftMargin, yPosition, { bold: true, size: 14 });
-    yPosition -= 20;
-    addText(`Name: ${prescription.patient_name}`, leftMargin, yPosition);
+    addText('VrDoc', leftMargin, yPosition + 15, { 
+      bold: true, 
+      size: 24,
+      color: rgb(1, 1, 1) // White text
+    });
+
+    yPosition -= 70;
+
+    // 2. Doctor Information (Left side)
+    addText(`Dr. ${doctor.full_name}`, leftMargin, yPosition, { bold: true, size: 14 });
     yPosition -= 15;
-    addText(`Age: ${prescription.patient_age} years`, leftMargin, yPosition);
-    yPosition -= 15;
-    addText(`Gender: ${prescription.patient_gender}`, leftMargin, yPosition);
-    yPosition -= 30;
+    addText(`${doctor.specialization || 'General Medicine'}`, leftMargin, yPosition, { size: 11 });
+    yPosition -= 12;
+    addText(`License: ${doctor.license_number || 'N/A'}`, leftMargin, yPosition, { size: 11 });
+    yPosition -= 12;
+    addText(`Phone: ${doctor.phone || 'N/A'}`, leftMargin, yPosition, { size: 11 });
+    
+    // Patient Information (Right side - same level as doctor)
+    const patientStartY = yPosition + 39;
+    addText(`Patient: ${requestData.patient_name}`, rightMargin - 200, patientStartY, { bold: true, size: 12 });
+    addText(`Age: ${requestData.patient_age}`, rightMargin - 200, patientStartY - 15, { size: 11 });
+    addText(`Gender: ${requestData.patient_gender}`, rightMargin - 200, patientStartY - 30, { size: 11 });
+    addText(`Date: ${new Date().toLocaleDateString()}`, rightMargin - 200, patientStartY - 45, { size: 11 });
 
-    // Diagnosis
-    addText('Diagnosis:', leftMargin, yPosition, { bold: true, size: 14 });
-    yPosition -= 20;
-    const diagnosis = prescription.diagnosis || 'No diagnosis provided';
-    addText(diagnosis, leftMargin, yPosition);
-    yPosition -= 30;
+    yPosition -= 50;
 
-    // Medications
-    addText('Prescribed Medications:', leftMargin, yPosition, { bold: true, size: 14 });
-    yPosition -= 20;
+    // Horizontal line separator
+    page.drawLine({
+      start: { x: leftMargin, y: yPosition },
+      end: { x: rightMargin, y: yPosition },
+      thickness: 1,
+      color: rgb(0.8, 0.8, 0.8),
+    });
 
+    yPosition -= 25;
+
+    // 3. C/o- (Chief complaint from symptoms)
+    if (requestData.symptoms && requestData.symptoms.trim()) {
+      addText('C/o-', leftMargin, yPosition, { bold: true, size: 12 });
+      yPosition -= 15;
+      
+      const symptomLines = wrapText(requestData.symptoms, pageWidth - 50);
+      for (const line of symptomLines) {
+        addText(line, leftMargin + 20, yPosition, { size: 11 });
+        yPosition -= 12;
+      }
+      yPosition -= 10;
+    }
+
+    // 4. H/o- (History from clinical_history)
+    if (requestData.clinical_history && requestData.clinical_history.trim()) {
+      addText('H/o-', leftMargin, yPosition, { bold: true, size: 12 });
+      yPosition -= 15;
+      
+      const historyLines = wrapText(requestData.clinical_history, pageWidth - 50);
+      for (const line of historyLines) {
+        addText(line, leftMargin + 20, yPosition, { size: 11 });
+        yPosition -= 12;
+      }
+      yPosition -= 10;
+    }
+
+    // 5. Medication History (only if exists)
+    if (requestData.medication_history && requestData.medication_history.trim()) {
+      addText('Current Medications:', leftMargin, yPosition, { bold: true, size: 12 });
+      yPosition -= 15;
+      
+      const medicationLines = wrapText(requestData.medication_history, pageWidth - 50);
+      for (const line of medicationLines) {
+        addText(line, leftMargin + 20, yPosition, { size: 11 });
+        yPosition -= 12;
+      }
+      yPosition -= 15;
+    }
+
+    // 6. DIAGNOSIS (only probable diagnosis)
+    if (requestData.probable_diagnosis && requestData.probable_diagnosis.trim()) {
+      addText('DIAGNOSIS:', leftMargin, yPosition, { bold: true, size: 13 });
+      yPosition -= 18;
+      
+      const diagnosisLines = wrapText(requestData.probable_diagnosis, pageWidth);
+      for (const line of diagnosisLines) {
+        addText(line, leftMargin, yPosition, { size: 12, bold: true });
+        yPosition -= 15;
+      }
+      yPosition -= 10;
+    }
+
+    // 7. Rx Section (with symbolic Rx instead of "medication")
+    addText('℞', leftMargin, yPosition, { bold: true, size: 20 });
+    yPosition -= 25;
+
+    // Parse and display prescribed medications
     try {
       const medications = JSON.parse(prescription.medications || '[]');
       
@@ -131,57 +224,90 @@ Deno.serve(async (req) => {
           const frequency = med.frequency || '';
           const duration = med.duration || '';
           
-          addText(`${index + 1}. ${medName}`, leftMargin + 10, yPosition);
+          // Medication name
+          addText(`${index + 1}. ${medName}`, leftMargin + 20, yPosition, { bold: true, size: 11 });
           yPosition -= 15;
           
-          if (dosage) {
-            addText(`   Dosage: ${dosage}`, leftMargin + 20, yPosition);
-            yPosition -= 12;
+          // Dosage and frequency on same line if both exist
+          let dosageText = '';
+          if (dosage && frequency) {
+            dosageText = `${dosage}, ${frequency}`;
+          } else if (dosage) {
+            dosageText = dosage;
+          } else if (frequency) {
+            dosageText = frequency;
           }
           
-          if (frequency) {
-            addText(`   Frequency: ${frequency}`, leftMargin + 20, yPosition);
+          if (dosageText) {
+            addText(`   ${dosageText}`, leftMargin + 30, yPosition, { size: 10 });
             yPosition -= 12;
           }
           
           if (duration) {
-            addText(`   Duration: ${duration}`, leftMargin + 20, yPosition);
+            addText(`   Duration: ${duration}`, leftMargin + 30, yPosition, { size: 10 });
             yPosition -= 12;
           }
           
-          yPosition -= 10;
+          yPosition -= 8;
         });
       } else {
-        addText('No medications prescribed', leftMargin + 10, yPosition);
+        addText('No medications prescribed', leftMargin + 20, yPosition, { size: 11 });
         yPosition -= 20;
       }
     } catch (error) {
       console.error('Error parsing medications:', error);
-      addText('Error displaying medications', leftMargin + 10, yPosition);
+      addText('Error displaying medications', leftMargin + 20, yPosition, { size: 11 });
       yPosition -= 20;
     }
 
-    // Instructions
+    yPosition -= 15;
+
+    // 8. INVESTIGATIONS
+    if (requestData.basic_investigations && requestData.basic_investigations.trim()) {
+      addText('INVESTIGATIONS:', leftMargin, yPosition, { bold: true, size: 13 });
+      yPosition -= 18;
+      
+      const investigationLines = wrapText(requestData.basic_investigations, pageWidth);
+      for (const line of investigationLines) {
+        addText(line, leftMargin, yPosition, { size: 11 });
+        yPosition -= 13;
+      }
+      yPosition -= 15;
+    }
+
+    // Instructions (if any)
     if (prescription.instructions && prescription.instructions.trim()) {
-      yPosition -= 10;
-      addText('Instructions:', leftMargin, yPosition, { bold: true, size: 14 });
+      addText('Instructions:', leftMargin, yPosition, { bold: true, size: 12 });
+      yPosition -= 15;
+      
+      const instructionLines = wrapText(prescription.instructions, pageWidth);
+      for (const line of instructionLines) {
+        addText(line, leftMargin, yPosition, { size: 11 });
+        yPosition -= 13;
+      }
       yPosition -= 20;
-      addText(prescription.instructions, leftMargin, yPosition);
-      yPosition -= 30;
     }
 
-    // Date and Signature
-    yPosition -= 20;
-    const currentDate = new Date().toLocaleDateString();
-    addText(`Date: ${currentDate}`, leftMargin, yPosition);
-    yPosition -= 30;
-    addText('Doctor Signature: ________________________', leftMargin, yPosition);
+    // 9. Digital Signature Section
+    yPosition = Math.min(yPosition, 150); // Ensure signature is at bottom
+    
+    // Signature line
+    page.drawLine({
+      start: { x: rightMargin - 200, y: yPosition },
+      end: { x: rightMargin, y: yPosition },
+      thickness: 1,
+      color: rgb(0, 0, 0),
+    });
+    
+    addText('Digital Signature', rightMargin - 180, yPosition - 15, { size: 10 });
+    addText(`Dr. ${doctor.full_name}`, rightMargin - 180, yPosition - 30, { bold: true, size: 11 });
+    addText(`${doctor.license_number || 'License: N/A'}`, rightMargin - 180, yPosition - 45, { size: 9 });
 
     // Generate PDF
     const pdfBytes = await pdfDoc.save();
     
     // Upload to storage
-    const fileName = `prescription-${prescription.id}-${Date.now()}.pdf`;
+    const fileName = `vrdoc-prescription-${prescription.id}-${Date.now()}.pdf`;
     const { error: uploadError } = await supabase.storage
       .from('new_prescription-templet')
       .upload(fileName, pdfBytes, {
@@ -211,22 +337,22 @@ Deno.serve(async (req) => {
       // Don't fail the request if update fails, PDF is still generated
     }
 
-    console.log('PDF generated successfully:', fileName);
+    console.log('VrDoc PDF generated successfully:', fileName);
 
     return new Response(
       JSON.stringify({ 
         success: true, 
         fileName,
-        message: 'PDF generated successfully'
+        message: 'VrDoc PDF generated successfully'
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 
   } catch (error) {
-    console.error('PDF generation error:', error);
+    console.error('VrDoc PDF generation error:', error);
     return new Response(
       JSON.stringify({ 
-        error: 'PDF generation failed', 
+        error: 'VrDoc PDF generation failed', 
         details: error.message 
       }),
       { 
