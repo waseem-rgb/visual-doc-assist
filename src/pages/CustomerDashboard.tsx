@@ -301,6 +301,36 @@ const CustomerDashboard = () => {
                 🔄 Refresh
               </Button>
               <Button 
+                variant="ghost"
+                size="sm"
+                onClick={async () => {
+                  console.log('Fixing missing PDFs...');
+                  try {
+                    const { data, error } = await supabase.functions.invoke('fix-missing-pdfs', {});
+                    if (error) throw error;
+                    
+                    toast({
+                      title: "PDF Generation Started",
+                      description: "Generating missing PDFs. Please refresh in a moment.",
+                    });
+                    
+                    // Auto refresh after 5 seconds
+                    setTimeout(() => {
+                      checkAuthAndFetchData();
+                    }, 5000);
+                  } catch (error) {
+                    console.error('Error fixing PDFs:', error);
+                    toast({
+                      title: "Error",
+                      description: "Failed to generate PDFs. Please try again.",
+                      variant: "destructive"
+                    });
+                  }
+                }}
+              >
+                🔧 Fix PDFs
+              </Button>
+              <Button 
                 variant="outline"
                 onClick={() => {
                   // Placeholder for teleconsultation integration
