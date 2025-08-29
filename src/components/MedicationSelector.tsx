@@ -210,6 +210,8 @@ const MedicationSelector = ({
   };
 
   const getAIAssistMedications = async () => {
+    console.log('AI Assist clicked. Diagnosis:', diagnosis, 'Patient Age:', patientAge, 'Gender:', patientGender);
+    
     if (!diagnosis) {
       toast({
         title: "No Diagnosis Available",
@@ -222,7 +224,9 @@ const MedicationSelector = ({
     setLoadingAIAssist(true);
     
     try {
+      console.log('Calling AI service with diagnosis:', diagnosis);
       const suggestions = await suggestMedicationsForDiagnosis(diagnosis, patientAge, patientGender);
+      console.log('AI suggestions received:', suggestions);
       
       // Parse the AI suggestions and convert to medication objects
       const lines = suggestions.split('\n').filter(line => line.includes('|'));
