@@ -1,0 +1,123 @@
+{
+  "common": {
+    "next": "આગળ",
+    "back": "પાછળ",
+    "submit": "સબમિટ કરો",
+    "cancel": "રદ કરો",
+    "save": "સેવ કરો",
+    "edit": "સંપાદિત કરો",
+    "delete": "ડિલીટ કરો",
+    "search": "શોધો",
+    "loading": "લોડ થઈ રહ્યું છે...",
+    "error": "ભૂલ",
+    "success": "સફળતા",
+    "yes": "હા",
+    "no": "ના",
+    "male": "પુરુષ",
+    "female": "સ્ત્રી",
+    "age": "ઉંમર",
+    "name": "નામ"
+  },
+  "languages": {
+    "en": "English",
+    "hi": "हिंदी (Hindi)",
+    "ta": "தமிழ் (Tamil)",
+    "te": "తెలుగు (Telugu)",
+    "bn": "বাংলা (Bengali)",
+    "gu": "ગુજરાતી (Gujarati)",
+    "mr": "मराठी (Marathi)"
+  },
+  "voice": {
+    "speak": "બોલો",
+    "listen": "સાંભળો",
+    "stopListening": "સાંભળવાનું બંધ કરો",
+    "voiceInstructions": "તમારા લક્ષણો કહેવા માટે દબાવો અને બોલો",
+    "processing": "તમારો આવાજ સમજી રહ્યું છે...",
+    "repeatInstruction": "કૃપા કરીને ફરીથી કહો"
+  },
+  "navigation": {
+    "home": "ઘર",
+    "consultation": "નવી તપાસ",
+    "dashboard": "ડેશબોર્ડ",
+    "profile": "પ્રોફાઇલ"
+  },
+  "hero": {
+    "title": "AI દ્વારા મેડિકલ સલાહ",
+    "subtitle": "લાયક ડોકટરો પાસેથી તત્કાલ મેડિકલ સલાહ અને દવાઓની પ્રિસ્ક્રિપ્શન મેળવો",
+    "startConsultation": "તપાસ શરૂ કરો",
+    "howItWorks": "આ કેવી રીતે કામ કરે છે"
+  },
+  "consultation": {
+    "title": "મેડિકલ તપાસ",
+    "patientInfo": "દર્દીની માહિતી",
+    "bodyArea": "શરીરનો ભાગ પસંદ કરો",
+    "symptoms": "લક્ષણો વર્ણવો",
+    "review": "સમીક્ષા અને પ્રિસ્ક્રિપ્શન",
+    "enterName": "દર્દીનું નામ લખો",
+    "enterAge": "ઉંમર લખો",
+    "selectGender": "લિંગ પસંદ કરો",
+    "selectBodyPart": "સમસ્યા ધરાવતો શરીરનો ભાગ પસંદ કરો",
+    "describeSymptoms": "તમારા લક્ષણો સાદા શબ્દોમાં વર્ણવો",
+    "additionalNotes": "વધારાની નોંધ",
+    "isPregnant": "શું તમે ગર્ભવતી છો?",
+    "pregnancyNote": "આ સુરક્ષિત સારવાર આપવામાં મદદ કરે છે"
+  },
+  "symptoms": {
+    "common": {
+      "headache": "માથાનો દુખાવો",
+      "fever": "તાવ",
+      "cough": "ઉધરસ",
+      "soreThroat": "ગળાનો દુખાવો",
+      "nausea": "ઉબકા",
+      "fatigue": "ખૂબ થાક",
+      "bodyAche": "આખા શરીરમાં દુખાવો",
+      "chestPain": "છાતીનો દુખાવો",
+      "stomachPain": "પેટનો દુખાવો",
+      "backPain": "કમરનો દુખાવો"
+    },
+    "bodyParts": {
+      "head": "માથું",
+      "chest": "છાતી",
+      "abdomen": "પેટ",
+      "arms": "હાથ",
+      "legs": "પગ",
+      "back": "કમર"
+    }
+  },
+  "prescriptions": {
+    "title": "દવાઓની પ્રિસ્ક્રિપ્શન",
+    "medication": "દવા",
+    "dosage": "કેટલી લેવી",
+    "frequency": "કેટલી વાર",
+    "duration": "કેટલા દિવસ",
+    "instructions": "ખાસ સૂચનાઓ",
+    "download": "પ્રિસ્ક્રિપ્શન ડાઉનલોડ કરો"
+  },
+  "templates": {
+    "commonCold": {
+      "name": "સામાન્ય શરદી",
+      "symptoms": "નાકમાંથી પાણી વહેવું, ઉધરસ, ગળાનો દુખાવો",
+      "treatment": "આરાม કરો, ગરમ પાણી પીઓ, દવા લો"
+    },
+    "fever": {
+      "name": "તાવ",
+      "symptoms": "શરીર ગરમ થવું, તીવ્ર તાવ",
+      "treatment": "તાવની દવા લો, ઘણું પાણી પીઓ, આરામ કરો"
+    },
+    "headache": {
+      "name": "માથાનો દુખાવો",
+      "symptoms": "માથામાં દુખાવો, માથું ભારે લાગવું",
+      "treatment": "દુખાવાની દવા લો, અંધારા ઓરડામાં આરામ કરો"
+    },
+    "stomachPain": {
+      "name": "પેટનો દુખાવો",
+      "symptoms": "પેટમાં દુખાવો, ઉબકા",
+      "treatment": "હળવો ખોરાક લો, પાણી પીઓ, દવા લો"
+    }
+  },
+  "referrals": {
+    "pediatrician": "બાળકોના ડોકટર",
+    "gynecologist": "સ્ત્રી રોગ નિષ્ણાત",
+    "automaticReferral": "વધુ સારી સારવાર માટે તમને નિષ્ણાત ડોકટર પાસે મોકલવામાં આવશે"
+  }
+}

@@ -1,0 +1,123 @@
+{
+  "common": {
+    "next": "পরবর্তী",
+    "back": "পেছনে",
+    "submit": "জমা দিন",
+    "cancel": "বাতিল",
+    "save": "সেভ করুন",
+    "edit": "সম্পাদনা",
+    "delete": "মুছুন",
+    "search": "খুঁজুন",
+    "loading": "লোড হচ্ছে...",
+    "error": "ত্রুটি",
+    "success": "সফল",
+    "yes": "হ্যাঁ",
+    "no": "না",
+    "male": "পুরুষ",
+    "female": "মহিলা",
+    "age": "বয়স",
+    "name": "নাম"
+  },
+  "languages": {
+    "en": "English",
+    "hi": "हिंदी (Hindi)",
+    "ta": "தமிழ் (Tamil)",
+    "te": "తెలుగు (Telugu)",
+    "bn": "বাংলা (Bengali)",
+    "gu": "ગુજરાતી (Gujarati)",
+    "mr": "मराठी (Marathi)"
+  },
+  "voice": {
+    "speak": "বলুন",
+    "listen": "শুনুন",
+    "stopListening": "শোনা বন্ধ করুন",
+    "voiceInstructions": "আপনার লক্ষণ বলতে চাপুন এবং বলুন",
+    "processing": "আপনার কণ্ঠস্বর বুঝছে...",
+    "repeatInstruction": "অনুগ্রহ করে আবার বলুন"
+  },
+  "navigation": {
+    "home": "বাড়ি",
+    "consultation": "নতুন পরীক্ষা",
+    "dashboard": "ড্যাশবোর্ড",
+    "profile": "প্রোফাইল"
+  },
+  "hero": {
+    "title": "AI দিয়ে চিকিৎসা পরামর্শ",
+    "subtitle": "যোগ্য ডাক্তারদের কাছ থেকে তাৎক্ষণিক চিকিৎসা পরামর্শ ও ওষুধের প্রেসক্রিপশন পান",
+    "startConsultation": "পরীক্ষা শুরু করুন",
+    "howItWorks": "এটি কীভাবে কাজ করে"
+  },
+  "consultation": {
+    "title": "চিকিৎসা পরীক্ষা",
+    "patientInfo": "রোগীর তথ্য",
+    "bodyArea": "শরীরের অংশ নির্বাচন করুন",
+    "symptoms": "লক্ষণ বর্ণনা করুন",
+    "review": "পর্যালোচনা ও প্রেসক্রিপশন",
+    "enterName": "রোগীর নাম লিখুন",
+    "enterAge": "বয়স লিখুন",
+    "selectGender": "লিঙ্গ নির্বাচন করুন",
+    "selectBodyPart": "সমস্যাযুক্ত শরীরের অংশ নির্বাচন করুন",
+    "describeSymptoms": "আপনার লক্ষণগুলি সহজ ভাষায় বর্ণনা করুন",
+    "additionalNotes": "অতিরিক্ত নোট",
+    "isPregnant": "আপনি কি গর্ভবতী?",
+    "pregnancyNote": "এটি নিরাপদ চিকিৎসা প্রদানে সাহায্য করে"
+  },
+  "symptoms": {
+    "common": {
+      "headache": "মাথাব্যথা",
+      "fever": "জ্বর",
+      "cough": "কাশি",
+      "soreThroat": "গলাব্যথা",
+      "nausea": "বমি ভাব",
+      "fatigue": "অতিরিক্ত ক্লান্তি",
+      "bodyAche": "সারা শরীরে ব্যথা",
+      "chestPain": "বুকে ব্যথা",
+      "stomachPain": "পেটব্যথা",
+      "backPain": "কোমর ব্যথা"
+    },
+    "bodyParts": {
+      "head": "মাথা",
+      "chest": "বুক",
+      "abdomen": "পেট",
+      "arms": "হাত",
+      "legs": "পা",
+      "back": "কোমর"
+    }
+  },
+  "prescriptions": {
+    "title": "ওষুধের প্রেসক্রিপশন",
+    "medication": "ওষুধ",
+    "dosage": "কতটুকু নিতে হবে",
+    "frequency": "কতবার",
+    "duration": "কত দিন",
+    "instructions": "বিশেষ নির্দেশনা",
+    "download": "প্রেসক্রিপশন ডাউনলোড করুন"
+  },
+  "templates": {
+    "commonCold": {
+      "name": "সাধারণ সর্দি",
+      "symptoms": "নাক দিয়ে পানি পড়া, কাশি, গলাব্যথা",
+      "treatment": "বিশ্রাম নিন, গরম পানি পান করুন, ওষুধ খান"
+    },
+    "fever": {
+      "name": "জ্বর",
+      "symptoms": "শরীর গরম হওয়া, তীব্র জ্বর",
+      "treatment": "জ্বরের ওষুধ খান, প্রচুর পানি পান করুন, বিশ্রাম নিন"
+    },
+    "headache": {
+      "name": "মাথাব্যথা",
+      "symptoms": "মাথায় ব্যথা, মাথা ভারী লাগা",
+      "treatment": "ব্যথার ওষুধ খান, অন্ধকার ঘরে বিশ্রাম নিন"
+    },
+    "stomachPain": {
+      "name": "পেটব্যথা",
+      "symptoms": "পেটে ব্যথা, বমি ভাব",
+      "treatment": "হালকা খাবার খান, পানি পান করুন, ওষুধ খান"
+    }
+  },
+  "referrals": {
+    "pediatrician": "শিশু চিকিৎসক",
+    "gynecologist": "স্ত্রীরোগ বিশেষজ্ঞ",
+    "automaticReferral": "উন্নত চিকিৎসার জন্য আপনাকে বিশেষজ্ঞ ডাক্তারের কাছে পাঠানো হবে"
+  }
+}

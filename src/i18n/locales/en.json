@@ -1,0 +1,123 @@
+{
+  "common": {
+    "next": "Next",
+    "back": "Back",
+    "submit": "Submit",
+    "cancel": "Cancel",
+    "save": "Save",
+    "edit": "Edit",
+    "delete": "Delete",
+    "search": "Search",
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "yes": "Yes",
+    "no": "No",
+    "male": "Male",
+    "female": "Female",
+    "age": "Age",
+    "name": "Name"
+  },
+  "languages": {
+    "en": "English",
+    "hi": "हिंदी (Hindi)",
+    "ta": "தமிழ் (Tamil)",
+    "te": "తెలుగు (Telugu)",
+    "bn": "বাংলা (Bengali)",
+    "gu": "ગુજરાતી (Gujarati)",
+    "mr": "मराठी (Marathi)"
+  },
+  "voice": {
+    "speak": "Speak",
+    "listen": "Listen",
+    "stopListening": "Stop Listening",
+    "voiceInstructions": "Tap and speak to describe your symptoms",
+    "processing": "Processing your voice...",
+    "repeatInstruction": "Please repeat that"
+  },
+  "navigation": {
+    "home": "Home",
+    "consultation": "New Consultation",
+    "dashboard": "Dashboard",
+    "profile": "Profile"
+  },
+  "hero": {
+    "title": "AI-Powered Medical Consultation",
+    "subtitle": "Get instant medical advice and prescriptions from qualified doctors",
+    "startConsultation": "Start Consultation",
+    "howItWorks": "How It Works"
+  },
+  "consultation": {
+    "title": "Medical Consultation",
+    "patientInfo": "Patient Information",
+    "bodyArea": "Select Body Area",
+    "symptoms": "Describe Symptoms",
+    "review": "Review & Generate",
+    "enterName": "Enter patient name",
+    "enterAge": "Enter age",
+    "selectGender": "Select gender",
+    "selectBodyPart": "Select the body part with symptoms",
+    "describeSymptoms": "Describe your symptoms in simple words",
+    "additionalNotes": "Any additional notes",
+    "isPregnant": "Are you pregnant?",
+    "pregnancyNote": "This helps us provide safer treatment options"
+  },
+  "symptoms": {
+    "common": {
+      "headache": "Head pain",
+      "fever": "High body temperature",
+      "cough": "Coughing",
+      "soreThroat": "Throat pain",
+      "nausea": "Feeling sick",
+      "fatigue": "Feeling very tired",
+      "bodyAche": "Body pain everywhere",
+      "chestPain": "Chest pain",
+      "stomachPain": "Stomach pain",
+      "backPain": "Back pain"
+    },
+    "bodyParts": {
+      "head": "Head",
+      "chest": "Chest", 
+      "abdomen": "Stomach area",
+      "arms": "Arms",
+      "legs": "Legs",
+      "back": "Back"
+    }
+  },
+  "prescriptions": {
+    "title": "Prescription",
+    "medication": "Medication",
+    "dosage": "How much to take",
+    "frequency": "How often",
+    "duration": "For how long",
+    "instructions": "Special instructions",
+    "download": "Download Prescription"
+  },
+  "templates": {
+    "commonCold": {
+      "name": "Common Cold",
+      "symptoms": "Runny nose, cough, throat pain",
+      "treatment": "Rest, drink warm water, take medicine as prescribed"
+    },
+    "fever": {
+      "name": "Fever",
+      "symptoms": "High body temperature, feeling hot",
+      "treatment": "Take fever medicine, drink lots of water, rest"
+    },
+    "headache": {
+      "name": "Headache", 
+      "symptoms": "Head pain, feeling heavy in head",
+      "treatment": "Take pain medicine, rest in dark room"
+    },
+    "stomachPain": {
+      "name": "Stomach Pain",
+      "symptoms": "Pain in stomach area, feeling sick",
+      "treatment": "Eat light food, drink water, take medicine"
+    }
+  },
+  "referrals": {
+    "pediatrician": "Child specialist doctor",
+    "gynecologist": "Women's health specialist doctor",
+    "automaticReferral": "You will be referred to specialist doctor for better care"
+  }
+}
