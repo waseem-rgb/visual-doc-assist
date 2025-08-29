@@ -115,11 +115,37 @@ const PrescriptionRequestDetail = ({ request, onBack, onUpdate }: PrescriptionRe
 
       if (error) {
         console.error('Download error:', error);
-        toast({
-          title: "Download Error",
-          description: "Failed to download prescription. Please try again.",
-          variant: "destructive",
-        });
+        
+        // If PDF not generated yet, try to generate it now
+        if (error.message?.includes('PDF not yet generated') || error.message?.includes('not found')) {
+          toast({
+            title: "Generating PDF",
+            description: "PDF is being generated. Please wait a moment and try again.",
+          });
+          
+          // Trigger PDF generation
+          const { data: { user } } = await supabase.auth.getUser();
+          if (user) {
+            setTimeout(async () => {
+              try {
+                await supabase.functions.invoke('generate-prescription-pdf', {
+                  body: {
+                    requestId: request.id,
+                    doctorId: user.id
+                  }
+                });
+              } catch (genError) {
+                console.error('PDF generation error:', genError);
+              }
+            }, 100);
+          }
+        } else {
+          toast({
+            title: "Download Error",
+            description: "Failed to download prescription. Please try again.",
+            variant: "destructive",
+          });
+        }
         return;
       }
 
@@ -180,7 +206,7 @@ const PrescriptionRequestDetail = ({ request, onBack, onUpdate }: PrescriptionRe
 
       if (prescError) throw prescError;
 
-      // Update request status
+      // Update request status to completed immediately
       const { data: updatedRequest, error: updateError } = await supabase
         .from("prescription_requests")
         .update({ 
@@ -195,47 +221,27 @@ const PrescriptionRequestDetail = ({ request, onBack, onUpdate }: PrescriptionRe
 
       if (updateError) throw updateError;
 
-      // Generate PDF after prescription is created
-      try {
-        const { data: pdfData, error: pdfError } = await supabase.functions.invoke('generate-prescription-pdf', {
-          body: {
-            requestId: request.id,
-            doctorId: user?.id
-          }
-        });
+      // Show immediate success feedback
+      toast({
+        title: "Prescription Approved",
+        description: "Prescription has been approved successfully. PDF will be generated shortly.",
+      });
 
-        if (pdfError) {
-          console.error('PDF generation error:', pdfError);
-          toast({
-            title: "PDF Generation Error",
-            description: "Prescription saved but PDF generation failed. Try downloading again later.",
-            variant: "destructive",
+      // Start PDF generation in background (non-blocking)
+      setTimeout(async () => {
+        try {
+          console.log('Starting background PDF generation for request:', request.id);
+          await supabase.functions.invoke('generate-prescription-pdf', {
+            body: {
+              requestId: request.id,
+              doctorId: user?.id
+            }
           });
-        } else if (pdfData?.success) {
-          console.log('PDF generated successfully:', pdfData?.pdfUrl);
-          toast({
-            title: "Prescription Generated",
-            description: "Prescription has been approved and PDF generated successfully.",
-          });
-        } else {
-          console.error('PDF generation failed:', pdfData);
-          toast({
-            title: "PDF Generation Error", 
-            description: "Prescription saved but PDF generation failed. Try downloading again later.",
-            variant: "destructive",
-          });
+          console.log('Background PDF generation completed');
+        } catch (pdfError) {
+          console.error('Failed to generate PDF in background:', pdfError);
         }
-      } catch (pdfError) {
-        console.error('Failed to generate PDF:', pdfError);
-        toast({
-          title: "PDF Generation Error",
-          description: "Prescription saved but PDF generation failed. Try downloading again later.",
-          variant: "destructive",
-        });
-      }
-      
-      // Only show success toast if no PDF errors occurred
-      // (PDF success toast is handled above)
+      }, 100); // Start after 100ms to ensure UI updates first
 
       onUpdate(updatedRequest);
     } catch (error: any) {
