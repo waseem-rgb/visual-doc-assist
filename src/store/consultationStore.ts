@@ -6,6 +6,7 @@ export interface PatientData {
   age: string;
   gender: string;
   phone: string;
+  isPregnant?: string; // 'yes' | 'no' | undefined
 }
 
 export interface ConsultationState {
@@ -45,7 +46,7 @@ export interface ConsultationState {
 const initialState = {
   currentStep: 0,
   isCompleted: false,
-  patientData: { name: '', age: '', gender: 'male', phone: '' },
+  patientData: { name: '', age: '', gender: 'male', phone: '', isPregnant: undefined },
   selectedBodyParts: [],
   currentView: 'Front' as const,
   selectionStep: 'quadrant' as const,

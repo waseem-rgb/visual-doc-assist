@@ -44,32 +44,50 @@ export function ReviewStep({ onBack, onReset }: ReviewStepProps) {
       // Determine prescription requirement by checking database for symptoms
       let prescriptionRequired = false;
       let isReferralCase = false;
+      let referralSpecialist = '';
+      
+      // Rule 1: Children under 10 years -> Pediatrician
+      const patientAge = parseInt(patientData.age);
+      if (patientAge < 10) {
+        isReferralCase = true;
+        referralSpecialist = 'Pediatrician';
+        console.log('🔍 [REVIEW STEP] Patient under 10, referring to Pediatrician');
+      }
+      
+      // Rule 2: Pregnant females -> Gynecologist
+      if (patientData.gender === 'female' && patientData.isPregnant === 'yes') {
+        isReferralCase = true;
+        referralSpecialist = 'Gynecologist';
+        console.log('🔍 [REVIEW STEP] Pregnant female, referring to Gynecologist');
+      }
       
       console.log('🔍 [REVIEW STEP] Checking prescription requirement for symptoms:', selectedSymptoms);
       
-      // Check database for prescription requirements based on symptoms
-      const { data: masterData, error: masterError } = await supabase
-        .from('New Master')
-        .select('"prescription_Y-N"')
-        .ilike('Symptoms', `%${selectedSymptoms[0]}%`) // Check first symptom
-        .maybeSingle();
+      // Check database for prescription requirements based on symptoms (only if not already a referral case)
+      if (!isReferralCase) {
+        const { data: masterData, error: masterError } = await supabase
+          .from('New Master')
+          .select('"prescription_Y-N"')
+          .ilike('Symptoms', `%${selectedSymptoms[0]}%`) // Check first symptom
+          .maybeSingle();
 
-      if (!masterError && masterData) {
-        const prescriptionYN = masterData['prescription_Y-N']?.toLowerCase() || '';
-        console.log('🔍 [REVIEW STEP] prescription_Y-N value:', prescriptionYN);
-        
-        // Check for doctor review keywords
-        const doctorReviewKeywords = ['doctors review and prescription', 'doctor review', 'prescription', 'y'];
-        const requiresDoctorReview = doctorReviewKeywords.some(keyword => prescriptionYN.includes(keyword));
-        
-        // Check for referral indicators
-        const referralIndicators = ['cardiologist', 'ent', 'dermatologist', 'specialist', 'emergency', 'hospital', 'department', 'referral'];
-        const hasReferralIndicators = referralIndicators.some(indicator => prescriptionYN.includes(indicator));
-        
-        prescriptionRequired = requiresDoctorReview && !hasReferralIndicators;
-        isReferralCase = hasReferralIndicators || prescriptionYN === 'n' || (!requiresDoctorReview && prescriptionYN !== '');
-        
-        console.log('🔍 [REVIEW STEP] Final decision - prescriptionRequired:', prescriptionRequired, 'isReferralCase:', isReferralCase);
+        if (!masterError && masterData) {
+          const prescriptionYN = masterData['prescription_Y-N']?.toLowerCase() || '';
+          console.log('🔍 [REVIEW STEP] prescription_Y-N value:', prescriptionYN);
+          
+          // Check for doctor review keywords
+          const doctorReviewKeywords = ['doctors review and prescription', 'doctor review', 'prescription', 'y'];
+          const requiresDoctorReview = doctorReviewKeywords.some(keyword => prescriptionYN.includes(keyword));
+          
+          // Check for referral indicators
+          const referralIndicators = ['cardiologist', 'ent', 'dermatologist', 'specialist', 'emergency', 'hospital', 'department', 'referral'];
+          const hasReferralIndicators = referralIndicators.some(indicator => prescriptionYN.includes(indicator));
+          
+          prescriptionRequired = requiresDoctorReview && !hasReferralIndicators;
+          isReferralCase = hasReferralIndicators || prescriptionYN === 'n' || (!requiresDoctorReview && prescriptionYN !== '');
+          
+          console.log('🔍 [REVIEW STEP] Final decision - prescriptionRequired:', prescriptionRequired, 'isReferralCase:', isReferralCase);
+        }
       }
 
       // Debug logging
@@ -80,14 +98,14 @@ export function ReviewStep({ onBack, onReset }: ReviewStepProps) {
       const requestData = {
         body_part: selectedBodyParts.join(', '),
         chief_complaint: selectedSymptoms.join(', '),
-        clinical_history: symptomNotes || 'Mobile consultation',
         patient_name: patientData.name,
         patient_age: patientData.age,
         patient_gender: patientData.gender,
         patient_phone: patientData.phone,
         status: prescriptionRequired ? 'pending' as const : 'completed' as const,
         symptoms: selectedSymptoms.join(', '),
-        prescription_required: prescriptionRequired
+        prescription_required: prescriptionRequired,
+        clinical_history: referralSpecialist ? `Automatic referral to ${referralSpecialist}. ${symptomNotes || 'Mobile consultation'}` : (symptomNotes || 'Mobile consultation')
       };
 
       console.log('🔍 [DEBUG] Request data being inserted:', requestData);
@@ -114,10 +132,12 @@ export function ReviewStep({ onBack, onReset }: ReviewStepProps) {
       if (pdfError) throw pdfError;
 
       toast({
-        title: prescriptionRequired ? "Sent for Doctor Review" : "Referral Generated Successfully",
-        description: prescriptionRequired 
-          ? "Your request has been sent to a doctor for review and prescription."
-          : "Your consultation has been processed and referral document is ready.",
+        title: referralSpecialist ? `Referred to ${referralSpecialist}` : 
+               prescriptionRequired ? "Sent for Doctor Review" : "Referral Generated Successfully",
+        description: referralSpecialist ? `Your consultation has been automatically referred to a ${referralSpecialist}.` :
+                    prescriptionRequired 
+                    ? "Your request has been sent to a doctor for review and prescription."
+                    : "Your consultation has been processed and referral document is ready.",
       });
 
       // Reset consultation and navigate to dashboard
@@ -172,6 +192,12 @@ export function ReviewStep({ onBack, onReset }: ReviewStepProps) {
               <span className="text-muted-foreground">Gender:</span>
               <span className="font-medium capitalize">{patientData.gender}</span>
             </div>
+            {patientData.gender === 'female' && parseInt(patientData.age) > 18 && patientData.isPregnant && (
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Pregnant:</span>
+                <span className="font-medium capitalize">{patientData.isPregnant}</span>
+              </div>
+            )}
           </CardContent>
         </Card>
 

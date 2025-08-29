@@ -29,7 +29,8 @@ export function PatientInfoStep({ onNext, onBack }: PatientInfoStepProps) {
     console.log('🔍 [PATIENT INFO] Phone number:', updatedData.phone);
   };
 
-  const isValid = formData.name.trim() && formData.age.trim() && formData.gender && formData.phone.trim();
+  const isValid = formData.name.trim() && formData.age.trim() && formData.gender && formData.phone.trim() &&
+    (formData.gender !== 'female' || parseInt(formData.age) <= 18 || formData.isPregnant);
 
   return (
     <div className="flex-1 flex flex-col">
@@ -117,6 +118,29 @@ export function PatientInfoStep({ onNext, onBack }: PatientInfoStepProps) {
                 We'll send prescription updates to this number via SMS
               </p>
             </div>
+
+            {/* Pregnancy Question - Only for females over 18 */}
+            {formData.gender === 'female' && parseInt(formData.age) > 18 && (
+              <div className="space-y-3">
+                <Label className="text-base font-medium">
+                  Are you currently pregnant?
+                </Label>
+                <RadioGroup
+                  value={formData.isPregnant || ''}
+                  onValueChange={(value) => handleInputChange('isPregnant', value)}
+                  className="flex flex-row gap-6"
+                >
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="yes" id="pregnant-yes" className="h-5 w-5" />
+                    <Label htmlFor="pregnant-yes" className="text-base cursor-pointer">Yes</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="no" id="pregnant-no" className="h-5 w-5" />
+                    <Label htmlFor="pregnant-no" className="text-base cursor-pointer">No</Label>
+                  </div>
+                </RadioGroup>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
