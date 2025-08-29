@@ -124,7 +124,8 @@ const MedicationSelector = ({
 
   const filteredMedications = availableMedications.filter(med =>
     med.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    med.generic_name.toLowerCase().includes(searchQuery.toLowerCase())
+    med.generic_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    med.brand_names.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const addMedication = (medication: Medication) => {
@@ -349,7 +350,7 @@ const MedicationSelector = ({
           <CardContent>
             <div className="space-y-3">
               <Input
-                placeholder="Search by medication name or generic name..."
+                placeholder="Search by medication name, generic name, or brand name..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full"
