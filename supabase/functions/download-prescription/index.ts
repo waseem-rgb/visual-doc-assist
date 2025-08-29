@@ -52,7 +52,7 @@ Deno.serve(async (req) => {
     // Verify user has access to the prescription using RLS
     let query = userSupabase
       .from('prescriptions')
-      .select('*, prescription_requests!inner(customer_id)')
+      .select('*, prescription_requests!inner(customer_id), pdf_bucket')
       .single();
     
     if (prescriptionId) {
@@ -85,13 +85,32 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Use private bucket for secure storage
-    const bucketName = 'prescriptions';
+    // Use the correct bucket based on prescription data
+    const bucketName = prescription.pdf_bucket || 'new_prescription-templet';
     const filePath = prescription.pdf_url;
 
-    console.log(`Attempting to create signed URL for file: ${filePath} in private bucket: ${bucketName}`);
+    console.log(`Attempting to access file: ${filePath} in bucket: ${bucketName}`);
 
-    // Create fresh signed URL (valid for 1 hour) using admin client
+    // For public buckets, use direct URL instead of signed URL
+    if (bucketName === 'new_prescription-templet' || bucketName === 'Prescription_templet') {
+      const publicUrl = `${supabaseUrl}/storage/v1/object/public/${bucketName}/${filePath}`;
+      
+      console.log(`Using public URL for prescription download: ${publicUrl}`);
+      
+      return new Response(
+        JSON.stringify({ 
+          success: true, 
+          downloadUrl: publicUrl,
+          fileName: filePath
+        }),
+        { 
+          status: 200,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      );
+    }
+
+    // Create fresh signed URL (valid for 1 hour) using admin client for private buckets
     const { data: signedUrlData, error: signedUrlError } = await adminSupabase.storage
       .from(bucketName)
       .createSignedUrl(filePath, 3600);
