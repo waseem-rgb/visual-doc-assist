@@ -109,28 +109,28 @@ export type Database = {
           "Basic Investigations": string | null
           "Common Treatments": string | null
           "Part of body_and general full body symptom": string | null
-          "prescription_Y-N": string | null
+          "prescription_Y-N": string
           "Probable Diagnosis": string | null
           "Short Summary": string | null
-          Symptoms: string | null
+          Symptoms: string
         }
         Insert: {
           "Basic Investigations"?: string | null
           "Common Treatments"?: string | null
           "Part of body_and general full body symptom"?: string | null
-          "prescription_Y-N"?: string | null
+          "prescription_Y-N": string
           "Probable Diagnosis"?: string | null
           "Short Summary"?: string | null
-          Symptoms?: string | null
+          Symptoms: string
         }
         Update: {
           "Basic Investigations"?: string | null
           "Common Treatments"?: string | null
           "Part of body_and general full body symptom"?: string | null
-          "prescription_Y-N"?: string | null
+          "prescription_Y-N"?: string
           "Probable Diagnosis"?: string | null
           "Short Summary"?: string | null
-          Symptoms?: string | null
+          Symptoms?: string
         }
         Relationships: []
       }
