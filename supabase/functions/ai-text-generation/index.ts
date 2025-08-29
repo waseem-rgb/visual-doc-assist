@@ -34,7 +34,7 @@ serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-5-2025-08-07', // Using GPT-5 for best results  
+        model: 'gpt-4.1-2025-04-14', // Using GPT-4.1 for reliable results  
         messages: [
           {
             role: 'system',
@@ -45,7 +45,7 @@ serve(async (req) => {
             content: prompt
           }
         ],
-        max_completion_tokens: maxTokens, // Use max_completion_tokens for GPT-5
+        max_completion_tokens: maxTokens, // Use max_completion_tokens for GPT-4.1+
       }),
     });
 
