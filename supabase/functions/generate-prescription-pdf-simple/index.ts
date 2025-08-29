@@ -196,12 +196,12 @@ Deno.serve(async (req) => {
       yPosition -= 15;
     }
 
-    // 6. DIAGNOSIS (only probable diagnosis)
-    if (requestData.probable_diagnosis && requestData.probable_diagnosis.trim()) {
+    // 6. DIAGNOSIS (use diagnosis from prescription table)
+    if (prescription.diagnosis && prescription.diagnosis.trim()) {
       addText('DIAGNOSIS:', leftMargin, yPosition, { bold: true, size: 13 });
       yPosition -= 18;
       
-      const diagnosisLines = wrapText(requestData.probable_diagnosis, pageWidth);
+      const diagnosisLines = wrapText(prescription.diagnosis, pageWidth);
       for (const line of diagnosisLines) {
         addText(line, leftMargin, yPosition, { size: 12, bold: true });
         yPosition -= 15;
