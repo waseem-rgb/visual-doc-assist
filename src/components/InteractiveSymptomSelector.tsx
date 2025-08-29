@@ -38,6 +38,7 @@ const InteractiveSymptomSelector = ({ bodyPart, patientData, onBack }: Interacti
   const [loadingDiagnosis, setLoadingDiagnosis] = useState(false);
   const [showClinicalForm, setShowClinicalForm] = useState(false);
   const [prescriptionSubmitted, setPrescriptionSubmitted] = useState(false);
+  const [isSubmittingPrescription, setIsSubmittingPrescription] = useState(false);
   const [imageError, setImageError] = useState<string | null>(null);
   const blobUrlRef = useRef<string | null>(null);
   const { toast } = useToast();
@@ -263,11 +264,20 @@ const InteractiveSymptomSelector = ({ bodyPart, patientData, onBack }: Interacti
   };
 
   const handleRequestPrescription = () => {
+    console.log('Request Prescription button clicked!');
+    console.log('prescriptionSubmitted state:', prescriptionSubmitted);
     console.log('Request prescription clicked - showing clinical form');
     setShowClinicalForm(true);
+    console.log('After handleRequestPrescription - showClinicalForm should be:', true);
   };
 
   const handleClinicalFormSubmit = async () => {
+    // Prevent multiple submissions
+    if (isSubmittingPrescription) {
+      console.log('Already submitting prescription, ignoring click');
+      return;
+    }
+
     // Validate required fields
     if (!clinicalData.mobileNumber.trim()) {
       toast({
@@ -288,6 +298,9 @@ const InteractiveSymptomSelector = ({ bodyPart, patientData, onBack }: Interacti
       });
       return;
     }
+
+    setIsSubmittingPrescription(true);
+    console.log('Starting prescription submission...');
 
     try {
       // Get additional data from New Master table
@@ -383,6 +396,9 @@ const InteractiveSymptomSelector = ({ bodyPart, patientData, onBack }: Interacti
         description: "There was an error submitting your request. Please try again.",
         variant: "destructive"
       });
+    } finally {
+      setIsSubmittingPrescription(false);
+      console.log('Prescription submission completed');
     }
   };
 
@@ -779,8 +795,16 @@ const InteractiveSymptomSelector = ({ bodyPart, patientData, onBack }: Interacti
                 <Button 
                   onClick={handleClinicalFormSubmit}
                   className="flex-1 bg-gradient-to-r from-primary to-primary-glow"
+                  disabled={isSubmittingPrescription}
                 >
-                  Submit & Request Prescription
+                  {isSubmittingPrescription ? (
+                    <>
+                      <Clock className="mr-2 h-4 w-4 animate-spin" />
+                      Submitting...
+                    </>
+                  ) : (
+                    "Submit & Generate Prescription"
+                  )}
                 </Button>
               </div>
             </CardContent>
