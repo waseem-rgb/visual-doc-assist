@@ -1,22 +1,22 @@
-import { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { ChevronDown, ChevronRight } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
-import { useQuery } from "@tanstack/react-query";
-import { toast } from "sonner";
-import bodyFrontRealistic from "@/assets/body-front-realistic.png";
-import bodyBackRealistic from "@/assets/body-back-realistic.png";
-import bodyFrontFemale from "@/assets/body-front-female.png";
-import bodyBackFemale from "@/assets/body-back-female.png";
-import SymptomViewer from "./SymptomViewer";
-import QuadrantBodySelector from "./QuadrantBodySelector";
-import DetailedBodyView from "./DetailedBodyView";
-import MaskBodySelector from "./MaskBodySelector";
-import SimpleBodySelector from "./SimpleBodySelector";
-import SVGBodySelector from "./SVGBodySelector";
+import { useState, useEffect } from 'react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { ChevronDown, ChevronRight } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { useQuery } from '@tanstack/react-query';
+import { toast } from 'sonner';
+import bodyFrontRealistic from '@/assets/body-front-realistic.png';
+import bodyBackRealistic from '@/assets/body-back-realistic.png';
+import bodyFrontFemale from '@/assets/body-front-female.png';
+import bodyBackFemale from '@/assets/body-back-female.png';
+import SymptomViewer from './SymptomViewer';
+import QuadrantBodySelector from './QuadrantBodySelector';
+import DetailedBodyView from './DetailedBodyView';
+import MaskBodySelector from './MaskBodySelector';
+import SimpleBodySelector from './SimpleBodySelector';
+import SVGBodySelector from './SVGBodySelector';
 
 interface BodyMapProps {
   gender: "male" | "female";
@@ -82,7 +82,6 @@ const BodyMap = ({ gender, patientData }: BodyMapProps) => {
     },
   });
 
-  // Filter body parts based on current view and gender with robust, case-insensitive matching
   const bodyParts = allBodyParts?.filter(part => {
     if (!part?.Body_part || !part?.View) return false;
     
@@ -293,7 +292,7 @@ const BodyMap = ({ gender, patientData }: BodyMapProps) => {
           <ToggleGroup 
             type="single" 
             value={currentView} 
-            onValueChange={(value) => setCurrentView(value as "Front" | "Back view")}
+            onValueChange={(value: string) => setCurrentView(value as "Front" | "Back view")}
             className="mb-6"
           >
             <ToggleGroupItem value="Front" className="px-8">
@@ -303,26 +302,6 @@ const BodyMap = ({ gender, patientData }: BodyMapProps) => {
               Back View
             </ToggleGroupItem>
           </ToggleGroup>
-          
-          {/* Debug controls - hidden as requested */}
-          {/* {selectionStep === "detailed" && (
-            <div className="flex justify-center gap-4 mb-4">
-              <Button
-                variant={debugMode ? "default" : "outline"}
-                size="sm"
-                onClick={() => setDebugMode(!debugMode)}
-              >
-                {debugMode ? "Debug: ON" : "Debug: OFF"}
-              </Button>
-              <Button
-                variant={useMaskSelector ? "outline" : "default"}
-                size="sm"
-                onClick={() => setUseMaskSelector(!useMaskSelector)}
-              >
-                {useMaskSelector ? "Switch to Simple" : "Simple Mode (Active)"}
-              </Button>
-            </div>
-          )} */}
         </div>
 
         <div className="flex justify-center">

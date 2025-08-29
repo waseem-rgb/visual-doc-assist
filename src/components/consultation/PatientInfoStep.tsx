@@ -1,16 +1,16 @@
-import { useState, useEffect } from 'react';
-import { useConsultationStore, PatientData } from '@/store/consultationStore';
-import { StickyFooterActions } from '@/components/common/StickyFooterActions';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { User, Calendar, Users, Phone } from 'lucide-react';
+import { useState, useEffect } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { StickyFooterActions } from "@/components/common/StickyFooterActions";
+import { User, Calendar, Users, Phone } from "lucide-react";
+import { useConsultationStore, PatientData } from "@/store/consultationStore";
 
 interface PatientInfoStepProps {
   onNext: () => void;
   onBack: () => void;
-  onReset: () => void;
+  onReset?: () => void;
 }
 
 export function PatientInfoStep({ onNext, onBack }: PatientInfoStepProps) {
@@ -18,11 +18,15 @@ export function PatientInfoStep({ onNext, onBack }: PatientInfoStepProps) {
   const [formData, setFormData] = useState<PatientData>(patientData);
 
   useEffect(() => {
+    console.log('🔍 [PATIENT INFO] Setting patient data in store:', formData);
     setPatientData(formData);
   }, [formData, setPatientData]);
 
   const handleInputChange = (field: keyof PatientData, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    const updatedData = { ...formData, [field]: value };
+    setFormData(updatedData);
+    console.log('🔍 [PATIENT INFO] Updated patient data:', updatedData);
+    console.log('🔍 [PATIENT INFO] Phone number:', updatedData.phone);
   };
 
   const isValid = formData.name.trim() && formData.age.trim() && formData.gender && formData.phone.trim();
@@ -36,16 +40,14 @@ export function PatientInfoStep({ onNext, onBack }: PatientInfoStepProps) {
               <User className="h-6 w-6 text-primary" />
             </div>
             <CardTitle className="text-xl">Patient Information</CardTitle>
-            <CardDescription>
-              Let's start by collecting some basic information about the patient.
-            </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-6">
+          
+          <CardContent className="space-y-6 px-6 pb-6">
             {/* Name */}
             <div className="space-y-2">
               <Label htmlFor="name" className="text-base font-medium">
                 <User className="inline h-4 w-4 mr-2" />
-                Patient Name
+                Full Name
               </Label>
               <Input
                 id="name"
@@ -100,16 +102,20 @@ export function PatientInfoStep({ onNext, onBack }: PatientInfoStepProps) {
             <div className="space-y-2">
               <Label htmlFor="phone" className="text-base font-medium">
                 <Phone className="inline h-4 w-4 mr-2" />
-                Mobile Number
+                Mobile Number *
               </Label>
               <Input
                 id="phone"
                 type="tel"
-                placeholder="Enter mobile number"
+                placeholder="Enter mobile number (required for SMS notifications)"
                 value={formData.phone}
                 onChange={(e) => handleInputChange('phone', e.target.value)}
                 className="h-12 text-base"
+                required
               />
+              <p className="text-sm text-muted-foreground">
+                We'll send prescription updates to this number via SMS
+              </p>
             </div>
           </CardContent>
         </Card>
@@ -119,7 +125,7 @@ export function PatientInfoStep({ onNext, onBack }: PatientInfoStepProps) {
         onBack={onBack}
         onNext={onNext}
         nextDisabled={!isValid}
-        nextLabel="Select Body Area"
+        nextLabel="Continue to Body Areas"
       />
     </div>
   );
