@@ -110,7 +110,7 @@ export default function BhashiniTest() {
     });
   };
 
-  // Translate text
+  // Translate text using Google Cloud Translation
   const translateText = async () => {
     if (!inputText.trim()) {
       toast.error('Please enter some text to translate');
@@ -119,7 +119,7 @@ export default function BhashiniTest() {
 
     setIsLoading('translate');
     try {
-      const { data, error } = await supabase.functions.invoke('bhashini-translate', {
+      const { data, error } = await supabase.functions.invoke('google-translate', {
         body: {
           text: inputText,
           sourceLanguage: selectedLanguage,
@@ -128,20 +128,15 @@ export default function BhashiniTest() {
       });
 
       if (error) {
-        console.error('Supabase function error:', error);
-        // Fallback for testing - simulate translation
-        setTranslatedText(`[DEMO] English translation of: "${inputText}"`);
-        toast.success('Translation simulated (Bhashini API unavailable)');
-        return;
+        console.error('Google Translate function error:', error);
+        throw error;
       }
       
       setTranslatedText(data.translatedText || '');
-      toast.success('Text translated successfully');
+      toast.success('Text translated successfully with Google Cloud Translation');
     } catch (error) {
       console.error('Translation error:', error);
-      // Fallback for testing
-      setTranslatedText(`[DEMO] English translation of: "${inputText}"`);
-      toast.success('Translation simulated (Bhashini API unavailable)');
+      toast.error('Failed to translate text. Please check your Google Cloud API key.');
     } finally {
       setIsLoading(null);
     }
@@ -190,9 +185,9 @@ export default function BhashiniTest() {
     <div className="min-h-screen bg-background p-4">
       <div className="max-w-4xl mx-auto space-y-6">
         <div className="text-center space-y-2">
-          <h1 className="text-3xl font-bold">Bhashini Integration Test</h1>
+          <h1 className="text-3xl font-bold">Translation & Voice Test</h1>
           <p className="text-muted-foreground">
-            Test speech-to-text, translation, and text-to-speech capabilities
+            Test Google Cloud Translation with Bhashini speech capabilities
           </p>
         </div>
 
