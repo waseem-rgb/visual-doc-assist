@@ -143,8 +143,13 @@ Deno.serve(async (req) => {
 
   } catch (error) {
     console.error('Error generating prescription PDF:', error);
+    console.error('Error details:', error.message);
+    console.error('Error stack:', error.stack);
     return new Response(
-      JSON.stringify({ error: 'Internal server error' }),
+      JSON.stringify({ 
+        error: 'Internal server error',
+        details: error.message 
+      }),
       { 
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
@@ -554,20 +559,56 @@ async function generateProfessionalPDF(data: any): Promise<Uint8Array> {
     // Medications Section
     if (data.prescription?.medications) {
       try {
-        const medications = JSON.parse(data.prescription.medications);
-        medications.forEach((med: any, index: number) => {
-          const medName = med.name || med.medication_name || 'Medication';
-          const dosage = med.prescribed_dosage || med.dosage || '';
-          const frequency = med.frequency || '';
-          const duration = med.duration || '';
-          
-          // Format like: "1. pantocid 40 mg tab Twice daily 7 days"
-          let prescriptionLine = `${index + 1}. ${medName}`;
-          if (dosage) prescriptionLine += ` ${dosage}`;
-          if (frequency) prescriptionLine += ` ${frequency}`;
-          if (duration) prescriptionLine += ` ${duration}`;
-          
-          page.drawText(prescriptionLine, {
+        let medications;
+        if (typeof data.prescription.medications === 'string') {
+          medications = JSON.parse(data.prescription.medications);
+        } else {
+          medications = data.prescription.medications;
+        }
+        
+        console.log('Processing medications:', medications);
+        
+        if (Array.isArray(medications)) {
+          medications.forEach((med: any, index: number) => {
+            // Clean medication name - remove numbering and markdown formatting
+            let medName = med.name || med.medication_name || 'Medication';
+            medName = medName.replace(/^\d+\.\s*\*?\*?/, '').replace(/\*\*/g, '');
+            
+            const dosage = med.prescribed_dosage || med.dosage || med.common_dosages || '';
+            const frequency = med.frequency || '';
+            const duration = med.duration || '';
+            
+            // Format like: "1. Paracetamol 500mg Twice daily 7 days"
+            let prescriptionLine = `${index + 1}. ${medName}`;
+            if (dosage) prescriptionLine += ` ${dosage}`;
+            if (frequency) prescriptionLine += ` ${frequency}`;
+            if (duration) prescriptionLine += ` ${duration}`;
+            
+            page.drawText(prescriptionLine, {
+              x: 80,
+              y: currentY,
+              size: 12,
+              font: timesBold,
+              color: rgb(0.1, 0.1, 0.1),
+            });
+            currentY -= 18;
+            
+            // Add instructions if available
+            if (med.instructions) {
+              const cleanInstructions = med.instructions.replace(/\*\*/g, '');
+              page.drawText(`    ${cleanInstructions}`, {
+                x: 100,
+                y: currentY,
+                size: 10,
+                font: timesRoman,
+                color: rgb(0.3, 0.3, 0.3),
+              });
+              currentY -= 15;
+            }
+          });
+        } else {
+          console.log('Medications is not an array:', typeof medications);
+          page.drawText('1. Medication as prescribed', {
             x: 80,
             y: currentY,
             size: 12,
@@ -575,21 +616,10 @@ async function generateProfessionalPDF(data: any): Promise<Uint8Array> {
             color: rgb(0.1, 0.1, 0.1),
           });
           currentY -= 18;
-          
-          // Add "Take before food" or instructions if available
-          if (med.instructions) {
-            page.drawText(`    ${med.instructions}`, {
-              x: 100,
-              y: currentY,
-              size: 10,
-              font: timesRoman,
-              color: rgb(0.3, 0.3, 0.3),
-            });
-            currentY -= 15;
-          }
-        });
+        }
       } catch (parseError) {
         console.error('Error parsing medications:', parseError);
+        console.log('Raw medications data:', data.prescription.medications);
         page.drawText('1. Medication as prescribed', {
           x: 80,
           y: currentY,
@@ -656,6 +686,8 @@ async function generateProfessionalPDF(data: any): Promise<Uint8Array> {
     return await pdfDoc.save();
   } catch (error) {
     console.error('Error generating PDF:', error);
+    console.error('PDF generation error details:', error.message);
+    console.error('PDF generation error stack:', error.stack);
     throw error;
   }
 }
