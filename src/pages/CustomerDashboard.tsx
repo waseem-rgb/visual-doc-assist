@@ -287,6 +287,20 @@ const CustomerDashboard = () => {
             <h2 className="text-2xl font-bold">Your Medical Consultations</h2>
             <div className="flex items-center gap-3">
               <Button 
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  console.log('Refreshing dashboard data...');
+                  checkAuthAndFetchData();
+                  toast({
+                    title: "Refreshing",
+                    description: "Updating prescription status...",
+                  });
+                }}
+              >
+                🔄 Refresh
+              </Button>
+              <Button 
                 variant="outline"
                 onClick={() => {
                   // Placeholder for teleconsultation integration
