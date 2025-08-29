@@ -13,13 +13,13 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { requestId, doctorId } = await req.json();
+    const { requestId, doctorId, isReferral } = await req.json();
     
-    console.log('VrDoc PDF generation request:', { requestId, doctorId });
+    console.log('VrDoc PDF generation request:', { requestId, doctorId, isReferral });
 
-    if (!requestId || !doctorId) {
+    if (!requestId) {
       return new Response(
-        JSON.stringify({ error: 'Missing requestId or doctorId' }),
+        JSON.stringify({ error: 'Missing requestId' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -29,41 +29,116 @@ Deno.serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Fetch prescription and request data
-    const { data: prescription, error: prescriptionError } = await supabase
-      .from('prescriptions')
-      .select(`
-        *,
-        prescription_requests!inner(*)
-      `)
-      .eq('request_id', requestId)
-      .eq('doctor_id', doctorId)
-      .single();
-
-    if (prescriptionError || !prescription) {
-      console.error('Prescription not found:', prescriptionError);
-      return new Response(
-        JSON.stringify({ error: 'Prescription not found' }),
-        { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    // Fetch doctor profile
-    const { data: doctor, error: doctorError } = await supabase
-      .from('doctor_profiles')
+    // Fetch prescription request data
+    const { data: requestData, error: requestError } = await supabase
+      .from('prescription_requests')
       .select('*')
-      .eq('id', doctorId)
+      .eq('id', requestId)
       .single();
 
-    if (doctorError || !doctor) {
-      console.error('Doctor not found:', doctorError);
+    if (requestError || !requestData) {
+      console.error('Prescription request not found:', requestError);
       return new Response(
-        JSON.stringify({ error: 'Doctor profile not found' }),
+        JSON.stringify({ error: 'Prescription request not found' }),
         { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    const requestData = prescription.prescription_requests;
+    // Try to fetch existing prescription or create one for referral cases
+    let prescription;
+    let doctor;
+    let referralText = null;
+
+    if (isReferral || !requestData.prescription_required) {
+      // For referral cases, fetch the referral text from New Master table
+      const { data: masterData, error: masterError } = await supabase
+        .from('New Master')
+        .select('"prescription_Y-N"')
+        .or(`"Probable Diagnosis".ilike.%${requestData.database_diagnosis || requestData.probable_diagnosis}%`)
+        .maybeSingle();
+
+      referralText = masterData?.['prescription_Y-N'] || 'specialist';
+      console.log('Referral text found:', referralText);
+
+      // Create a referral prescription if it doesn't exist
+      const systemDoctorId = '00000000-0000-0000-0000-000000000000'; // System UUID for referrals
+      
+      const { data: existingPrescription } = await supabase
+        .from('prescriptions')
+        .select('*')
+        .eq('request_id', requestId)
+        .single();
+
+      if (!existingPrescription) {
+        const { data: newPrescription, error: createError } = await supabase
+          .from('prescriptions')
+          .insert({
+            request_id: requestId,
+            doctor_id: systemDoctorId,
+            patient_name: requestData.patient_name,
+            patient_age: requestData.patient_age,
+            patient_gender: requestData.patient_gender,
+            diagnosis: requestData.database_diagnosis || requestData.probable_diagnosis || 'Referral required',
+            medications: '[]',
+            instructions: `Referred to: ${referralText}`,
+            prescription_date: new Date().toISOString()
+          })
+          .select()
+          .single();
+
+        if (createError) {
+          console.error('Error creating referral prescription:', createError);
+          return new Response(
+            JSON.stringify({ error: 'Failed to create referral prescription' }),
+            { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+        prescription = newPrescription;
+      } else {
+        prescription = existingPrescription;
+      }
+
+      // Set system doctor for referrals
+      doctor = {
+        full_name: 'VrDoc System',
+        specialization: 'Referral Service',
+        license_number: 'VRDOC-REF-001',
+        phone: 'N/A'
+      };
+    } else {
+      // For regular prescriptions, fetch the actual prescription and doctor
+      const { data: existingPrescription, error: prescriptionError } = await supabase
+        .from('prescriptions')
+        .select('*')
+        .eq('request_id', requestId)
+        .eq('doctor_id', doctorId)
+        .single();
+
+      if (prescriptionError || !existingPrescription) {
+        console.error('Prescription not found:', prescriptionError);
+        return new Response(
+          JSON.stringify({ error: 'Prescription not found' }),
+          { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      const { data: doctorProfile, error: doctorError } = await supabase
+        .from('doctor_profiles')
+        .select('*')
+        .eq('id', doctorId)
+        .single();
+
+      if (doctorError || !doctorProfile) {
+        console.error('Doctor not found:', doctorError);
+        return new Response(
+          JSON.stringify({ error: 'Doctor profile not found' }),
+          { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      prescription = existingPrescription;
+      doctor = doctorProfile;
+    }
 
     // Create PDF with VrDoc template
     const pdfDoc = await PDFDocument.create();
@@ -209,61 +284,67 @@ Deno.serve(async (req) => {
       yPosition -= 10;
     }
 
-    // 7. Rx Section (with symbolic Rx instead of "medication")
-    addText('℞', leftMargin, yPosition, { bold: true, size: 20 });
+    // 7. Rx Section (with symbolic Rx or referral text)
+    addText('Rx', leftMargin, yPosition, { bold: true, size: 16 });
     yPosition -= 25;
 
-    // Parse and display prescribed medications
-    try {
-      // Handle both string and array cases
-      let medications;
-      if (typeof prescription.medications === 'string') {
-        medications = JSON.parse(prescription.medications || '[]');
-      } else {
-        medications = prescription.medications || [];
-      }
-      
-      if (medications && medications.length > 0) {
-        medications.forEach((med: any, index: number) => {
-          const medName = med.name || med.generic_name || 'Unknown medication';
-          const dosage = med.prescribed_dosage || med.common_dosages || '';
-          const frequency = med.frequency || '';
-          const duration = med.duration || '';
-          
-          // Medication name
-          addText(`${index + 1}. ${medName}`, leftMargin + 20, yPosition, { bold: true, size: 11 });
-          yPosition -= 15;
-          
-          // Dosage and frequency on same line if both exist
-          let dosageText = '';
-          if (dosage && frequency) {
-            dosageText = `${dosage}, ${frequency}`;
-          } else if (dosage) {
-            dosageText = dosage;
-          } else if (frequency) {
-            dosageText = frequency;
-          }
-          
-          if (dosageText) {
-            addText(`   ${dosageText}`, leftMargin + 30, yPosition, { size: 10 });
-            yPosition -= 12;
-          }
-          
-          if (duration) {
-            addText(`   Duration: ${duration}`, leftMargin + 30, yPosition, { size: 10 });
-            yPosition -= 12;
-          }
-          
-          yPosition -= 8;
-        });
-      } else {
-        addText('No medications prescribed', leftMargin + 20, yPosition, { size: 11 });
+    // For referral cases, show referral text instead of medications
+    if (referralText && (isReferral || !requestData.prescription_required)) {
+      addText(`Referred to: ${referralText}`, leftMargin + 20, yPosition, { bold: true, size: 12 });
+      yPosition -= 20;
+    } else {
+      // Parse and display prescribed medications for regular prescriptions
+      try {
+        // Handle both string and array cases
+        let medications;
+        if (typeof prescription.medications === 'string') {
+          medications = JSON.parse(prescription.medications || '[]');
+        } else {
+          medications = prescription.medications || [];
+        }
+        
+        if (medications && medications.length > 0) {
+          medications.forEach((med: any, index: number) => {
+            const medName = med.name || med.generic_name || 'Unknown medication';
+            const dosage = med.prescribed_dosage || med.common_dosages || '';
+            const frequency = med.frequency || '';
+            const duration = med.duration || '';
+            
+            // Medication name
+            addText(`${index + 1}. ${medName}`, leftMargin + 20, yPosition, { bold: true, size: 11 });
+            yPosition -= 15;
+            
+            // Dosage and frequency on same line if both exist
+            let dosageText = '';
+            if (dosage && frequency) {
+              dosageText = `${dosage}, ${frequency}`;
+            } else if (dosage) {
+              dosageText = dosage;
+            } else if (frequency) {
+              dosageText = frequency;
+            }
+            
+            if (dosageText) {
+              addText(`   ${dosageText}`, leftMargin + 30, yPosition, { size: 10 });
+              yPosition -= 12;
+            }
+            
+            if (duration) {
+              addText(`   Duration: ${duration}`, leftMargin + 30, yPosition, { size: 10 });
+              yPosition -= 12;
+            }
+            
+            yPosition -= 8;
+          });
+        } else {
+          addText('No medications prescribed', leftMargin + 20, yPosition, { size: 11 });
+          yPosition -= 20;
+        }
+      } catch (error) {
+        console.error('Error parsing medications:', error);
+        addText('Error displaying medications', leftMargin + 20, yPosition, { size: 11 });
         yPosition -= 20;
       }
-    } catch (error) {
-      console.error('Error parsing medications:', error);
-      addText('Error displaying medications', leftMargin + 20, yPosition, { size: 11 });
-      yPosition -= 20;
     }
 
     yPosition -= 15;

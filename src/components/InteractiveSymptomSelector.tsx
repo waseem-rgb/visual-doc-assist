@@ -332,8 +332,16 @@ const InteractiveSymptomSelector = ({ bodyPart, patientData, onBack }: Interacti
       
       const fullSymptomsText = symptomsText + durationText + chronicText + allergiesText + medicationText + lifestyleFinal;
 
-      // Determine if prescription is required (default to true if not specified)
-      const prescriptionRequired = masterData?.['prescription_Y-N'] !== 'N';
+      // Determine if prescription is required or if it's a referral/emergency case
+      const prescriptionYN = masterData?.['prescription_Y-N']?.toLowerCase() || '';
+      
+      // Check for referral indicators in prescription_Y-N column
+      const referralIndicators = ['cardiologist', 'ent', 'dermatologist', 'specialist', 'emergency', 'hospital', 'department'];
+      const isReferralCase = referralIndicators.some(indicator => prescriptionYN.includes(indicator));
+      
+      // Only require prescription if explicitly marked as needing doctor review
+      const prescriptionRequired = prescriptionYN === 'doctors review and prescription' || prescriptionYN === 'y';
+      const isEmergencyReferral = !prescriptionRequired && (isReferralCase || (prescriptionYN !== 'n' && prescriptionYN !== ''));
 
       // Check if user is authenticated for tracking
       const { data: { user } } = await supabase.auth.getUser();
@@ -354,7 +362,7 @@ const InteractiveSymptomSelector = ({ bodyPart, patientData, onBack }: Interacti
     }
 
     // Store prescription request in database with both diagnoses
-    const { data, error } = await supabase
+    const { data: insertedData, error } = await supabase
       .from('prescription_requests')
       .insert({
         patient_name: patientData.name,
@@ -369,14 +377,40 @@ const InteractiveSymptomSelector = ({ bodyPart, patientData, onBack }: Interacti
         basic_investigations: masterData?.['Basic Investigations'] || '',
         common_treatments: masterData?.['Common Treatments'] || '',
         prescription_required: prescriptionRequired,
-        status: 'pending',
+        status: prescriptionRequired ? 'pending' : 'completed', // Auto-complete referral cases
         customer_id: user?.id || null, // Track customer if authenticated
         customer_email: user?.email || null, // Track customer email if authenticated
         medication_history: clinicalData.medicationHistory.trim() || null,
-      });
+      })
+      .select()
+      .single();
 
     if (error) {
       throw error;
+    }
+
+    // Auto-generate referral prescription if it's an emergency/referral case
+    if (isEmergencyReferral && insertedData) {
+      try {
+        console.log('Auto-generating referral prescription for request:', insertedData.id);
+        
+        const { data: pdfResult, error: pdfError } = await supabase.functions.invoke('generate-prescription-pdf-simple', {
+          body: {
+            requestId: insertedData.id,
+            isReferral: true
+          }
+        });
+
+        if (pdfError) {
+          console.error('Error auto-generating referral PDF:', pdfError);
+          // Don't fail the whole request if PDF generation fails
+        } else {
+          console.log('Referral PDF auto-generated successfully:', pdfResult);
+        }
+      } catch (pdfError) {
+        console.error('Unexpected error in referral PDF generation:', pdfError);
+        // Don't fail the whole request if PDF generation fails
+      }
     }
 
     // Immediately set submitted state
@@ -386,8 +420,8 @@ const InteractiveSymptomSelector = ({ bodyPart, patientData, onBack }: Interacti
     toast({
       title: "Request Submitted Successfully",
       description: user ? 
-        `Your ${prescriptionRequired ? 'prescription' : 'referral'} request has been submitted. A doctor will review it within 15 minutes. Check your dashboard for updates.` :
-        `Your ${prescriptionRequired ? 'prescription' : 'referral'} request has been submitted. A doctor will review it within 15 minutes. Sign up to track your consultations in your dashboard.`,
+        `Your ${prescriptionRequired ? 'prescription' : 'referral'} request has been ${prescriptionRequired ? 'submitted. A doctor will review it within 15 minutes' : 'processed and ready for download'}. Check your dashboard for updates.` :
+        `Your ${prescriptionRequired ? 'prescription' : 'referral'} request has been ${prescriptionRequired ? 'submitted. A doctor will review it within 15 minutes' : 'processed and ready for download'}. Sign up to track your consultations in your dashboard.`,
       duration: 8000
     });
     } catch (error: any) {
