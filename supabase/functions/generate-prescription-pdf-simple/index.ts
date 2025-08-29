@@ -24,6 +24,18 @@ Deno.serve(async (req) => {
   }
 
   try {
+    // Get authorization header
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized: Missing authorization header' }),
+        { 
+          status: 401,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      );
+    }
+
     const { requestId, doctorId, isReferral } = await req.json();
     
     console.log('VrDoc PDF generation request:', { requestId, doctorId, isReferral });
@@ -35,13 +47,39 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Initialize Supabase client
+    // Initialize Supabase clients
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
+    
+    // Client with user's JWT for authorization checks
+    const userSupabase = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: authHeader } }
+    });
+    
+    // Service role client for database operations
+    const adminSupabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Fetch prescription request data
-    const { data: requestData, error: requestError } = await supabase
+    // Verify user has doctor role for authorization
+    const { data: userRoles, error: roleError } = await userSupabase
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', 'auth.uid()')
+      .single();
+
+    if (roleError || !userRoles || userRoles.role !== 'doctor') {
+      console.error('Unauthorized: User is not a doctor', roleError);
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized: Doctor role required' }),
+        { 
+          status: 403,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      );
+    }
+
+    // Fetch prescription request data using admin client
+    const { data: requestData, error: requestError } = await adminSupabase
       .from('prescription_requests')
       .select('*')
       .eq('id', requestId)
@@ -65,7 +103,7 @@ Deno.serve(async (req) => {
       const diagnosis = requestData.database_diagnosis || requestData.probable_diagnosis;
       console.log('Looking for referral info for diagnosis:', diagnosis);
       
-      let { data: masterData, error: masterError } = await supabase
+      let { data: masterData, error: masterError } = await adminSupabase
         .from('New Master')
         .select('"Common Treatments", "Probable Diagnosis"')
         .ilike('"Probable Diagnosis"', `%${diagnosis}%`)
@@ -74,7 +112,7 @@ Deno.serve(async (req) => {
       // If no match found with diagnosis, try with symptoms as fallback
       if (!masterData && requestData.symptoms) {
         console.log('Trying with symptoms:', requestData.symptoms);
-        const { data: symptomData } = await supabase
+        const { data: symptomData } = await adminSupabase
           .from('New Master')
           .select('"Common Treatments", "Probable Diagnosis"')
           .ilike('Symptoms', `%${requestData.symptoms}%`)
@@ -86,14 +124,14 @@ Deno.serve(async (req) => {
       console.log('Referral text found:', referralText, 'for diagnosis:', masterData?.['Probable Diagnosis']);
 
       // Create a referral prescription if it doesn't exist - use NULL doctor_id
-      const { data: existingPrescription } = await supabase
+      const { data: existingPrescription } = await adminSupabase
         .from('prescriptions')
         .select('*')
         .eq('request_id', requestId)
         .single();
 
       if (!existingPrescription) {
-        const { data: newPrescription, error: createError } = await supabase
+        const { data: newPrescription, error: createError } = await adminSupabase
           .from('prescriptions')
           .insert({
             request_id: requestId,
@@ -130,7 +168,7 @@ Deno.serve(async (req) => {
       };
     } else {
       // For regular prescriptions, fetch the actual prescription and doctor
-      const { data: existingPrescription, error: prescriptionError } = await supabase
+      const { data: existingPrescription, error: prescriptionError } = await adminSupabase
         .from('prescriptions')
         .select('*')
         .eq('request_id', requestId)
@@ -145,7 +183,7 @@ Deno.serve(async (req) => {
         );
       }
 
-      const { data: doctorProfile, error: doctorError } = await supabase
+      const { data: doctorProfile, error: doctorError } = await adminSupabase
         .from('doctor_profiles')
         .select('*')
         .eq('id', doctorId)
@@ -426,10 +464,10 @@ Deno.serve(async (req) => {
     // Generate PDF
     const pdfBytes = await pdfDoc.save();
     
-    // Upload to storage
+    // Upload to private storage bucket
     const fileName = `vrdoc-prescription-${prescription.id}-${Date.now()}.pdf`;
-    const { error: uploadError } = await supabase.storage
-      .from('new_prescription-templet')
+    const { error: uploadError } = await adminSupabase.storage
+      .from('prescriptions')
       .upload(fileName, pdfBytes, {
         contentType: 'application/pdf',
         upsert: false
@@ -444,11 +482,11 @@ Deno.serve(async (req) => {
     }
 
     // Update prescription with PDF URL
-    const { error: updateError } = await supabase
+    const { error: updateError } = await adminSupabase
       .from('prescriptions')
       .update({ 
         pdf_url: fileName,
-        pdf_bucket: 'new_prescription-templet'
+        pdf_bucket: 'prescriptions'
       })
       .eq('id', prescription.id);
 

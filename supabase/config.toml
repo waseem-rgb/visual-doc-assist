@@ -1,10 +1,13 @@
 project_id = "melgpvpplocdxlefthcu"
 
 [functions.ai-text-generation]
-verify_jwt = false
+verify_jwt = true
 
-[functions.generate-prescription-pdf]
-verify_jwt = false
+[functions.generate-prescription-pdf-simple]
+verify_jwt = true
 
 [functions.download-prescription]
-verify_jwt = false
+verify_jwt = true
+
+[functions.cleanup-templates]
+verify_jwt = true

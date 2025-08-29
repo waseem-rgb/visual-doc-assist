@@ -12,6 +12,18 @@ Deno.serve(async (req) => {
   }
 
   try {
+    // Get authorization header
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized: Missing authorization header' }),
+        { 
+          status: 401,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      );
+    }
+
     const { requestId, prescriptionId } = await req.json();
 
     if (!requestId && !prescriptionId) {
@@ -24,15 +36,24 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Initialize Supabase client
+    // Initialize Supabase clients
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
+    
+    // Client with user's JWT for authorization checks
+    const userSupabase = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: authHeader } }
+    });
+    
+    // Service role client for storage operations
+    const adminSupabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Fetch prescription data
-    let query = supabase
+    // Verify user has access to the prescription using RLS
+    let query = userSupabase
       .from('prescriptions')
-      .select('*');
+      .select('*, prescription_requests!inner(customer_id)')
+      .single();
     
     if (prescriptionId) {
       query = query.eq('id', prescriptionId);
@@ -40,12 +61,12 @@ Deno.serve(async (req) => {
       query = query.eq('request_id', requestId);
     }
 
-    const { data: prescription, error: prescriptionError } = await query.single();
+    const { data: prescription, error: prescriptionError } = await query;
 
     if (prescriptionError || !prescription) {
-      console.error('Error fetching prescription:', prescriptionError);
+      console.error('Error fetching prescription or unauthorized access:', prescriptionError);
       return new Response(
-        JSON.stringify({ error: 'Prescription not found' }),
+        JSON.stringify({ error: 'Prescription not found or access denied' }),
         { 
           status: 404,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
@@ -64,50 +85,19 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Determine which bucket to use (support both old and new buckets)
-    const bucketName = prescription.pdf_bucket || 'new_prescription-templet';
+    // Use private bucket for secure storage
+    const bucketName = 'prescriptions';
     const filePath = prescription.pdf_url;
 
-    console.log(`Attempting to create signed URL for file: ${filePath} in bucket: ${bucketName}`);
+    console.log(`Attempting to create signed URL for file: ${filePath} in private bucket: ${bucketName}`);
 
-    // Create fresh signed URL (valid for 1 hour)
-    const { data: signedUrlData, error: signedUrlError } = await supabase.storage
+    // Create fresh signed URL (valid for 1 hour) using admin client
+    const { data: signedUrlData, error: signedUrlError } = await adminSupabase.storage
       .from(bucketName)
       .createSignedUrl(filePath, 3600);
 
     if (signedUrlError || !signedUrlData?.signedUrl) {
       console.error('Error creating signed URL:', signedUrlError);
-      
-      // If the file doesn't exist in new bucket, try the old bucket
-      if (bucketName === 'new_prescription-templet') {
-        console.log('Trying old prescriptions bucket...');
-        const { data: fallbackUrlData, error: fallbackError } = await supabase.storage
-          .from('prescriptions')
-          .createSignedUrl(filePath, 3600);
-          
-        if (fallbackError || !fallbackUrlData?.signedUrl) {
-          return new Response(
-            JSON.stringify({ error: 'Failed to generate download link' }),
-            { 
-              status: 500,
-              headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-            }
-          );
-        }
-        
-        return new Response(
-          JSON.stringify({ 
-            success: true, 
-            downloadUrl: fallbackUrlData.signedUrl,
-            fileName: filePath
-          }),
-          { 
-            status: 200,
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-          }
-        );
-      }
-      
       return new Response(
         JSON.stringify({ error: 'Failed to generate download link' }),
         { 
