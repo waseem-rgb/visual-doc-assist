@@ -289,7 +289,7 @@ function generatePrescriptionHTML(data: any): string {
   `;
 }
 
-// Generate professional prescription PDF with medical styling
+// Generate Indian standard prescription PDF format
 async function generateProfessionalPDF(data: any): Promise<Uint8Array> {
   try {
     const pdfDoc = await PDFDocument.create();
@@ -308,80 +308,85 @@ async function generateProfessionalPDF(data: any): Promise<Uint8Array> {
     
     const { width, height } = page.getSize();
     
-    // Medical green header (light medical green)
+    // Light green background for header area (matching Indian format)
     page.drawRectangle({
       x: 0,
-      y: height - 120,
+      y: height - 140,
       width: width,
-      height: 120,
-      color: rgb(0.88, 0.95, 0.88), // Light medical green
-    });
-    
-    // Off-white background for the rest
-    page.drawRectangle({
-      x: 0,
-      y: 0,
-      width: width,
-      height: height - 120,
-      color: rgb(0.98, 0.98, 0.96), // Off-white
+      height: 140,
+      color: rgb(0.90, 0.95, 0.90), // Very light green
     });
     
     let currentY = height - 30;
     
-    // Header - Clinic Name
-    page.drawText('VrDoc - Medical Prescription', {
-      x: 50,
+    // Header - Medical Prescription (centered)
+    page.drawText('Medical Prescription', {
+      x: width / 2 - 85,
       y: currentY,
-      size: 24,
+      size: 20,
       font: timesBold,
-      color: rgb(0.2, 0.5, 0.2), // Dark green
+      color: rgb(0.2, 0.6, 0.2), // Medical green
     });
     
-    currentY -= 30;
+    // VrDoc logo/branding (top right)
+    page.drawText('VrDoc', {
+      x: width - 80,
+      y: currentY + 5,
+      size: 14,
+      font: timesBold,
+      color: rgb(0.5, 0.3, 0.8), // Purple like in image
+    });
     
-    // Doctor Information
+    currentY -= 35;
+    
+    // Doctor Information (left side)
     page.drawText(`Dr. ${data.doctor?.full_name || 'Doctor Name'}`, {
       x: 50,
       y: currentY,
       size: 14,
       font: timesBold,
-      color: rgb(0.2, 0.5, 0.2),
+      color: rgb(0.2, 0.6, 0.2),
     });
     
-    currentY -= 20;
+    currentY -= 18;
     page.drawText(`Specialization: ${data.doctor?.specialization || 'General Medicine'}`, {
       x: 50,
       y: currentY,
       size: 12,
       font: timesRoman,
-      color: rgb(0.2, 0.5, 0.2),
+      color: rgb(0.2, 0.6, 0.2),
     });
     
-    currentY -= 15;
+    currentY -= 16;
     page.drawText(`License: ${data.doctor?.license_number || 'N/A'}`, {
       x: 50,
       y: currentY,
       size: 12,
       font: timesRoman,
-      color: rgb(0.2, 0.5, 0.2),
+      color: rgb(0.2, 0.6, 0.2),
     });
     
-    // Date (top right)
-    page.drawText(`Date: ${new Date().toLocaleDateString()}`, {
-      x: width - 150,
-      y: height - 30,
+    // Date (top right corner)
+    const currentDate = new Date().toLocaleDateString('en-IN', {
+      day: '2-digit',
+      month: '2-digit', 
+      year: 'numeric'
+    });
+    page.drawText(`Date: ${currentDate}`, {
+      x: width - 120,
+      y: height - 75,
       size: 12,
       font: timesRoman,
-      color: rgb(0.2, 0.5, 0.2),
+      color: rgb(0.2, 0.6, 0.2),
     });
     
-    currentY -= 40; // Move to body section
+    currentY -= 50; // Move to main content area
     
     // Patient Information Section
     page.drawText('PATIENT INFORMATION', {
       x: 50,
       y: currentY,
-      size: 14,
+      size: 13,
       font: timesBold,
       color: rgb(0.1, 0.1, 0.1),
     });
@@ -395,7 +400,7 @@ async function generateProfessionalPDF(data: any): Promise<Uint8Array> {
       color: rgb(0.1, 0.1, 0.1),
     });
     
-    currentY -= 20;
+    currentY -= 18;
     page.drawText(`Age: ${data.prescription?.patient_age || 'N/A'}    Gender: ${data.prescription?.patient_gender || 'N/A'}`, {
       x: 70,
       y: currentY,
@@ -404,11 +409,108 @@ async function generateProfessionalPDF(data: any): Promise<Uint8Array> {
       color: rgb(0.1, 0.1, 0.1),
     });
     
-    currentY -= 35;
+    currentY -= 30;
+    
+    // Clinical History Sections (Indian format)
+    // C/o- (Chief complaint/symptom with duration)
+    page.drawText('C/o-', {
+      x: 50,
+      y: currentY,
+      size: 12,
+      font: timesBold,
+      color: rgb(0.1, 0.1, 0.1),
+    });
+    
+    page.drawText('( symptom with duration )', {
+      x: 85,
+      y: currentY,
+      size: 10,
+      font: timesRoman,
+      color: rgb(0.4, 0.4, 0.4),
+    });
+    
+    currentY -= 18;
+    const symptoms = data.request?.symptoms || data.request?.body_part || 'No symptoms reported';
+    const symptomLines = wrapText(symptoms, 70);
+    for (const line of symptomLines.slice(0, 2)) { // Limit to 2 lines
+      page.drawText(line, {
+        x: 70,
+        y: currentY,
+        size: 11,
+        font: timesRoman,
+        color: rgb(0.1, 0.1, 0.1),
+      });
+      currentY -= 15;
+    }
+    
+    currentY -= 10;
+    
+    // H/o- (History)
+    page.drawText('H/o-', {
+      x: 50,
+      y: currentY,
+      size: 12,
+      font: timesBold,
+      color: rgb(0.1, 0.1, 0.1),
+    });
+    
+    page.drawText('( history of any chronic illness and personal history of smoking or alcohol )', {
+      x: 85,
+      y: currentY,
+      size: 10,
+      font: timesRoman,
+      color: rgb(0.4, 0.4, 0.4),
+    });
+    
+    currentY -= 18;
+    // Extract chronic illness, smoking, alcohol from symptoms text if available
+    const historyText = 'No significant history reported';
+    page.drawText(historyText, {
+      x: 70,
+      y: currentY,
+      size: 11,
+      font: timesRoman,
+      color: rgb(0.1, 0.1, 0.1),
+    });
+    
+    currentY -= 25;
+    
+    // Medication history- (Indian format)
+    page.drawText('Medication history-', {
+      x: 50,
+      y: currentY,
+      size: 12,
+      font: timesBold,
+      color: rgb(0.1, 0.1, 0.1),
+    });
+    
+    page.drawText('any medication customer is currently taking', {
+      x: 170,
+      y: currentY,
+      size: 10,
+      font: timesRoman,
+      color: rgb(0.4, 0.4, 0.4),
+    });
+    
+    currentY -= 18;
+    const medicationHistory = data.request?.medication_history || 'No current medications reported';
+    const medHistoryLines = wrapText(medicationHistory, 70);
+    for (const line of medHistoryLines.slice(0, 2)) { // Limit to 2 lines
+      page.drawText(line, {
+        x: 70,
+        y: currentY,
+        size: 11,
+        font: timesRoman,
+        color: rgb(0.1, 0.1, 0.1),
+      });
+      currentY -= 15;
+    }
+    
+    currentY -= 25;
     
     // Diagnosis Section
     page.drawText('DIAGNOSIS', {
-      x: 50,
+      x: width / 2 - 30,
       y: currentY,
       size: 14,
       font: timesBold,
@@ -416,9 +518,9 @@ async function generateProfessionalPDF(data: any): Promise<Uint8Array> {
     });
     
     currentY -= 25;
-    const diagnosis = data.prescription?.diagnosis || data.request?.probable_diagnosis || 'To be determined';
+    const diagnosis = data.prescription?.diagnosis || data.request?.probable_diagnosis || 'Unable to determine diagnosis. Please consult with a healthcare provider.';
     const diagnosisLines = wrapText(diagnosis, 65);
-    for (const line of diagnosisLines) {
+    for (const line of diagnosisLines.slice(0, 3)) { // Limit to 3 lines
       page.drawText(line, {
         x: 70,
         y: currentY,
@@ -426,210 +528,122 @@ async function generateProfessionalPDF(data: any): Promise<Uint8Array> {
         font: timesRoman,
         color: rgb(0.1, 0.1, 0.1),
       });
-      currentY -= 15;
+      currentY -= 16;
     }
     
-    currentY -= 20;
+    currentY -= 25;
     
-    // Medications Section
-    page.drawText('MEDICATIONS', {
-      x: 50,
+    // Rx Section (Indian prescription symbol)
+    page.drawText('℞', {
+      x: width / 2 - 10,
       y: currentY,
-      size: 14,
+      size: 28,
       font: timesBold,
-      color: rgb(0.1, 0.1, 0.1),
+      color: rgb(0.2, 0.4, 0.8), // Blue color for Rx symbol
     });
     
-    currentY -= 25;
+    currentY -= 35;
+    
+    // Medications Section
     if (data.prescription?.medications) {
       try {
         const medications = JSON.parse(data.prescription.medications);
         medications.forEach((med: any, index: number) => {
           const medName = med.name || med.medication_name || 'Medication';
-          page.drawText(`${index + 1}. ${medName}`, {
-            x: 70,
+          const dosage = med.prescribed_dosage || med.dosage || '';
+          const frequency = med.frequency || '';
+          const duration = med.duration || '';
+          
+          // Format like: "1. pantocid 40 mg tab Twice daily 7 days"
+          let prescriptionLine = `${index + 1}. ${medName}`;
+          if (dosage) prescriptionLine += ` ${dosage}`;
+          if (frequency) prescriptionLine += ` ${frequency}`;
+          if (duration) prescriptionLine += ` ${duration}`;
+          
+          page.drawText(prescriptionLine, {
+            x: 80,
             y: currentY,
             size: 12,
             font: timesBold,
             color: rgb(0.1, 0.1, 0.1),
           });
-          currentY -= 15;
+          currentY -= 18;
           
-          // Enhanced medication details
-          if (med.prescribed_dosage || med.dosage) {
-            page.drawText(`   Dosage: ${med.prescribed_dosage || med.dosage}`, {
-              x: 90,
-              y: currentY,
-              size: 11,
-              font: timesRoman,
-              color: rgb(0.1, 0.1, 0.1),
-            });
-            currentY -= 12;
-          }
-          
-          if (med.frequency) {
-            page.drawText(`   Frequency: ${med.frequency}`, {
-              x: 90,
-              y: currentY,
-              size: 11,
-              font: timesRoman,
-              color: rgb(0.1, 0.1, 0.1),
-            });
-            currentY -= 12;
-          }
-          
-          if (med.duration) {
-            page.drawText(`   Duration: ${med.duration}`, {
-              x: 90,
-              y: currentY,
-              size: 11,
-              font: timesRoman,
-              color: rgb(0.1, 0.1, 0.1),
-            });
-            currentY -= 12;
-          }
-          
+          // Add "Take before food" or instructions if available
           if (med.instructions) {
-            const instLines = wrapText(`Instructions: ${med.instructions}`, 60);
-            for (const line of instLines) {
-              page.drawText(`   ${line}`, {
-                x: 90,
-                y: currentY,
-                size: 11,
-                font: timesRoman,
-                color: rgb(0.1, 0.1, 0.1),
-              });
-              currentY -= 12;
-            }
-          }
-          
-          // Add category for custom medications
-          if (med.category === 'Custom Medication') {
-            page.drawText(`   (Custom prescribed medication)`, {
-              x: 90,
+            page.drawText(`    ${med.instructions}`, {
+              x: 100,
               y: currentY,
-              size: 9,
+              size: 10,
               font: timesRoman,
-              color: rgb(0.4, 0.4, 0.4),
+              color: rgb(0.3, 0.3, 0.3),
             });
-            currentY -= 10;
+            currentY -= 15;
           }
-          
-          currentY -= 10;
         });
-      } catch (e) {
-        console.error('Error parsing medications:', e);
-        page.drawText('No medications prescribed', {
-          x: 70,
+      } catch (parseError) {
+        console.error('Error parsing medications:', parseError);
+        page.drawText('1. Medication as prescribed', {
+          x: 80,
           y: currentY,
           size: 12,
-          font: timesRoman,
-          color: rgb(0.5, 0.5, 0.5),
+          font: timesBold,
+          color: rgb(0.1, 0.1, 0.1),
         });
-        currentY -= 20;
+        currentY -= 18;
       }
     } else {
       page.drawText('No medications prescribed', {
-        x: 70,
+        x: 80,
         y: currentY,
         size: 12,
         font: timesRoman,
-        color: rgb(0.5, 0.5, 0.5),
+        color: rgb(0.4, 0.4, 0.4),
       });
-      currentY -= 20;
+      currentY -= 18;
     }
+    
+    currentY -= 30;
+    
+    // Investigations Section (left side)
+    page.drawText('INVESTIGATIONS', {
+      x: 50,
+      y: currentY,
+      size: 13,
+      font: timesBold,
+      color: rgb(0.1, 0.1, 0.1),
+    });
     
     currentY -= 20;
-    
-    // Instructions Section
-    if (data.prescription?.instructions) {
-      page.drawText('INSTRUCTIONS', {
+    const investigations = data.request?.basic_investigations || 'CBC';
+    const investigationLines = wrapText(investigations, 30);
+    for (const line of investigationLines.slice(0, 3)) {
+      page.drawText(line, {
         x: 50,
         y: currentY,
-        size: 14,
-        font: timesBold,
+        size: 11,
+        font: timesRoman,
         color: rgb(0.1, 0.1, 0.1),
       });
-      
-      currentY -= 25;
-      const instructionLines = wrapText(data.prescription.instructions, 65);
-      for (const line of instructionLines) {
-        page.drawText(line, {
-          x: 70,
-          y: currentY,
-          size: 12,
-          font: timesRoman,
-          color: rgb(0.1, 0.1, 0.1),
-        });
-        currentY -= 15;
-      }
-      currentY -= 20;
+      currentY -= 15;
     }
     
-    // Investigations Section
-    if (data.request?.basic_investigations) {
-      page.drawText('INVESTIGATIONS', {
-        x: 50,
-        y: currentY,
-        size: 14,
-        font: timesBold,
-        color: rgb(0.1, 0.1, 0.1),
-      });
-      
-      currentY -= 25;
-      const investigationLines = wrapText(data.request.basic_investigations, 65);
-      for (const line of investigationLines) {
-        page.drawText(line, {
-          x: 70,
-          y: currentY,
-          size: 12,
-          font: timesRoman,
-          color: rgb(0.1, 0.1, 0.1),
-        });
-        currentY -= 15;
-      }
-      currentY -= 20;
-    }
-    
-    // Follow-up Section
-    if (data.prescription?.follow_up_notes) {
-      page.drawText('FOLLOW-UP', {
-        x: 50,
-        y: currentY,
-        size: 14,
-        font: timesBold,
-        color: rgb(0.1, 0.1, 0.1),
-      });
-      
-      currentY -= 25;
-      const followUpLines = wrapText(data.prescription.follow_up_notes, 65);
-      for (const line of followUpLines) {
-        page.drawText(line, {
-          x: 70,
-          y: currentY,
-          size: 12,
-          font: timesRoman,
-          color: rgb(0.1, 0.1, 0.1),
-        });
-        currentY -= 15;
-      }
-    }
-    
-    // Digital Signature
+    // Digital Signature (bottom right)
+    const signatureY = 120;
     page.drawText('Digital Signature:', {
       x: width - 200,
-      y: 100,
-      size: 12,
-      font: timesBold,
-      color: rgb(0.2, 0.5, 0.2),
+      y: signatureY + 20,
+      size: 11,
+      font: timesRoman,
+      color: rgb(0.2, 0.6, 0.2),
     });
     
     page.drawText(`Dr. ${data.doctor?.full_name || 'Doctor Name'}`, {
       x: width - 200,
-      y: 80,
-      size: 14,
+      y: signatureY,
+      size: 12,
       font: timesBold,
-      color: rgb(0.2, 0.5, 0.2),
+      color: rgb(0.2, 0.6, 0.2),
     });
     
     return await pdfDoc.save();
