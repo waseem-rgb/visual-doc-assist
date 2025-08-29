@@ -230,16 +230,16 @@ const PrescriptionRequestDetail = ({ request, onBack, onUpdate }: PrescriptionRe
       // Start PDF generation in background (non-blocking)
       setTimeout(async () => {
         try {
-          console.log('Starting background PDF generation for request:', request.id);
-          await supabase.functions.invoke('generate-prescription-pdf', {
+          console.log('Starting immediate PDF generation for request:', request.id);
+          await supabase.functions.invoke('generate-prescription-pdf-simple', {
             body: {
               requestId: request.id,
               doctorId: user?.id
             }
           });
-          console.log('Background PDF generation completed');
+          console.log('PDF generation completed successfully');
         } catch (pdfError) {
-          console.error('Failed to generate PDF in background:', pdfError);
+          console.error('Failed to generate PDF:', pdfError);
         }
       }, 100); // Start after 100ms to ensure UI updates first
 

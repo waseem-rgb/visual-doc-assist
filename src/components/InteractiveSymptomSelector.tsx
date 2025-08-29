@@ -338,57 +338,58 @@ const InteractiveSymptomSelector = ({ bodyPart, patientData, onBack }: Interacti
       // Check if user is authenticated for tracking
       const { data: { user } } = await supabase.auth.getUser();
 
-      // Generate AI diagnosis using the edge function
-      const { data: aiResponse, error: aiError } = await supabase.functions.invoke('ai-text-generation', {
-        body: {
-          prompt: `Based on these symptoms: "${fullSymptomsText}" and body part: "${bodyPart}", provide a probable diagnosis. Keep it concise and professional.`,
-          systemMessage: 'You are a medical AI assistant. Provide a probable diagnosis based on the symptoms described. Keep responses concise and note that this should not replace professional medical advice.',
-          maxTokens: 200
-        }
+    // Generate AI diagnosis using the edge function
+    const { data: aiResponse, error: aiError } = await supabase.functions.invoke('ai-text-generation', {
+      body: {
+        prompt: `Based on these symptoms: "${fullSymptomsText}" and body part: "${bodyPart}", provide a probable diagnosis. Keep it concise and professional.`,
+        systemMessage: 'You are a medical AI assistant. Provide a probable diagnosis based on the symptoms described. Keep responses concise and note that this should not replace professional medical advice.',
+        maxTokens: 200
+      }
+    });
+
+    let generatedAiDiagnosis = 'Unable to determine diagnosis. Please consult with a healthcare provider.';
+    if (!aiError && aiResponse?.success) {
+      generatedAiDiagnosis = aiResponse.generatedText;
+      setAiDiagnosis(generatedAiDiagnosis);
+    }
+
+    // Store prescription request in database with both diagnoses
+    const { data, error } = await supabase
+      .from('prescription_requests')
+      .insert({
+        patient_name: patientData.name,
+        patient_age: patientData.age,
+        patient_gender: patientData.gender,
+        body_part: bodyPart,
+        symptoms: fullSymptomsText,
+        probable_diagnosis: diagnosis || 'To be determined', // Keep for backward compatibility
+        database_diagnosis: diagnosis || 'To be determined',
+        ai_diagnosis: generatedAiDiagnosis,
+        short_summary: masterData?.['Short Summary'] || '',
+        basic_investigations: masterData?.['Basic Investigations'] || '',
+        common_treatments: masterData?.['Common Treatments'] || '',
+        prescription_required: prescriptionRequired,
+        status: 'pending',
+        customer_id: user?.id || null, // Track customer if authenticated
+        customer_email: user?.email || null, // Track customer email if authenticated
+        medication_history: clinicalData.medicationHistory.trim() || null,
       });
 
-      let generatedAiDiagnosis = 'Unable to determine diagnosis. Please consult with a healthcare provider.';
-      if (!aiError && aiResponse?.success) {
-        generatedAiDiagnosis = aiResponse.generatedText;
-        setAiDiagnosis(generatedAiDiagnosis);
-      }
+    if (error) {
+      throw error;
+    }
 
-      // Store prescription request in database with both diagnoses
-      const { data, error } = await supabase
-        .from('prescription_requests')
-        .insert({
-          patient_name: patientData.name,
-          patient_age: patientData.age,
-          patient_gender: patientData.gender,
-          body_part: bodyPart,
-          symptoms: fullSymptomsText,
-          probable_diagnosis: diagnosis || 'To be determined', // Keep for backward compatibility
-          database_diagnosis: diagnosis || 'To be determined',
-          ai_diagnosis: generatedAiDiagnosis,
-          short_summary: masterData?.['Short Summary'] || '',
-          basic_investigations: masterData?.['Basic Investigations'] || '',
-          common_treatments: masterData?.['Common Treatments'] || '',
-          prescription_required: prescriptionRequired,
-          status: 'pending',
-          customer_id: user?.id || null, // Track customer if authenticated
-          customer_email: user?.email || null, // Track customer email if authenticated
-          medication_history: clinicalData.medicationHistory.trim() || null,
-        });
+    // Immediately set submitted state
+    setPrescriptionSubmitted(true);
+    setShowClinicalForm(false);
 
-      if (error) {
-        throw error;
-      }
-
-      setPrescriptionSubmitted(true);
-      setShowClinicalForm(false);
-
-      toast({
-        title: "Request Submitted Successfully",
-        description: user ? 
-          `Your ${prescriptionRequired ? 'prescription' : 'referral'} request has been submitted. A doctor will review it within 15 minutes. Check your dashboard for updates.` :
-          `Your ${prescriptionRequired ? 'prescription' : 'referral'} request has been submitted. A doctor will review it within 15 minutes. Sign up to track your consultations in your dashboard.`,
-        duration: 8000
-      });
+    toast({
+      title: "Request Submitted Successfully",
+      description: user ? 
+        `Your ${prescriptionRequired ? 'prescription' : 'referral'} request has been submitted. A doctor will review it within 15 minutes. Check your dashboard for updates.` :
+        `Your ${prescriptionRequired ? 'prescription' : 'referral'} request has been submitted. A doctor will review it within 15 minutes. Sign up to track your consultations in your dashboard.`,
+      duration: 8000
+    });
     } catch (error: any) {
       console.error('Error submitting prescription request:', error);
       toast({
