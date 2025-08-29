@@ -78,15 +78,25 @@ const PrescriptionStatus = ({ request }: PrescriptionStatusProps) => {
         return;
       }
 
-      // Download the file
+      // Download the file by fetching content and creating blob
       try {
+        const response = await fetch(data.downloadUrl);
+        if (!response.ok) {
+          throw new Error('Failed to fetch PDF');
+        }
+        
+        const blob = await response.blob();
+        const blobUrl = URL.createObjectURL(blob);
+        
         const link = document.createElement('a');
-        link.href = data.downloadUrl;
+        link.href = blobUrl;
         link.download = data.fileName || `prescription-${request.prescription.id}.pdf`;
-        link.target = '_blank';
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
+        
+        // Clean up the blob URL
+        URL.revokeObjectURL(blobUrl);
         
         toast({
           title: "Download Started",
@@ -94,8 +104,11 @@ const PrescriptionStatus = ({ request }: PrescriptionStatusProps) => {
         });
       } catch (fetchError) {
         console.error('Error downloading file:', fetchError);
-        // Fallback: try to open in new tab
-        window.open(data.downloadUrl, '_blank');
+        toast({
+          title: "Download Error",
+          description: "Failed to download prescription. Please try again.",
+          variant: "destructive",
+        });
       }
       
     } catch (error) {
