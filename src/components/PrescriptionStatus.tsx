@@ -49,8 +49,32 @@ const PrescriptionStatus = ({ request }: PrescriptionStatusProps) => {
         return;
       }
 
-      // Open the fresh signed URL
-      window.open(data.downloadUrl, '_blank');
+      // Instead of opening URL directly, fetch the file and trigger download
+      try {
+        const response = await fetch(data.downloadUrl);
+        if (!response.ok) {
+          throw new Error('Failed to fetch prescription file');
+        }
+        
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = data.fileName || `prescription-${request.prescription.id}.pdf`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+        
+        toast({
+          title: "Download Started",
+          description: "Your prescription is downloading...",
+        });
+      } catch (fetchError) {
+        console.error('Error fetching prescription file:', fetchError);
+        // Fallback: try to open in new tab
+        window.open(data.downloadUrl, '_blank');
+      }
       
     } catch (error) {
       console.error('Error downloading prescription:', error);
