@@ -48,9 +48,15 @@ export default function BhashiniTest() {
         setMediaRecorder(recorder);
         setIsRecording(true);
         toast.success('Recording started');
-      } catch (error) {
-        toast.error('Failed to start recording. Please check microphone permissions.');
+      } catch (error: any) {
         console.error('Recording error:', error);
+        if (error.name === 'NotAllowedError') {
+          toast.error('Microphone access denied. Please allow microphone permissions and reload the page.');
+        } else if (error.name === 'NotFoundError') {
+          toast.error('No microphone found. Please check your device.');
+        } else {
+          toast.error('Failed to start recording. Please check your microphone setup.');
+        }
       }
     } else {
       if (mediaRecorder) {
