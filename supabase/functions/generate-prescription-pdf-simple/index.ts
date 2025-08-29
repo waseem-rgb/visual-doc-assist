@@ -215,7 +215,13 @@ Deno.serve(async (req) => {
 
     // Parse and display prescribed medications
     try {
-      const medications = JSON.parse(prescription.medications || '[]');
+      // Handle both string and array cases
+      let medications;
+      if (typeof prescription.medications === 'string') {
+        medications = JSON.parse(prescription.medications || '[]');
+      } else {
+        medications = prescription.medications || [];
+      }
       
       if (medications && medications.length > 0) {
         medications.forEach((med: any, index: number) => {
