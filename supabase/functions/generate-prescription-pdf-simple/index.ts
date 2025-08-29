@@ -74,22 +74,27 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Verify user has doctor role for authorization
-    const { data: userRoles, error: roleError } = await userSupabase
-      .from('user_roles')
-      .select('role')
-      .eq('user_id', user.user.id)
-      .single();
+    // For referrals, skip doctor role check (customers can generate referrals)
+    // For regular prescriptions, verify doctor role
+    let isUserDoctor = false;
+    if (!isReferral) {
+      const { data: userRoles, error: roleError } = await userSupabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', user.user.id)
+        .single();
 
-    if (roleError || !userRoles || userRoles.role !== 'doctor') {
-      console.error('Unauthorized: User is not a doctor', roleError);
-      return new Response(
-        JSON.stringify({ error: 'Unauthorized: Doctor role required' }),
-        { 
-          status: 403,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        }
-      );
+      if (roleError || !userRoles || userRoles.role !== 'doctor') {
+        console.error('Unauthorized: User is not a doctor', roleError);
+        return new Response(
+          JSON.stringify({ error: 'Unauthorized: Doctor role required for prescriptions' }),
+          { 
+            status: 403,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          }
+        );
+      }
+      isUserDoctor = true;
     }
 
     // Fetch prescription request data using admin client
