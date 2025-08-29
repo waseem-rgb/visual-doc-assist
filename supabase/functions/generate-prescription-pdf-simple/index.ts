@@ -62,14 +62,28 @@ Deno.serve(async (req) => {
 
     if (isReferral || !requestData.prescription_required) {
       // For referral cases, fetch the referral text from New Master table
-      const { data: masterData, error: masterError } = await supabase
+      const diagnosis = requestData.database_diagnosis || requestData.probable_diagnosis;
+      console.log('Looking for referral info for diagnosis:', diagnosis);
+      
+      let { data: masterData, error: masterError } = await supabase
         .from('New Master')
-        .select('"prescription_Y-N"')
-        .or(`"Probable Diagnosis".ilike.%${requestData.database_diagnosis || requestData.probable_diagnosis}%`)
+        .select('"Common Treatments", "Probable Diagnosis"')
+        .ilike('"Probable Diagnosis"', `%${diagnosis}%`)
         .maybeSingle();
 
-      referralText = masterData?.['prescription_Y-N'] || 'specialist';
-      console.log('Referral text found:', referralText);
+      // If no match found with diagnosis, try with symptoms as fallback
+      if (!masterData && requestData.symptoms) {
+        console.log('Trying with symptoms:', requestData.symptoms);
+        const { data: symptomData } = await supabase
+          .from('New Master')
+          .select('"Common Treatments", "Probable Diagnosis"')
+          .ilike('Symptoms', `%${requestData.symptoms}%`)
+          .maybeSingle();
+        masterData = symptomData;
+      }
+
+      referralText = masterData?.['Common Treatments'] || 'specialist';
+      console.log('Referral text found:', referralText, 'for diagnosis:', masterData?.['Probable Diagnosis']);
 
       // Create a referral prescription if it doesn't exist - use NULL doctor_id
       const { data: existingPrescription } = await supabase
