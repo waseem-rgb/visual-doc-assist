@@ -471,24 +471,6 @@ const InteractiveSymptomSelector = ({ bodyPart, patientData, onBack }: Interacti
                     {finalSelection.text}
                   </p>
                 </div>
-                
-                <div className="flex gap-3 justify-center">
-                  <Button 
-                    variant="outline" 
-                    onClick={() => {
-                      setFinalSelection(null);
-                      setDiagnosis(null);
-                    }}
-                  >
-                    Change Selection
-                  </Button>
-                  <Button 
-                    onClick={handleContinueToNextStep}
-                    disabled={loadingDiagnosis}
-                  >
-                    {loadingDiagnosis ? "Analyzing..." : "Continue to Next Step"}
-                  </Button>
-                </div>
               </CardContent>
             </Card>
           )}
