@@ -60,11 +60,25 @@ Deno.serve(async (req) => {
     // Service role client for database operations
     const adminSupabase = createClient(supabaseUrl, supabaseServiceKey);
 
+    // Get the current user to verify doctor role
+    const { data: user, error: userError } = await userSupabase.auth.getUser();
+    
+    if (userError || !user?.user) {
+      console.error('Failed to get user:', userError);
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized: Invalid token' }),
+        { 
+          status: 401,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      );
+    }
+
     // Verify user has doctor role for authorization
     const { data: userRoles, error: roleError } = await userSupabase
       .from('user_roles')
       .select('role')
-      .eq('user_id', 'auth.uid()')
+      .eq('user_id', user.user.id)
       .single();
 
     if (roleError || !userRoles || userRoles.role !== 'doctor') {
