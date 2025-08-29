@@ -11,6 +11,17 @@ import { X, Plus, Search, Pill, Brain, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { getMedicationInsights, suggestMedicationsForDiagnosis } from "@/utils/aiService";
 
+// Utility function to strip markdown formatting
+const stripMarkdown = (text: string): string => {
+  if (!text) return text;
+  return text
+    .replace(/\*\*(.*?)\*\*/g, '$1') // Remove bold **text**
+    .replace(/\*(.*?)\*/g, '$1') // Remove italic *text*
+    .replace(/`(.*?)`/g, '$1') // Remove code `text`
+    .replace(/#{1,6}\s?/g, '') // Remove headers
+    .trim();
+};
+
 interface Medication {
   id: string;
   name: string;
@@ -228,23 +239,23 @@ const MedicationSelector = ({
       const lines = suggestions.split('\n').filter(line => line.includes('|'));
       
       const suggestedMedications: PrescribedMedication[] = lines.map((line, index) => {
-        const parts = line.split('|').map(part => part.trim());
+        const parts = line.split('|').map(part => stripMarkdown(part.trim()));
         if (parts.length >= 4) {
           return {
             id: `ai-suggested-${Date.now()}-${index}`,
-            name: parts[0] || 'Suggested Medication',
-            generic_name: parts[0] || '',
+            name: stripMarkdown(parts[0]) || 'Suggested Medication',
+            generic_name: stripMarkdown(parts[0]) || '',
             brand_names: '',
             category: 'AI Suggested',
             dosage_form: '',
-            common_dosages: parts[1] || '',
+            common_dosages: stripMarkdown(parts[1]) || '',
             indication: diagnosis,
             contraindication: '',
             side_effects: '',
-            prescribed_dosage: parts[1] || '',
-            frequency: parts[2] || 'As directed',
-            duration: parts[3] || '7 days',
-            instructions: parts[4] || 'Take as prescribed',
+            prescribed_dosage: stripMarkdown(parts[1]) || '',
+            frequency: stripMarkdown(parts[2]) || 'As directed',
+            duration: stripMarkdown(parts[3]) || '7 days',
+            instructions: stripMarkdown(parts[4]) || 'Take as prescribed',
           };
         }
         return null;

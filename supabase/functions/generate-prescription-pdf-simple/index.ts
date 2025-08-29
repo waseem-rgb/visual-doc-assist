@@ -6,6 +6,17 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
+// Utility function to strip markdown formatting
+const stripMarkdown = (text: string): string => {
+  if (!text) return text;
+  return text
+    .replace(/\*\*(.*?)\*\*/g, '$1') // Remove bold **text**
+    .replace(/\*(.*?)\*/g, '$1') // Remove italic *text*
+    .replace(/`(.*?)`/g, '$1') // Remove code `text`
+    .replace(/#{1,6}\s?/g, '') // Remove headers
+    .trim();
+};
+
 Deno.serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -303,10 +314,11 @@ Deno.serve(async (req) => {
         
         if (medications && medications.length > 0) {
           medications.forEach((med: any, index: number) => {
-            const medName = med.name || med.generic_name || 'Unknown medication';
-            const dosage = med.prescribed_dosage || med.common_dosages || '';
-            const frequency = med.frequency || '';
-            const duration = med.duration || '';
+            const medName = stripMarkdown(med.name || med.generic_name || 'Unknown medication');
+            const dosage = stripMarkdown(med.prescribed_dosage || med.common_dosages || '');
+            const frequency = stripMarkdown(med.frequency || '');
+            const duration = stripMarkdown(med.duration || '');
+            const instructions = stripMarkdown(med.instructions || '');
             
             // Medication name
             addText(`${index + 1}. ${medName}`, leftMargin + 20, yPosition, { bold: true, size: 11 });
@@ -330,6 +342,14 @@ Deno.serve(async (req) => {
             if (duration) {
               addText(`   Duration: ${duration}`, leftMargin + 30, yPosition, { size: 10 });
               yPosition -= 12;
+            }
+            
+            if (instructions) {
+              const instructionLines = wrapText(instructions, pageWidth - 80);
+              instructionLines.forEach(line => {
+                addText(`   ${line}`, leftMargin + 30, yPosition, { size: 9 });
+                yPosition -= 10;
+              });
             }
             
             yPosition -= 8;
@@ -365,7 +385,8 @@ Deno.serve(async (req) => {
       addText('Instructions:', leftMargin, yPosition, { bold: true, size: 12 });
       yPosition -= 15;
       
-      const instructionLines = wrapText(prescription.instructions, pageWidth);
+      const cleanInstructions = stripMarkdown(prescription.instructions);
+      const instructionLines = wrapText(cleanInstructions, pageWidth);
       for (const line of instructionLines) {
         addText(line, leftMargin, yPosition, { size: 11 });
         yPosition -= 13;
