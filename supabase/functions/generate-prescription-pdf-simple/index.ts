@@ -284,7 +284,7 @@ Deno.serve(async (req) => {
       yPosition -= 10;
     }
 
-    // 7. Rx Section (with symbolic Rx or referral text)
+    // 7. Rx Section (with regular Rx text or referral text)
     addText('Rx', leftMargin, yPosition, { bold: true, size: 16 });
     yPosition -= 25;
 
