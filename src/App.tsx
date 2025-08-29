@@ -14,6 +14,7 @@ import DoctorLogin from "./pages/DoctorLogin";
 import DoctorDashboard from "./pages/DoctorDashboard";
 import CustomerAuth from "./pages/CustomerAuth";
 import CustomerDashboard from "./pages/CustomerDashboard";
+import BhashiniTest from "./pages/BhashiniTest";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -35,6 +36,7 @@ const DesktopApp = () => (
         <CustomerDashboard />
       </ProtectedRoute>
     } />
+    <Route path="/bhashini-test" element={<BhashiniTest />} />
     {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
     <Route path="*" element={<NotFound />} />
   </Routes>
@@ -57,6 +59,7 @@ const MobileApp = () => (
         <MobileLayout><CustomerDashboard /></MobileLayout>
       </ProtectedRoute>
     } />
+    <Route path="/bhashini-test" element={<MobileLayout><BhashiniTest /></MobileLayout>} />
     {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
     <Route path="*" element={<MobileLayout><NotFound /></MobileLayout>} />
   </Routes>

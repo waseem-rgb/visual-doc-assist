@@ -13,6 +13,7 @@ const Navigation = () => {
     { label: t('navigation.howItWorks'), href: "#how-it-works" },
     { label: t('navigation.forDoctors'), href: "#doctors" },
     { label: t('navigation.contact'), href: "#contact" },
+    { label: "🧪 Bhashini Test", href: "/bhashini-test", isRoute: true },
   ];
 
   return (
@@ -33,6 +34,7 @@ const Navigation = () => {
                 key={item.label}
                 href={item.href}
                 className="text-muted-foreground hover:text-foreground transition-smooth"
+                onClick={item.isRoute ? () => window.location.href = item.href : undefined}
               >
                 {item.label}
               </a>
@@ -65,7 +67,10 @@ const Navigation = () => {
                   key={item.label}
                   href={item.href}
                   className="text-muted-foreground hover:text-foreground transition-smooth"
-                  onClick={() => setIsMenuOpen(false)}
+                  onClick={() => {
+                    setIsMenuOpen(false);
+                    if (item.isRoute) window.location.href = item.href;
+                  }}
                 >
                   {item.label}
                 </a>
