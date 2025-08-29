@@ -332,16 +332,29 @@ const InteractiveSymptomSelector = ({ bodyPart, patientData, onBack }: Interacti
       
       const fullSymptomsText = symptomsText + durationText + chronicText + allergiesText + medicationText + lifestyleFinal;
 
-      // Determine if prescription is required or if it's a referral/emergency case
+      // Determine if prescription is required based on database content
       const prescriptionYN = masterData?.['prescription_Y-N']?.toLowerCase() || '';
+      console.log('🔍 [PRESCRIPTION CHECK] prescription_Y-N value:', prescriptionYN);
       
-      // Check for referral indicators in prescription_Y-N column
-      const referralIndicators = ['cardiologist', 'ent', 'dermatologist', 'specialist', 'emergency', 'hospital', 'department'];
+      // Check for doctor review keywords - these require doctor approval
+      const doctorReviewKeywords = ['doctors review and prescription', 'doctor review', 'prescription', 'y'];
+      const requiresDoctorReview = doctorReviewKeywords.some(keyword => prescriptionYN.includes(keyword));
+      
+      // Check for referral indicators - these go directly to referral
+      const referralIndicators = ['cardiologist', 'ent', 'dermatologist', 'specialist', 'emergency', 'hospital', 'department', 'referral'];
       const isReferralCase = referralIndicators.some(indicator => prescriptionYN.includes(indicator));
       
-      // Only require prescription if explicitly marked as needing doctor review
-      const prescriptionRequired = prescriptionYN === 'doctors review and prescription' || prescriptionYN === 'y';
-      const isEmergencyReferral = !prescriptionRequired && (isReferralCase || (prescriptionYN !== 'n' && prescriptionYN !== ''));
+      // Logic: 
+      // - If contains doctor review keywords → needs doctor approval
+      // - If contains referral keywords OR is 'n' → goes to referral
+      // - Default for unclear cases → referral (safer option)
+      const prescriptionRequired = requiresDoctorReview && !isReferralCase;
+      const isReferralCase_final = isReferralCase || prescriptionYN === 'n' || (!requiresDoctorReview && prescriptionYN !== '');
+      
+      console.log('🔍 [DECISION] requiresDoctorReview:', requiresDoctorReview);
+      console.log('🔍 [DECISION] isReferralCase:', isReferralCase);
+      console.log('🔍 [DECISION] prescriptionRequired:', prescriptionRequired);
+      console.log('🔍 [DECISION] isReferralCase_final:', isReferralCase_final);
 
       // Check if user is authenticated for tracking
       const { data: { user } } = await supabase.auth.getUser();
@@ -389,8 +402,8 @@ const InteractiveSymptomSelector = ({ bodyPart, patientData, onBack }: Interacti
       throw error;
     }
 
-    // Auto-generate referral prescription if it's an emergency/referral case
-    if (isEmergencyReferral && insertedData) {
+    // Auto-generate referral prescription if it's a referral case
+    if (isReferralCase_final && insertedData) {
       try {
         console.log('Auto-generating referral prescription for request:', insertedData.id);
         

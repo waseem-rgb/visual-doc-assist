@@ -41,7 +41,38 @@ export function ReviewStep({ onBack, onReset }: ReviewStepProps) {
     setIsGenerating(true);
     
     try {
-      // Create prescription request record
+      // Determine prescription requirement by checking database for symptoms
+      let prescriptionRequired = false;
+      let isReferralCase = false;
+      
+      console.log('🔍 [REVIEW STEP] Checking prescription requirement for symptoms:', selectedSymptoms);
+      
+      // Check database for prescription requirements based on symptoms
+      const { data: masterData, error: masterError } = await supabase
+        .from('New Master')
+        .select('"prescription_Y-N"')
+        .ilike('Symptoms', `%${selectedSymptoms[0]}%`) // Check first symptom
+        .maybeSingle();
+
+      if (!masterError && masterData) {
+        const prescriptionYN = masterData['prescription_Y-N']?.toLowerCase() || '';
+        console.log('🔍 [REVIEW STEP] prescription_Y-N value:', prescriptionYN);
+        
+        // Check for doctor review keywords
+        const doctorReviewKeywords = ['doctors review and prescription', 'doctor review', 'prescription', 'y'];
+        const requiresDoctorReview = doctorReviewKeywords.some(keyword => prescriptionYN.includes(keyword));
+        
+        // Check for referral indicators
+        const referralIndicators = ['cardiologist', 'ent', 'dermatologist', 'specialist', 'emergency', 'hospital', 'department', 'referral'];
+        const hasReferralIndicators = referralIndicators.some(indicator => prescriptionYN.includes(indicator));
+        
+        prescriptionRequired = requiresDoctorReview && !hasReferralIndicators;
+        isReferralCase = hasReferralIndicators || prescriptionYN === 'n' || (!requiresDoctorReview && prescriptionYN !== '');
+        
+        console.log('🔍 [REVIEW STEP] Final decision - prescriptionRequired:', prescriptionRequired, 'isReferralCase:', isReferralCase);
+      }
+
+      // Create prescription request record with correct flags
       const requestData = {
         body_part: selectedBodyParts.join(', '),
         chief_complaint: selectedSymptoms.join(', '),
@@ -49,9 +80,9 @@ export function ReviewStep({ onBack, onReset }: ReviewStepProps) {
         patient_name: patientData.name,
         patient_age: patientData.age,
         patient_gender: patientData.gender,
-        status: 'pending' as const,
+        status: prescriptionRequired ? 'pending' as const : 'completed' as const,
         symptoms: selectedSymptoms.join(', '),
-        prescription_required: false
+        prescription_required: prescriptionRequired
       };
 
       const { data: prescriptionRequest, error: requestError } = await supabase
@@ -62,27 +93,22 @@ export function ReviewStep({ onBack, onReset }: ReviewStepProps) {
 
       if (requestError) throw requestError;
 
-      // Generate prescription using edge function
-      const prescriptionData = {
-        patient_name: patientData.name,
-        patient_age: patientData.age,
-        patient_gender: patientData.gender,
-        body_parts: selectedBodyParts.join(', '),
-        symptoms: selectedSymptoms.join(', '),
-        notes: symptomNotes,
-        request_id: prescriptionRequest.id
-      };
-
+      // Generate prescription/referral PDF
       const { data: pdfResult, error: pdfError } = await supabase.functions
         .invoke('generate-prescription-pdf-simple', {
-          body: prescriptionData
+          body: {
+            requestId: prescriptionRequest.id,
+            isReferral: isReferralCase
+          }
         });
 
       if (pdfError) throw pdfError;
 
       toast({
-        title: "Prescription Generated Successfully",
-        description: "Your consultation has been processed and prescription is ready.",
+        title: prescriptionRequired ? "Sent for Doctor Review" : "Referral Generated Successfully",
+        description: prescriptionRequired 
+          ? "Your request has been sent to a doctor for review and prescription."
+          : "Your consultation has been processed and referral document is ready.",
       });
 
       // Reset consultation and navigate to dashboard
