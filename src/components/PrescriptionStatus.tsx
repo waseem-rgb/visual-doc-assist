@@ -31,6 +31,17 @@ const PrescriptionStatus = ({ request }: PrescriptionStatusProps) => {
     
     setIsDownloading(true);
     try {
+      // First check if PDF exists by checking pdf_url field
+      if (!request.prescription.pdf_url) {
+        toast({
+          title: "PDF Generating",
+          description: "Your prescription PDF is being generated. Please try again in a few moments.",
+          variant: "default",
+        });
+        setIsDownloading(false);
+        return;
+      }
+
       // Use the new download function to get fresh signed URL
       const { data, error } = await supabase.functions.invoke('download-prescription', {
         body: { 
@@ -39,39 +50,50 @@ const PrescriptionStatus = ({ request }: PrescriptionStatusProps) => {
         }
       });
 
-      if (error || !data?.success) {
+      if (error) {
         console.error('Error downloading prescription:', error);
+        
+        // Handle specific error cases
+        if (error.message?.includes('PDF not yet generated')) {
+          toast({
+            title: "PDF Generating",
+            description: "Your prescription PDF is being generated. Please try again in a few moments.",
+          });
+        } else {
+          toast({
+            title: "Download Error", 
+            description: "Failed to download prescription. Please try again.",
+            variant: "destructive",
+          });
+        }
+        return;
+      }
+
+      if (!data?.success || !data?.downloadUrl) {
         toast({
           title: "Download Error",
-          description: "Failed to download prescription. Please try again.",
+          description: "Prescription file not ready. Please try again in a few moments.",
           variant: "destructive",
         });
         return;
       }
 
-      // Instead of opening URL directly, fetch the file and trigger download
+      // Download the file
       try {
-        const response = await fetch(data.downloadUrl);
-        if (!response.ok) {
-          throw new Error('Failed to fetch prescription file');
-        }
-        
-        const blob = await response.blob();
-        const url = window.URL.createObjectURL(blob);
         const link = document.createElement('a');
-        link.href = url;
+        link.href = data.downloadUrl;
         link.download = data.fileName || `prescription-${request.prescription.id}.pdf`;
+        link.target = '_blank';
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
-        window.URL.revokeObjectURL(url);
         
         toast({
           title: "Download Started",
           description: "Your prescription is downloading...",
         });
       } catch (fetchError) {
-        console.error('Error fetching prescription file:', fetchError);
+        console.error('Error downloading file:', fetchError);
         // Fallback: try to open in new tab
         window.open(data.downloadUrl, '_blank');
       }
@@ -91,6 +113,23 @@ const PrescriptionStatus = ({ request }: PrescriptionStatusProps) => {
   const isReferral = !request.prescription_required;
 
   if (request.status === 'completed' && request.prescription) {
+    // Check if PDF is ready
+    const hasValidPdf = request.prescription.pdf_url && !request.prescription.pdf_url.includes('http');
+    
+    if (!hasValidPdf) {
+      return (
+        <Button
+          variant="outline"
+          size="sm"
+          disabled
+          className="text-orange-600 border-orange-200 bg-orange-50"
+        >
+          <Clock className="h-4 w-4 mr-1" />
+          {isReferral ? 'Generating Referral PDF' : 'Generating PDF'}
+        </Button>
+      );
+    }
+    
     return (
       <Button
         variant="default"

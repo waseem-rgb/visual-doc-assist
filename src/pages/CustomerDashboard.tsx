@@ -289,7 +289,10 @@ const CustomerDashboard = () => {
                 Teleconsultation
               </Button>
               <Button 
-                onClick={() => navigate("/consultation")} 
+                onClick={() => {
+                  console.log('Start New Consultation clicked - navigating to /consultation');
+                  navigate("/consultation");
+                }} 
                 className="hidden md:flex"
               >
                 <Heart className="h-4 w-4 mr-2" />
@@ -306,7 +309,10 @@ const CustomerDashboard = () => {
                   <Heart className="h-12 w-12 mx-auto mb-4 opacity-50" />
                   <p className="text-lg mb-2">No consultations yet</p>
                   <p>Start your first consultation to see your medical records here.</p>
-                  <Button onClick={() => navigate("/consultation")} className="mt-4">
+                  <Button onClick={() => {
+                    console.log('Start Consultation clicked - navigating to /consultation');
+                    navigate("/consultation");
+                  }} className="mt-4">
                     Start Consultation
                   </Button>
                 </div>
@@ -391,7 +397,10 @@ const CustomerDashboard = () => {
       {/* Mobile Floating Action Button */}
       <div className="fixed bottom-6 right-6 md:hidden">
         <Button 
-          onClick={() => navigate("/consultation")} 
+          onClick={() => {
+            console.log('Mobile Start New Consultation clicked - navigating to /consultation');
+            navigate("/consultation");
+          }} 
           size="lg"
           className="shadow-lg hover:shadow-xl transition-shadow"
         >
