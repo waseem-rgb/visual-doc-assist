@@ -148,6 +148,7 @@ export type Database = {
           customer_id: string | null
           database_diagnosis: string | null
           id: string
+          medication_history: string | null
           patient_age: string
           patient_gender: string
           patient_name: string
@@ -174,6 +175,7 @@ export type Database = {
           customer_id?: string | null
           database_diagnosis?: string | null
           id?: string
+          medication_history?: string | null
           patient_age: string
           patient_gender: string
           patient_name: string
@@ -200,6 +202,7 @@ export type Database = {
           customer_id?: string | null
           database_diagnosis?: string | null
           id?: string
+          medication_history?: string | null
           patient_age?: string
           patient_gender?: string
           patient_name?: string

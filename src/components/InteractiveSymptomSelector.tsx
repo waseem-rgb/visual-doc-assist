@@ -50,7 +50,8 @@ const InteractiveSymptomSelector = ({ bodyPart, patientData, onBack }: Interacti
     drugAllergies: '',
     smoking: '',
     alcohol: '',
-    mobileNumber: ''
+    mobileNumber: '',
+    medicationHistory: ''
   });
 
   // Universal symptom definitions - removed as UniversalSymptomSelector now handles this via Supabase
@@ -308,13 +309,15 @@ const InteractiveSymptomSelector = ({ bodyPart, patientData, onBack }: Interacti
         ` Chronic conditions: ${clinicalData.chronicIllness.join(', ')}.` : '';
       const allergiesText = clinicalData.drugAllergies.trim() ? 
         ` Drug allergies: ${clinicalData.drugAllergies}.` : '';
+      const medicationText = clinicalData.medicationHistory.trim() ? 
+        ` Current medications: ${clinicalData.medicationHistory}.` : '';
       const lifestyleText = [
         clinicalData.smoking ? `Smoking: ${clinicalData.smoking}` : '',
         clinicalData.alcohol ? `Alcohol: ${clinicalData.alcohol}` : ''
       ].filter(Boolean).join(', ');
       const lifestyleFinal = lifestyleText ? ` Lifestyle: ${lifestyleText}.` : '';
       
-      const fullSymptomsText = symptomsText + durationText + chronicText + allergiesText + lifestyleFinal;
+      const fullSymptomsText = symptomsText + durationText + chronicText + allergiesText + medicationText + lifestyleFinal;
 
       // Determine if prescription is required (default to true if not specified)
       const prescriptionRequired = masterData?.['prescription_Y-N'] !== 'N';
@@ -356,6 +359,7 @@ const InteractiveSymptomSelector = ({ bodyPart, patientData, onBack }: Interacti
           status: 'pending',
           customer_id: user?.id || null, // Track customer if authenticated
           customer_email: user?.email || null, // Track customer email if authenticated
+          medication_history: clinicalData.medicationHistory.trim() || null,
         });
 
       if (error) {
@@ -726,6 +730,23 @@ const InteractiveSymptomSelector = ({ bodyPart, patientData, onBack }: Interacti
                     <Label htmlFor="alcohol-no">No</Label>
                   </div>
                 </RadioGroup>
+              </div>
+
+              {/* Medication History */}
+              <div className="space-y-2">
+                <Label htmlFor="medication-history">
+                  MEDICATION HISTORY - ANY MEDICATION CUSTOMER IS CURRENTLY TAKING <span className="text-muted-foreground">(Optional)</span>
+                </Label>
+                <Input
+                  id="medication-history"
+                  placeholder="Enter any medications you are currently taking"
+                  value={clinicalData.medicationHistory}
+                  onChange={(e) => setClinicalData(prev => ({ ...prev, medicationHistory: e.target.value.toUpperCase() }))}
+                  className="w-full"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Please list all current medications including dosages if known.
+                </p>
               </div>
 
               {/* Mobile Number */}

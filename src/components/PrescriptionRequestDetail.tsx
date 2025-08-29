@@ -43,6 +43,7 @@ interface PrescriptionRequest {
   clinical_history?: string;
   chief_complaint?: string;
   physical_examination?: string;
+  medication_history?: string;
 }
 
 interface PrescriptionRequestDetailProps {
@@ -294,6 +295,15 @@ const PrescriptionRequestDetail = ({ request, onBack, onUpdate }: PrescriptionRe
                   </Label>
                   <p className="mt-1 p-3 bg-muted/50 rounded-md text-sm">
                     {request.symptoms || "No symptoms reported"}
+                  </p>
+                </div>
+
+                <div>
+                  <Label className="text-sm font-semibold text-muted-foreground">
+                    MEDICATION HISTORY - ANY MEDICATION CUSTOMER IS CURRENTLY TAKING
+                  </Label>
+                  <p className="mt-1 p-3 bg-muted/50 rounded-md text-sm">
+                    {request.medication_history || "No current medications reported"}
                   </p>
                 </div>
 
