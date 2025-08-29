@@ -132,6 +132,18 @@ const CustomerDashboard = () => {
     }
   };
 
+  // Auto-refresh data every 10 seconds to catch PDF generation updates
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (requests.some(r => r.status === 'completed' && r.prescription && !r.prescription.pdf_url)) {
+        console.log('Auto-refreshing data to check for PDF updates');
+        checkAuthAndFetchData();
+      }
+    }, 10000);
+
+    return () => clearInterval(interval);
+  }, [requests]);
+
   const handleSignOut = async () => {
     await supabase.auth.signOut();
     navigate("/");

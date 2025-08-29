@@ -113,8 +113,10 @@ const PrescriptionStatus = ({ request }: PrescriptionStatusProps) => {
   const isReferral = !request.prescription_required;
 
   if (request.status === 'completed' && request.prescription) {
-    // Check if PDF is ready
-    const hasValidPdf = request.prescription.pdf_url && !request.prescription.pdf_url.includes('http');
+    // Check if PDF is ready - accept both file paths and signed URLs
+    const hasValidPdf = request.prescription.pdf_url && 
+      request.prescription.pdf_url.trim().length > 0 &&
+      request.prescription.pdf_url !== 'null';
     
     if (!hasValidPdf) {
       return (
