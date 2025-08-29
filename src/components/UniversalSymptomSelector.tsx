@@ -174,20 +174,28 @@ const UniversalSymptomSelector = ({
   };
 
   const handleConfirm = () => {
+    console.log('🔄 [CONFIRM] Button clicked with selectedSymptoms:', selectedSymptoms);
+    
     // Call onSymptomsSelected if provided (for backward compatibility)
     if (onSymptomsSelected) {
+      console.log('🔄 [CONFIRM] Calling onSymptomsSelected');
       onSymptomsSelected(selectedSymptoms);
     }
     
     // Call onSymptomSubmit with the first selected symptom in the expected format
     if (onSymptomSubmit && selectedSymptoms.length > 0) {
       const firstSymptom = selectedSymptoms[0];
-      onSymptomSubmit({
+      const symptomData = {
         id: firstSymptom.replace(/\s+/g, '_').toLowerCase(),
         text: firstSymptom
-      });
+      };
+      console.log('🔄 [CONFIRM] Calling onSymptomSubmit with:', symptomData);
+      onSymptomSubmit(symptomData);
+    } else {
+      console.log('🚫 [CONFIRM] onSymptomSubmit not available or no symptoms selected');
     }
     
+    console.log('🔄 [CONFIRM] Closing dialog');
     handleClose();
   };
 

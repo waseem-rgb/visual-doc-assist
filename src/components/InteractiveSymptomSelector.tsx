@@ -153,8 +153,10 @@ const InteractiveSymptomSelector = ({ bodyPart, patientData, onBack }: Interacti
   };
 
   const handleSymptomSubmit = (symptom: {id: string, text: string}) => {
+    console.log('🎯 [SYMPTOM SUBMIT] Called with:', symptom);
     setFinalSelection(symptom);
     setLightboxOpen(false);
+    console.log('🎯 [SYMPTOM SUBMIT] Updated states - finalSelection set, lightbox closed');
   };
 
   // Debug logging when UniversalSymptomSelector is about to render
