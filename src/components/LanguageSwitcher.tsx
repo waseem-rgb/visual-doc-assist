@@ -3,21 +3,29 @@ import { useTranslation } from 'react-i18next';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { Languages } from 'lucide-react';
+import { BHASHINI_LANGUAGES } from '@/utils/bhashiniService';
 
 interface Language {
   code: string;
   name: string;
   nativeName: string;
+  region?: string;
 }
 
-const languages: Language[] = [
-  { code: 'en', name: 'English', nativeName: 'English' },
-  { code: 'hi', name: 'Hindi', nativeName: 'हिंदी' },
-  { code: 'ta', name: 'Tamil', nativeName: 'தமிழ்' },
-  { code: 'te', name: 'Telugu', nativeName: 'తెలుగు' },
-  { code: 'bn', name: 'Bengali', nativeName: 'বাংলা' },
-  { code: 'gu', name: 'Gujarati', nativeName: 'ગુજરાતી' },
-  { code: 'mr', name: 'Marathi', nativeName: 'मराठी' },
+// Use core languages for the main interface (most commonly supported)
+const coreLanguages: Language[] = [
+  { code: 'en', name: 'English', nativeName: 'English', region: 'Official' },
+  { code: 'hi', name: 'Hindi', nativeName: 'हिंदी', region: 'North' },
+  { code: 'ta', name: 'Tamil', nativeName: 'தமிழ்', region: 'South' },
+  { code: 'te', name: 'Telugu', nativeName: 'తెలుగు', region: 'South' },
+  { code: 'bn', name: 'Bengali', nativeName: 'বাংলা', region: 'East' },
+  { code: 'gu', name: 'Gujarati', nativeName: 'ગુજરાતી', region: 'West' },
+  { code: 'mr', name: 'Marathi', nativeName: 'मराठी', region: 'West' },
+  { code: 'kn', name: 'Kannada', nativeName: 'ಕನ್ನಡ', region: 'South' },
+  { code: 'ml', name: 'Malayalam', nativeName: 'മലയാളം', region: 'South' },
+  { code: 'pa', name: 'Punjabi', nativeName: 'ਪੰਜਾਬੀ', region: 'North' },
+  { code: 'or', name: 'Odia', nativeName: 'ଓଡ଼ିଆ', region: 'East' },
+  { code: 'as', name: 'Assamese', nativeName: 'অসমীয়া', region: 'Northeast' },
 ];
 
 interface LanguageSwitcherProps {
@@ -31,7 +39,7 @@ const LanguageSwitcher: React.FC<LanguageSwitcherProps> = ({ variant = 'default'
     i18n.changeLanguage(languageCode);
   };
 
-  const currentLanguage = languages.find(lang => lang.code === i18n.language) || languages[0];
+  const currentLanguage = coreLanguages.find(lang => lang.code === i18n.language) || coreLanguages[0];
 
   if (variant === 'compact') {
     return (
@@ -39,9 +47,9 @@ const LanguageSwitcher: React.FC<LanguageSwitcherProps> = ({ variant = 'default'
         variant="ghost"
         size="sm"
         onClick={() => {
-          const currentIndex = languages.findIndex(lang => lang.code === i18n.language);
-          const nextIndex = (currentIndex + 1) % languages.length;
-          handleLanguageChange(languages[nextIndex].code);
+          const currentIndex = coreLanguages.findIndex(lang => lang.code === i18n.language);
+          const nextIndex = (currentIndex + 1) % coreLanguages.length;
+          handleLanguageChange(coreLanguages[nextIndex].code);
         }}
         className="gap-2"
       >
@@ -63,11 +71,11 @@ const LanguageSwitcher: React.FC<LanguageSwitcherProps> = ({ variant = 'default'
           </SelectValue>
         </SelectTrigger>
         <SelectContent>
-          {languages.map((language) => (
+          {coreLanguages.map((language) => (
             <SelectItem key={language.code} value={language.code}>
               <div className="flex flex-col">
                 <span className="font-medium">{language.nativeName}</span>
-                <span className="text-xs text-muted-foreground">{language.name}</span>
+                <span className="text-xs text-muted-foreground">{language.name} • {language.region}</span>
               </div>
             </SelectItem>
           ))}

@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { bhashiniService } from "./bhashiniService";
 
 interface VoiceServiceOptions {
   language?: string;
@@ -34,8 +35,31 @@ export class VoiceService {
     }
   }
 
-  // Text-to-Speech using browser API for quick responses
+  // Text-to-Speech with Bhashini support for Indian languages
   async speakText(text: string, options: VoiceServiceOptions = {}): Promise<void> {
+    const language = options.language || 'en';
+    
+    // For Indian languages, try Bhashini first for better pronunciation
+    if (language !== 'en' && bhashiniService.isLanguageSupported(language)) {
+      try {
+        const audioBlob = await bhashiniService.textToSpeech(text, language);
+        const audioUrl = URL.createObjectURL(audioBlob);
+        const audio = new Audio(audioUrl);
+        
+        return new Promise((resolve, reject) => {
+          audio.onended = () => {
+            URL.revokeObjectURL(audioUrl);
+            resolve();
+          };
+          audio.onerror = () => reject(new Error('Bhashini audio playback failed'));
+          audio.play().catch(reject);
+        });
+      } catch (error) {
+        console.warn('Bhashini TTS failed, falling back to browser:', error);
+      }
+    }
+
+    // Fallback to browser speech synthesis
     return new Promise((resolve, reject) => {
       if (!this.synthesis) {
         reject(new Error('Speech synthesis not supported'));
@@ -45,8 +69,8 @@ export class VoiceService {
       const utterance = new SpeechSynthesisUtterance(text);
       
       // Set language based on options
-      const language = options.language || 'en-US';
-      utterance.lang = this.mapLanguageToVoiceLang(language);
+      const voiceLang = this.mapLanguageToVoiceLang(language);
+      utterance.lang = voiceLang;
       
       // Find appropriate voice
       const voices = this.synthesis.getVoices();
@@ -105,8 +129,22 @@ export class VoiceService {
     }
   }
 
-  // Speech-to-Text
+  // Speech-to-Text with Bhashini fallback
   async listenForSpeech(options: VoiceServiceOptions = {}): Promise<string> {
+    const language = options.language || 'en';
+    
+    // For Indian languages, try Bhashini first for better accuracy
+    if (language !== 'en' && bhashiniService.isLanguageSupported(language)) {
+      try {
+        // Record audio using MediaRecorder
+        const audioBlob = await this.recordAudio();
+        return await bhashiniService.speechToText(audioBlob, language);
+      } catch (error) {
+        console.warn('Bhashini ASR failed, falling back to browser:', error);
+      }
+    }
+
+    // Fallback to browser speech recognition
     return new Promise((resolve, reject) => {
       if (!this.recognition) {
         reject(new Error('Speech recognition not supported'));
@@ -118,8 +156,8 @@ export class VoiceService {
         return;
       }
 
-      const language = options.language || 'en-US';
-      this.recognition.lang = this.mapLanguageToVoiceLang(language);
+      const voiceLang = this.mapLanguageToVoiceLang(language);
+      this.recognition.lang = voiceLang;
       
       let finalTranscript = '';
       
@@ -214,6 +252,42 @@ export class VoiceService {
     
     const byteArray = new Uint8Array(byteNumbers);
     return new Blob([byteArray], { type: contentType });
+  }
+
+  // Record audio for Bhashini ASR
+  private async recordAudio(): Promise<Blob> {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        const mediaRecorder = new MediaRecorder(stream);
+        const chunks: Blob[] = [];
+
+        mediaRecorder.ondataavailable = (event) => {
+          if (event.data.size > 0) {
+            chunks.push(event.data);
+          }
+        };
+
+        mediaRecorder.onstop = () => {
+          const audioBlob = new Blob(chunks, { type: 'audio/webm' });
+          stream.getTracks().forEach(track => track.stop());
+          resolve(audioBlob);
+        };
+
+        mediaRecorder.onerror = reject;
+
+        mediaRecorder.start();
+        
+        // Record for 5 seconds or until stop is called
+        setTimeout(() => {
+          if (mediaRecorder.state === 'recording') {
+            mediaRecorder.stop();
+          }
+        }, 5000);
+      } catch (error) {
+        reject(error);
+      }
+    });
   }
 
   private blobToBase64(blob: Blob): Promise<string> {
