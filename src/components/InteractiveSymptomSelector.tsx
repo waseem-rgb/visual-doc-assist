@@ -152,11 +152,47 @@ const InteractiveSymptomSelector = ({ bodyPart, patientData, onBack }: Interacti
     }
   };
 
-  const handleSymptomSubmit = (symptom: {id: string, text: string}) => {
+  const handleSymptomSubmit = async (symptom: {id: string, text: string}) => {
     console.log('🎯 [SYMPTOM SUBMIT] Called with:', symptom);
     setFinalSelection(symptom);
     setLightboxOpen(false);
     console.log('🎯 [SYMPTOM SUBMIT] Updated states - finalSelection set, lightbox closed');
+    
+    // Automatically fetch diagnosis from database when symptom is selected
+    setLoadingDiagnosis(true);
+    try {
+      // Query the "New Master" table to find matching symptom and get probable diagnosis
+      const { data, error } = await supabase
+        .from('New Master')
+        .select('"Probable Diagnosis"')
+        .ilike('Symptoms', `%${symptom.text}%`)
+        .maybeSingle();
+
+      if (error) {
+        console.error('Error fetching diagnosis:', error);
+        // If exact match fails, try with symptom ID keywords
+        const keywords = symptom.id.replace(/-/g, ' ');
+        const { data: fallbackData, error: fallbackError } = await supabase
+          .from('New Master')
+          .select('"Probable Diagnosis"')
+          .ilike('Symptoms', `%${keywords}%`)
+          .maybeSingle();
+        
+        if (fallbackError) {
+          console.error('Error fetching fallback diagnosis:', fallbackError);
+          setDiagnosis('Unable to determine diagnosis. Please consult with a healthcare provider.');
+        } else {
+          setDiagnosis(fallbackData?.['Probable Diagnosis'] || 'No diagnosis information available.');
+        }
+      } else {
+        setDiagnosis(data?.['Probable Diagnosis'] || 'No diagnosis information available.');
+      }
+    } catch (err) {
+      console.error('Unexpected error:', err);
+      setDiagnosis('Unable to determine diagnosis. Please consult with a healthcare provider.');
+    } finally {
+      setLoadingDiagnosis(false);
+    }
   };
 
   // Debug logging when UniversalSymptomSelector is about to render
