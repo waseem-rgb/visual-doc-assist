@@ -59,7 +59,12 @@ const PrescriptionRequestDetail = ({ request, onBack, onUpdate }: PrescriptionRe
   const [followUpNotes, setFollowUpNotes] = useState("");
   const [updatedInvestigations, setUpdatedInvestigations] = useState(request.basic_investigations || "");
   const [updatedTreatments, setUpdatedTreatments] = useState(request.common_treatments || "");
-  const [selectedDiagnosis, setSelectedDiagnosis] = useState<'database' | 'ai'>('database');
+  const [selectedDiagnosis, setSelectedDiagnosis] = useState<'database' | 'ai'>(() => {
+    // Default to whichever diagnosis is available, prioritizing database
+    if (request.database_diagnosis) return 'database';
+    if (request.ai_diagnosis) return 'ai';
+    return 'database';
+  });
   const { toast } = useToast();
 
   const handleClaimCase = async () => {
