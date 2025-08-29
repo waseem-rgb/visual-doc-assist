@@ -104,6 +104,57 @@ const PrescriptionRequestDetail = ({ request, onBack, onUpdate }: PrescriptionRe
     }
   };
 
+  const handleDownloadPrescription = async () => {
+    setLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('download-prescription', {
+        body: {
+          requestId: request.id
+        }
+      });
+
+      if (error) {
+        console.error('Download error:', error);
+        toast({
+          title: "Download Error",
+          description: "Failed to download prescription. Please try again.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (data?.downloadUrl) {
+        // Create a temporary link to download the file
+        const link = document.createElement('a');
+        link.href = data.downloadUrl;
+        link.download = data.fileName || `prescription-${request.patient_name}.pdf`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        toast({
+          title: "Download Started",
+          description: "Your prescription is being downloaded.",
+        });
+      } else {
+        toast({
+          title: "Download Error",
+          description: "Prescription file not found or not ready yet.",
+          variant: "destructive",
+        });
+      }
+    } catch (error: any) {
+      console.error('Download error:', error);
+      toast({
+        title: "Download Error",
+        description: "Failed to download prescription. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleApproveAndGenerate = async () => {
     setLoading(true);
     try {
@@ -155,19 +206,36 @@ const PrescriptionRequestDetail = ({ request, onBack, onUpdate }: PrescriptionRe
 
         if (pdfError) {
           console.error('PDF generation error:', pdfError);
-          // Don't throw error here - prescription is still valid without PDF initially
-        } else {
+          toast({
+            title: "PDF Generation Error",
+            description: "Prescription saved but PDF generation failed. Try downloading again later.",
+            variant: "destructive",
+          });
+        } else if (pdfData?.success) {
           console.log('PDF generated successfully:', pdfData?.pdfUrl);
+          toast({
+            title: "Prescription Generated",
+            description: "Prescription has been approved and PDF generated successfully.",
+          });
+        } else {
+          console.error('PDF generation failed:', pdfData);
+          toast({
+            title: "PDF Generation Error", 
+            description: "Prescription saved but PDF generation failed. Try downloading again later.",
+            variant: "destructive",
+          });
         }
       } catch (pdfError) {
         console.error('Failed to generate PDF:', pdfError);
-        // Continue - prescription creation was successful
+        toast({
+          title: "PDF Generation Error",
+          description: "Prescription saved but PDF generation failed. Try downloading again later.",
+          variant: "destructive",
+        });
       }
       
-      toast({
-        title: "Prescription Generated",
-        description: "Prescription has been approved and generated successfully.",
-      });
+      // Only show success toast if no PDF errors occurred
+      // (PDF success toast is handled above)
 
       onUpdate(updatedRequest);
     } catch (error: any) {
@@ -272,7 +340,12 @@ const PrescriptionRequestDetail = ({ request, onBack, onUpdate }: PrescriptionRe
                 </Button>
                 
                 {request.status === 'completed' && (
-                  <Button variant="outline" className="w-full">
+                  <Button 
+                    variant="outline" 
+                    className="w-full"
+                    onClick={handleDownloadPrescription}
+                    disabled={loading}
+                  >
                     <Download className="h-4 w-4 mr-2" />
                     Download Prescription
                   </Button>

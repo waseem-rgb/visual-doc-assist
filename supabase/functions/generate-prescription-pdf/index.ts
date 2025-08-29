@@ -15,8 +15,11 @@ Deno.serve(async (req) => {
 
   try {
     const { requestId, doctorId } = await req.json();
+    
+    console.log('PDF generation request received:', { requestId, doctorId });
 
     if (!requestId || !doctorId) {
+      console.error('Missing required parameters:', { requestId, doctorId });
       return new Response(
         JSON.stringify({ error: 'Missing required parameters' }),
         { 
@@ -32,6 +35,7 @@ Deno.serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     // Fetch prescription data
+    console.log('Fetching prescription data for requestId:', requestId, 'doctorId:', doctorId);
     const { data: prescription, error: prescriptionError } = await supabase
       .from('prescriptions')
       .select(`
@@ -44,6 +48,7 @@ Deno.serve(async (req) => {
 
     if (prescriptionError || !prescription) {
       console.error('Error fetching prescription:', prescriptionError);
+      console.log('Query parameters used:', { requestId, doctorId });
       return new Response(
         JSON.stringify({ error: 'Prescription not found' }),
         { 
@@ -52,6 +57,8 @@ Deno.serve(async (req) => {
         }
       );
     }
+    
+    console.log('Prescription data fetched successfully:', prescription.id);
 
     // Fetch doctor profile
     const { data: doctor, error: doctorError } = await supabase
