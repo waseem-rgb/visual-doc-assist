@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { User, Calendar, Users } from 'lucide-react';
+import { User, Calendar, Users, Phone } from 'lucide-react';
 
 interface PatientInfoStepProps {
   onNext: () => void;
@@ -25,7 +25,7 @@ export function PatientInfoStep({ onNext, onBack }: PatientInfoStepProps) {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
-  const isValid = formData.name.trim() && formData.age.trim() && formData.gender;
+  const isValid = formData.name.trim() && formData.age.trim() && formData.gender && formData.phone.trim();
 
   return (
     <div className="flex-1 flex flex-col">
@@ -94,6 +94,22 @@ export function PatientInfoStep({ onNext, onBack }: PatientInfoStepProps) {
                   <Label htmlFor="female" className="text-base cursor-pointer">Female</Label>
                 </div>
               </RadioGroup>
+            </div>
+
+            {/* Phone */}
+            <div className="space-y-2">
+              <Label htmlFor="phone" className="text-base font-medium">
+                <Phone className="inline h-4 w-4 mr-2" />
+                Mobile Number
+              </Label>
+              <Input
+                id="phone"
+                type="tel"
+                placeholder="Enter mobile number"
+                value={formData.phone}
+                onChange={(e) => handleInputChange('phone', e.target.value)}
+                className="h-12 text-base"
+              />
             </div>
           </CardContent>
         </Card>

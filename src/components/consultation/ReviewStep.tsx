@@ -80,6 +80,7 @@ export function ReviewStep({ onBack, onReset }: ReviewStepProps) {
         patient_name: patientData.name,
         patient_age: patientData.age,
         patient_gender: patientData.gender,
+        patient_phone: patientData.phone,
         status: prescriptionRequired ? 'pending' as const : 'completed' as const,
         symptoms: selectedSymptoms.join(', '),
         prescription_required: prescriptionRequired

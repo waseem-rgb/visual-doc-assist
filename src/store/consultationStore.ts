@@ -5,6 +5,7 @@ export interface PatientData {
   name: string;
   age: string;
   gender: string;
+  phone: string;
 }
 
 export interface ConsultationState {
@@ -44,7 +45,7 @@ export interface ConsultationState {
 const initialState = {
   currentStep: 0,
   isCompleted: false,
-  patientData: { name: '', age: '', gender: 'male' },
+  patientData: { name: '', age: '', gender: 'male', phone: '' },
   selectedBodyParts: [],
   currentView: 'Front' as const,
   selectionStep: 'quadrant' as const,

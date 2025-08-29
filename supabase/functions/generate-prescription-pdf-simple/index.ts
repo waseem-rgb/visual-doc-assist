@@ -124,7 +124,7 @@ Deno.serve(async (req) => {
       
       let { data: masterData, error: masterError } = await adminSupabase
         .from('New Master')
-        .select('"Common Treatments", "Probable Diagnosis"')
+        .select('"prescription_Y-N", "Probable Diagnosis"')
         .ilike('"Probable Diagnosis"', `%${diagnosis}%`)
         .maybeSingle();
 
@@ -133,13 +133,13 @@ Deno.serve(async (req) => {
         console.log('Trying with symptoms:', requestData.symptoms);
         const { data: symptomData } = await adminSupabase
           .from('New Master')
-          .select('"Common Treatments", "Probable Diagnosis"')
+          .select('"prescription_Y-N", "Probable Diagnosis"')
           .ilike('Symptoms', `%${requestData.symptoms}%`)
           .maybeSingle();
         masterData = symptomData;
       }
 
-      referralText = masterData?.['Common Treatments'] || 'specialist';
+      referralText = masterData?.['prescription_Y-N'] || 'specialist';
       console.log('Referral text found:', referralText, 'for diagnosis:', masterData?.['Probable Diagnosis']);
 
       // Create a referral prescription if it doesn't exist - use NULL doctor_id
@@ -298,7 +298,8 @@ Deno.serve(async (req) => {
     addText(`Patient: ${requestData.patient_name}`, rightMargin - 200, patientStartY, { bold: true, size: 12 });
     addText(`Age: ${requestData.patient_age}`, rightMargin - 200, patientStartY - 15, { size: 11 });
     addText(`Gender: ${requestData.patient_gender}`, rightMargin - 200, patientStartY - 30, { size: 11 });
-    addText(`Date: ${new Date().toLocaleDateString()}`, rightMargin - 200, patientStartY - 45, { size: 11 });
+    addText(`Mobile: ${requestData.patient_phone || 'N/A'}`, rightMargin - 200, patientStartY - 45, { size: 11 });
+    addText(`Date: ${new Date().toLocaleDateString()}`, rightMargin - 200, patientStartY - 60, { size: 11 });
 
     yPosition -= 50;
 
@@ -438,8 +439,8 @@ Deno.serve(async (req) => {
 
     yPosition -= 15;
 
-    // 8. INVESTIGATIONS
-    if (requestData.basic_investigations && requestData.basic_investigations.trim()) {
+    // 8. INVESTIGATIONS (only for regular prescriptions, not referrals)
+    if (!isReferral && !referralText && requestData.basic_investigations && requestData.basic_investigations.trim()) {
       addText('INVESTIGATIONS:', leftMargin, yPosition, { bold: true, size: 13 });
       yPosition -= 18;
       
@@ -451,8 +452,8 @@ Deno.serve(async (req) => {
       yPosition -= 15;
     }
 
-    // Instructions (if any)
-    if (prescription.instructions && prescription.instructions.trim()) {
+    // Instructions (only for regular prescriptions, not referrals)
+    if (!isReferral && !referralText && prescription.instructions && prescription.instructions.trim() && !prescription.instructions.includes('Referred to:')) {
       addText('Instructions:', leftMargin, yPosition, { bold: true, size: 12 });
       yPosition -= 15;
       
