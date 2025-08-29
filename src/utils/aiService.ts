@@ -74,3 +74,23 @@ Be concise and evidence-based.`;
 
   return generateAIText(prompt, systemMessage, 400);
 };
+
+// Function to suggest medications based on diagnosis
+export const suggestMedicationsForDiagnosis = async (diagnosis: string, patientAge?: string, patientGender?: string): Promise<string> => {
+  const patientInfo = patientAge && patientGender ? ` for a ${patientAge}-year-old ${patientGender} patient` : '';
+  
+  const prompt = `Based on the diagnosis: "${diagnosis}"${patientInfo}
+
+Suggest appropriate first-line medications in this format:
+Medication Name | Dosage | Frequency | Duration | Special Instructions
+
+Example format:
+Paracetamol | 500mg | Twice daily | 7 days | Take with food
+Amoxicillin | 250mg | Three times daily | 5 days | Complete full course
+
+Provide 2-4 evidence-based medication recommendations. Include generic names and standard dosing for adults. Consider contraindications and safety.`;
+
+  const systemMessage = `You are a clinical pharmacology expert providing evidence-based medication recommendations for healthcare professionals. Always emphasize the importance of individualized treatment plans and checking for contraindications, allergies, and drug interactions.`;
+
+  return generateAIText(prompt, systemMessage, 500);
+};

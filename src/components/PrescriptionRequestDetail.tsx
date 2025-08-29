@@ -433,6 +433,9 @@ const PrescriptionRequestDetail = ({ request, onBack, onUpdate }: PrescriptionRe
                         <MedicationSelector
                           onMedicationsChange={setPrescribedMedications}
                           disabled={request.status === 'completed'}
+                          diagnosis={selectedDiagnosis === 'ai' ? request.ai_diagnosis : request.database_diagnosis || request.probable_diagnosis}
+                          patientAge={request.patient_age}
+                          patientGender={request.patient_gender}
                         />
                       </div>
                     </div>

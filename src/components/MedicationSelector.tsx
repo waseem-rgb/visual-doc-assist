@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { X, Plus, Search, Pill, Brain, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { getMedicationInsights } from "@/utils/aiService";
+import { getMedicationInsights, suggestMedicationsForDiagnosis } from "@/utils/aiService";
 
 interface Medication {
   id: string;
@@ -34,9 +34,18 @@ interface PrescribedMedication extends Medication {
 interface MedicationSelectorProps {
   onMedicationsChange: (medications: PrescribedMedication[]) => void;
   disabled?: boolean;
+  diagnosis?: string;
+  patientAge?: string;
+  patientGender?: string;
 }
 
-const MedicationSelector = ({ onMedicationsChange, disabled = false }: MedicationSelectorProps) => {
+const MedicationSelector = ({ 
+  onMedicationsChange, 
+  disabled = false, 
+  diagnosis, 
+  patientAge, 
+  patientGender 
+}: MedicationSelectorProps) => {
   const [availableMedications, setAvailableMedications] = useState<Medication[]>([]);
   const [prescribedMedications, setPrescribedMedications] = useState<PrescribedMedication[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
@@ -53,6 +62,7 @@ const MedicationSelector = ({ onMedicationsChange, disabled = false }: Medicatio
   });
   const [loadingAI, setLoadingAI] = useState<{ [key: number]: boolean }>({});
   const [aiInsights, setAiInsights] = useState<{ [key: number]: string }>({});
+  const [loadingAIAssist, setLoadingAIAssist] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -199,6 +209,73 @@ const MedicationSelector = ({ onMedicationsChange, disabled = false }: Medicatio
     }
   };
 
+  const getAIAssistMedications = async () => {
+    if (!diagnosis) {
+      toast({
+        title: "No Diagnosis Available",
+        description: "Please select a diagnosis first to get AI medication suggestions.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setLoadingAIAssist(true);
+    
+    try {
+      const suggestions = await suggestMedicationsForDiagnosis(diagnosis, patientAge, patientGender);
+      
+      // Parse the AI suggestions and convert to medication objects
+      const lines = suggestions.split('\n').filter(line => line.includes('|'));
+      
+      const suggestedMedications: PrescribedMedication[] = lines.map((line, index) => {
+        const parts = line.split('|').map(part => part.trim());
+        if (parts.length >= 4) {
+          return {
+            id: `ai-suggested-${Date.now()}-${index}`,
+            name: parts[0] || 'Suggested Medication',
+            generic_name: parts[0] || '',
+            brand_names: '',
+            category: 'AI Suggested',
+            dosage_form: '',
+            common_dosages: parts[1] || '',
+            indication: diagnosis,
+            contraindication: '',
+            side_effects: '',
+            prescribed_dosage: parts[1] || '',
+            frequency: parts[2] || 'As directed',
+            duration: parts[3] || '7 days',
+            instructions: parts[4] || 'Take as prescribed',
+          };
+        }
+        return null;
+      }).filter(Boolean) as PrescribedMedication[];
+
+      if (suggestedMedications.length > 0) {
+        setPrescribedMedications(prev => [...prev, ...suggestedMedications]);
+        toast({
+          title: "AI Medications Added",
+          description: `${suggestedMedications.length} AI-suggested medications added based on diagnosis.`,
+        });
+      } else {
+        toast({
+          title: "No Suggestions Found",
+          description: "AI couldn't generate specific medication suggestions for this diagnosis.",
+          variant: "destructive",
+        });
+      }
+      
+    } catch (error) {
+      console.error('Error getting AI medication assistance:', error);
+      toast({
+        title: "Error",
+        description: "Failed to get AI medication suggestions. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoadingAIAssist(false);
+    }
+  };
+
   if (disabled && prescribedMedications.length === 0) {
     return (
       <div className="text-muted-foreground text-sm">
@@ -211,7 +288,7 @@ const MedicationSelector = ({ onMedicationsChange, disabled = false }: Medicatio
     <div className="space-y-4">
       {/* Add Medication Buttons */}
       {!disabled && (
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <Button
             variant="outline"
             size="sm"
@@ -230,6 +307,22 @@ const MedicationSelector = ({ onMedicationsChange, disabled = false }: Medicatio
             <Plus className="h-4 w-4" />
             Add Custom Medication
           </Button>
+          {diagnosis && (
+            <Button
+              variant="default"
+              size="sm"
+              onClick={getAIAssistMedications}
+              disabled={loadingAIAssist}
+              className="flex items-center gap-2 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700"
+            >
+              {loadingAIAssist ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Brain className="h-4 w-4" />
+              )}
+              AI Assist
+            </Button>
+          )}
         </div>
       )}
 
