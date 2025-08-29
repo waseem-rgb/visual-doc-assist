@@ -60,9 +60,7 @@ Deno.serve(async (req) => {
       referralText = masterData?.['prescription_Y-N'] || 'specialist';
       console.log('Referral text found:', referralText);
 
-      // Create a referral prescription if it doesn't exist
-      const systemDoctorId = '00000000-0000-0000-0000-000000000000'; // System UUID for referrals
-      
+      // Create a referral prescription if it doesn't exist - use NULL doctor_id
       const { data: existingPrescription } = await supabase
         .from('prescriptions')
         .select('*')
@@ -74,7 +72,7 @@ Deno.serve(async (req) => {
           .from('prescriptions')
           .insert({
             request_id: requestId,
-            doctor_id: systemDoctorId,
+            doctor_id: null, // Use NULL instead of system UUID
             patient_name: requestData.patient_name,
             patient_age: requestData.patient_age,
             patient_gender: requestData.patient_gender,
