@@ -44,6 +44,7 @@ const UniversalSymptomSelector = ({
   onSymptomsSelected,
   initialSymptoms = [],
   imageUrl,
+  onSymptomSubmit,
   ...otherProps
 }: UniversalSymptomSelectorProps) => {
   const isDialogOpen = isOpen || open || false;
@@ -173,7 +174,20 @@ const UniversalSymptomSelector = ({
   };
 
   const handleConfirm = () => {
-    onSymptomsSelected(selectedSymptoms);
+    // Call onSymptomsSelected if provided (for backward compatibility)
+    if (onSymptomsSelected) {
+      onSymptomsSelected(selectedSymptoms);
+    }
+    
+    // Call onSymptomSubmit with the first selected symptom in the expected format
+    if (onSymptomSubmit && selectedSymptoms.length > 0) {
+      const firstSymptom = selectedSymptoms[0];
+      onSymptomSubmit({
+        id: firstSymptom.replace(/\s+/g, '_').toLowerCase(),
+        text: firstSymptom
+      });
+    }
+    
     handleClose();
   };
 
