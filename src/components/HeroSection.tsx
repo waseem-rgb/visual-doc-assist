@@ -29,7 +29,7 @@ const HeroSection = () => {
                 className="gradient-primary shadow-medium transition-bounce hover:shadow-large"
                 onClick={() => navigate("/customer/login")}
               >
-                Login to Start Consultation
+                Login/My Dashboard & Prescription Download
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
               <Button 
