@@ -16,7 +16,8 @@ import {
   Clock,
   CheckCircle,
   AlertCircle,
-  Stethoscope
+  Stethoscope,
+  Video
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import PrescriptionStatus from "@/components/PrescriptionStatus";
@@ -272,13 +273,29 @@ const CustomerDashboard = () => {
         <div className="space-y-6">
           <div className="flex items-center justify-between">
             <h2 className="text-2xl font-bold">Your Medical Consultations</h2>
-            <Button 
-              onClick={() => navigate("/consultation")} 
-              className="hidden md:flex"
-            >
-              <Heart className="h-4 w-4 mr-2" />
-              Start New Consultation
-            </Button>
+            <div className="flex items-center gap-3">
+              <Button 
+                variant="outline"
+                onClick={() => {
+                  // Placeholder for teleconsultation integration
+                  toast({
+                    title: "Teleconsultation",
+                    description: "Video consultation feature coming soon!",
+                  });
+                }}
+                className="hidden md:flex"
+              >
+                <Video className="h-4 w-4 mr-2" />
+                Teleconsultation
+              </Button>
+              <Button 
+                onClick={() => navigate("/consultation")} 
+                className="hidden md:flex"
+              >
+                <Heart className="h-4 w-4 mr-2" />
+                Start New Consultation
+              </Button>
+            </div>
           </div>
 
           {/* Request Cards */}
@@ -356,7 +373,7 @@ const CustomerDashboard = () => {
                           }}
                         >
                           <Eye className="h-4 w-4 mr-1" />
-                          View Details
+                          Reconsult
                         </Button>
                         
                         {/* Show prescription status */}
