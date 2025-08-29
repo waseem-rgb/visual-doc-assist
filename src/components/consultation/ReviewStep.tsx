@@ -72,6 +72,10 @@ export function ReviewStep({ onBack, onReset }: ReviewStepProps) {
         console.log('🔍 [REVIEW STEP] Final decision - prescriptionRequired:', prescriptionRequired, 'isReferralCase:', isReferralCase);
       }
 
+      // Debug logging
+      console.log('🔍 [DEBUG] Patient data in ReviewStep:', patientData);
+      console.log('🔍 [DEBUG] Patient phone:', patientData.phone);
+
       // Create prescription request record with correct flags
       const requestData = {
         body_part: selectedBodyParts.join(', '),
@@ -86,11 +90,15 @@ export function ReviewStep({ onBack, onReset }: ReviewStepProps) {
         prescription_required: prescriptionRequired
       };
 
+      console.log('🔍 [DEBUG] Request data being inserted:', requestData);
+
       const { data: prescriptionRequest, error: requestError } = await supabase
         .from('prescription_requests')
         .insert([requestData])
         .select()
         .single();
+
+      console.log('🔍 [DEBUG] Inserted prescription request:', prescriptionRequest);
 
       if (requestError) throw requestError;
 
