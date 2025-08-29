@@ -4,8 +4,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { StickyFooterActions } from "@/components/common/StickyFooterActions";
+import VoiceInterface from "@/components/VoiceInterface";
 import { User, Calendar, Users, Phone } from "lucide-react";
 import { useConsultationStore, PatientData } from "@/store/consultationStore";
+import { useTranslation } from "react-i18next";
 
 interface PatientInfoStepProps {
   onNext: () => void;
@@ -16,6 +18,7 @@ interface PatientInfoStepProps {
 export function PatientInfoStep({ onNext, onBack }: PatientInfoStepProps) {
   const { patientData, setPatientData } = useConsultationStore();
   const [formData, setFormData] = useState<PatientData>(patientData);
+  const { t } = useTranslation();
 
   useEffect(() => {
     console.log('🔍 [PATIENT INFO] Setting patient data in store:', formData);
@@ -32,6 +35,22 @@ export function PatientInfoStep({ onNext, onBack }: PatientInfoStepProps) {
   const isValid = formData.name.trim() && formData.age.trim() && formData.gender && formData.phone.trim() &&
     (formData.gender !== 'female' || parseInt(formData.age) <= 18 || formData.isPregnant);
 
+  const handleVoiceInput = (text: string) => {
+    // Simple voice input handling - can be enhanced with AI parsing
+    const lowerText = text.toLowerCase();
+    if (lowerText.includes('name') || lowerText.includes('नाम')) {
+      const nameMatch = text.match(/name is (\w+)|नाम (\w+)/i);
+      if (nameMatch) {
+        handleInputChange('name', nameMatch[1] || nameMatch[2]);
+      }
+    } else if (lowerText.includes('age') || lowerText.includes('उम्र')) {
+      const ageMatch = text.match(/(\d+)/);
+      if (ageMatch) {
+        handleInputChange('age', ageMatch[1]);
+      }
+    }
+  };
+
   return (
     <div className="flex-1 flex flex-col">
       <div className="flex-1 p-4 space-y-6">
@@ -40,7 +59,7 @@ export function PatientInfoStep({ onNext, onBack }: PatientInfoStepProps) {
             <div className="mx-auto w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mb-3">
               <User className="h-6 w-6 text-primary" />
             </div>
-            <CardTitle className="text-xl">Patient Information</CardTitle>
+            <CardTitle className="text-xl">{t('patientInfo.title')}</CardTitle>
           </CardHeader>
           
           <CardContent className="space-y-6 px-6 pb-6">
@@ -48,11 +67,11 @@ export function PatientInfoStep({ onNext, onBack }: PatientInfoStepProps) {
             <div className="space-y-2">
               <Label htmlFor="name" className="text-base font-medium">
                 <User className="inline h-4 w-4 mr-2" />
-                Full Name
+                {t('patientInfo.fullName')}
               </Label>
               <Input
                 id="name"
-                placeholder="Enter patient's full name"
+                placeholder={t('patientInfo.namePlaceholder')}
                 value={formData.name}
                 onChange={(e) => handleInputChange('name', e.target.value)}
                 className="h-12 text-base"
@@ -143,13 +162,20 @@ export function PatientInfoStep({ onNext, onBack }: PatientInfoStepProps) {
             )}
           </CardContent>
         </Card>
+
+        {/* Voice Interface */}
+        <VoiceInterface
+          onTextReceived={handleVoiceInput}
+          placeholder={t('voice.patientInfoInstructions')}
+          textToSpeak={t('voice.patientInfoWelcome')}
+        />
       </div>
 
       <StickyFooterActions
         onBack={onBack}
         onNext={onNext}
         nextDisabled={!isValid}
-        nextLabel="Continue to Body Areas"
+        nextLabel={t('navigation.continue')}
       />
     </div>
   );
