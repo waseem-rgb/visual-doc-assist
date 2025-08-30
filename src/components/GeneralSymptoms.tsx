@@ -20,7 +20,6 @@ interface GeneralSymptomsProps {
     name: string;
     age: string;
     gender: string;
-    phone?: string;
   };
 }
 
@@ -88,8 +87,8 @@ const GeneralSymptoms = ({ patientData }: GeneralSymptomsProps) => {
 
   const handleClinicalSubmit = async () => {
     try {
-      // Get phone number from store or fallback
-      const phoneNumber = storePatientData.phone || patientData.phone || '';
+      // Get phone number from store
+      const phoneNumber = storePatientData.phone || '';
       console.log('📞 Phone number for SMS:', phoneNumber);
       
       // Determine if prescription is required based on age and gender
