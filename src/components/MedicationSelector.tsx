@@ -126,11 +126,41 @@ const MedicationSelector = ({
     }
   };
 
-  const filteredMedications = availableMedications.filter(med =>
-    med.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    med.generic_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    med.brand_names.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredMedications = availableMedications
+    .filter(med => {
+      const query = searchQuery.toLowerCase();
+      const name = med.name.toLowerCase();
+      const genericName = med.generic_name.toLowerCase();
+      const brandNames = med.brand_names.toLowerCase();
+      
+      return name.includes(query) || 
+             genericName.includes(query) || 
+             brandNames.includes(query);
+    })
+    .sort((a, b) => {
+      const query = searchQuery.toLowerCase();
+      const aName = a.name.toLowerCase();
+      const bName = b.name.toLowerCase();
+      const aGeneric = a.generic_name.toLowerCase();
+      const bGeneric = b.generic_name.toLowerCase();
+      
+      // Prioritize exact matches at the start
+      const aNameStarts = aName.startsWith(query);
+      const bNameStarts = bName.startsWith(query);
+      const aGenericStarts = aGeneric.startsWith(query);
+      const bGenericStarts = bGeneric.startsWith(query);
+      
+      // First priority: name starts with query
+      if (aNameStarts && !bNameStarts) return -1;
+      if (!aNameStarts && bNameStarts) return 1;
+      
+      // Second priority: generic name starts with query
+      if (aGenericStarts && !bGenericStarts) return -1;
+      if (!aGenericStarts && bGenericStarts) return 1;
+      
+      // Third priority: alphabetical by name
+      return aName.localeCompare(bName);
+    });
 
   const addMedication = (medication: Medication) => {
     const prescribedMed: PrescribedMedication = {
@@ -205,6 +235,19 @@ const MedicationSelector = ({
         i === index ? { ...med, [field]: value } : med
       )
     );
+  };
+
+  const editAIMedication = (index: number, updatedMedication: Partial<PrescribedMedication>) => {
+    setPrescribedMedications(prev =>
+      prev.map((med, i) =>
+        i === index ? { ...med, ...updatedMedication } : med
+      )
+    );
+    
+    toast({
+      title: "Medication Updated",
+      description: "AI-assisted medication has been updated successfully.",
+    });
   };
 
   const getAIInsights = async (medicationName: string, index: number) => {
@@ -521,17 +564,33 @@ const MedicationSelector = ({
                 <div className="flex items-center justify-between">
                   <CardTitle className="flex items-center gap-2 text-lg">
                     <Pill className="h-5 w-5" />
-                    {med.name}
+                    {!disabled && med.category === 'AI Suggested' ? (
+                      <Input
+                        value={med.name}
+                        onChange={(e) => updateMedication(index, 'name', e.target.value)}
+                        className="font-semibold text-lg border-none p-0 h-auto bg-transparent focus-visible:ring-1"
+                        placeholder="Medication name"
+                      />
+                    ) : (
+                      med.name
+                    )}
                   </CardTitle>
-                  {!disabled && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => removeMedication(index)}
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
-                  )}
+                  <div className="flex items-center gap-2">
+                    {med.category === 'AI Suggested' && (
+                      <Badge variant="secondary" className="bg-gradient-to-r from-blue-100 to-purple-100 text-blue-700">
+                        AI Suggested
+                      </Badge>
+                    )}
+                    {!disabled && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => removeMedication(index)}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
                 </div>
                 {med.generic_name && (
                   <p className="text-sm text-muted-foreground">

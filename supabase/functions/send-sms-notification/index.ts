@@ -8,10 +8,14 @@ const corsHeaders = {
 
 interface SMSRequest {
   to: string;
-  message: string;
-  type: 'case_claimed' | 'prescription_ready' | 'consultation_update';
+  message?: string;
+  type: 'case_claimed' | 'prescription_ready' | 'consultation_update' | 'prescription_requested' | 'referral_submitted' | 'appointment_booked';
   patientName?: string;
   doctorName?: string;
+  appointmentDate?: string;
+  appointmentTime?: string;
+  isReferral?: boolean;
+  referralSpecialist?: string;
 }
 
 const serve_handler = async (req: Request): Promise<Response> => {
@@ -56,28 +60,32 @@ const serve_handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    // Check if user has doctor role (only doctors should send SMS notifications)
-    const { data: userRoles, error: roleError } = await supabase
-      .from('user_roles')
-      .select('role')
-      .eq('user_id', user.user.id);
-
-    const hasDocRole = userRoles?.some(r => r.role === 'doctor');
-    if (roleError || !hasDocRole) {
-      console.error('SMS notification attempt by non-doctor user:', user.user.id);
-      return new Response(
-        JSON.stringify({ error: 'Unauthorized: Doctor role required' }),
-        { 
-          status: 403,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        }
-      );
-    }
-
-    const { to, message, type, patientName, doctorName }: SMSRequest = await req.json();
+    const { to, message, type, patientName, doctorName, appointmentDate, appointmentTime, isReferral, referralSpecialist }: SMSRequest = await req.json();
     
     // Log without PII - only log type and success/failure
     console.log(`Sending SMS notification of type: ${type}`);
+
+    // Check if user has doctor role (only for certain message types)
+    const doctorOnlyTypes = ['case_claimed', 'prescription_ready'];
+    
+    if (doctorOnlyTypes.includes(type)) {
+      const { data: userRoles, error: roleError } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', user.user.id);
+
+      const hasDocRole = userRoles?.some(r => r.role === 'doctor');
+      if (roleError || !hasDocRole) {
+        console.error('SMS notification attempt by non-doctor user for doctor-only type:', user.user.id, type);
+        return new Response(
+          JSON.stringify({ error: 'Unauthorized: Doctor role required for this message type' }),
+          { 
+            status: 403,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          }
+        );
+      }
+    }
 
     // Get Twilio credentials from environment
     const twilioAccountSid = Deno.env.get('TWILIO_ACCOUNT_SID');
@@ -103,6 +111,19 @@ const serve_handler = async (req: Request): Promise<Response> => {
           break;
         case 'consultation_update':
           finalMessage = `Hello ${patientName || 'Patient'}, there's an update on your consultation. Please check your patient portal for details.`;
+          break;
+        case 'prescription_requested':
+          finalMessage = `Hello ${patientName || 'Patient'}, your prescription request has been submitted successfully. A doctor will review it and you'll be notified when it's ready.`;
+          break;
+        case 'referral_submitted':
+          if (isReferral && referralSpecialist) {
+            finalMessage = `Hello ${patientName || 'Patient'}, based on your consultation, you have been referred to a ${referralSpecialist}. Please check your patient portal for referral details.`;
+          } else {
+            finalMessage = `Hello ${patientName || 'Patient'}, your consultation has been processed. Please check your patient portal for details.`;
+          }
+          break;
+        case 'appointment_booked':
+          finalMessage = `Hello ${patientName || 'Patient'}, your teleconsultation appointment with Dr. ${doctorName || 'your doctor'} has been confirmed for ${appointmentDate || 'the scheduled date'}${appointmentTime ? ` at ${appointmentTime}` : ''}. You'll receive a WhatsApp link shortly.`;
           break;
         default:
           finalMessage = 'You have an update from your healthcare provider.';
