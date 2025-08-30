@@ -216,7 +216,7 @@ const UniversalSymptomSelector = ({
     <Dialog open={isDialogOpen} onOpenChange={handleClose}>
       <DialogContent 
         className={`${isFullscreen ? 'w-[98vw] h-[98vh] max-w-none' : 'w-[95vw] h-[95vh] max-w-7xl'} p-0 gap-0`}
-        style={{ maxHeight: '98vh' }}
+        style={{ maxHeight: isFullscreen ? '98vh' : '95vh' }}
       >
         <DialogHeader className="p-4 pb-2 border-b border-border flex-shrink-0">
           <div className="flex items-center justify-between">
@@ -250,10 +250,10 @@ const UniversalSymptomSelector = ({
           </div>
         </DialogHeader>
 
-        <div className="flex-1 flex min-h-0 overflow-hidden">
+        <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
           {/* Image Container - Full width in rail mode or mobile, 3/4 width in desktop column mode */}
-          <div className={`${viewMode === 'column' && !isMobile ? (isFullscreen ? 'w-3/4' : 'w-3/4') : 'w-full'} relative bg-gray-50 select-none h-full`} ref={containerRef}>
-            <div className="w-full h-full flex items-center justify-center p-4">
+          <div className={`${viewMode === 'column' && !isMobile ? (isFullscreen ? 'flex-1' : 'flex-1') : 'flex-1'} relative bg-gray-50 select-none flex items-center justify-center`} ref={containerRef}>
+            <div className="w-full h-full flex items-center justify-center p-4 max-h-full overflow-hidden">
               {imageUrl ? (
                 <img
                   ref={imageRef}
@@ -377,7 +377,7 @@ const UniversalSymptomSelector = ({
               <h3 className="text-lg font-semibold text-foreground mb-3">Available Symptoms</h3>
               <div 
                 ref={symptomRailRef}
-                className="overflow-x-auto overscroll-x-contain"
+                className="overflow-x-auto overscroll-x-contain max-h-48 overflow-y-auto"
                 style={{ scrollBehavior: 'smooth' }}
               >
                 <div className="flex gap-3 pb-2" style={{ minWidth: 'max-content' }}>
