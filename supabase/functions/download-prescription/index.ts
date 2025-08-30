@@ -89,13 +89,13 @@ Deno.serve(async (req) => {
     const bucketName = prescription.pdf_bucket || 'new_prescription-templet';
     const filePath = prescription.pdf_url;
 
-    console.log(`Attempting to access file: ${filePath} in bucket: ${bucketName}`);
+    console.log(`Attempting to access file in bucket: ${bucketName}`);
 
     // For public buckets, use direct URL instead of signed URL
     if (bucketName === 'new_prescription-templet' || bucketName === 'Prescription_templet') {
       const publicUrl = `${supabaseUrl}/storage/v1/object/public/${bucketName}/${filePath}`;
       
-      console.log(`Using public URL for prescription download: ${publicUrl}`);
+      console.log(`Using public URL for prescription download`);
       
       return new Response(
         JSON.stringify({ 

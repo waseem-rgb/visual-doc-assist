@@ -38,7 +38,8 @@ Deno.serve(async (req) => {
 
     const { requestId, doctorId, isReferral } = await req.json();
     
-    console.log('VrDoc PDF generation request:', { requestId, doctorId, isReferral });
+    // Log without PII
+    console.log('PDF generation request:', { requestId: requestId ? 'present' : 'missing', doctorId: doctorId ? 'present' : 'missing', isReferral });
 
     if (!requestId) {
       return new Response(
@@ -85,7 +86,7 @@ Deno.serve(async (req) => {
         .single();
 
       if (roleError || !userRoles || userRoles.role !== 'doctor') {
-        console.error('Unauthorized: User is not a doctor', roleError);
+        console.error('Unauthorized: User is not a doctor');
         return new Response(
           JSON.stringify({ error: 'Unauthorized: Doctor role required for prescriptions' }),
           { 
@@ -95,6 +96,18 @@ Deno.serve(async (req) => {
         );
       }
       isUserDoctor = true;
+
+      // For regular prescriptions, verify the doctor owns this prescription
+      if (doctorId && doctorId !== user.user.id) {
+        console.error('Unauthorized: Doctor attempting to access another doctors prescription');
+        return new Response(
+          JSON.stringify({ error: 'Unauthorized: Cannot access other doctors prescriptions' }),
+          { 
+            status: 403,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          }
+        );
+      }
     }
 
     // Fetch prescription request data using admin client
@@ -120,7 +133,7 @@ Deno.serve(async (req) => {
     if (isReferral || !requestData.prescription_required) {
       // For referral cases, fetch the referral text from New Master table
       const diagnosis = requestData.database_diagnosis || requestData.probable_diagnosis;
-      console.log('Looking for referral info for diagnosis:', diagnosis);
+      console.log('Looking for referral info for diagnosis');
       
       let { data: masterData, error: masterError } = await adminSupabase
         .from('New Master')
@@ -130,7 +143,7 @@ Deno.serve(async (req) => {
 
       // If no match found with diagnosis, try with symptoms as fallback
       if (!masterData && requestData.symptoms) {
-        console.log('Trying with symptoms:', requestData.symptoms);
+        console.log('Trying with symptoms fallback');
         const { data: symptomData } = await adminSupabase
           .from('New Master')
           .select('"prescription_Y-N", "Probable Diagnosis"')
@@ -140,7 +153,7 @@ Deno.serve(async (req) => {
       }
 
       referralText = masterData?.['prescription_Y-N'] || 'specialist';
-      console.log('Referral text found:', referralText, 'for diagnosis:', masterData?.['Probable Diagnosis']);
+      console.log('Referral text found:', referralText ? 'yes' : 'no');
 
       // Create a referral prescription if it doesn't exist - use NULL doctor_id
       const { data: existingPrescription } = await adminSupabase

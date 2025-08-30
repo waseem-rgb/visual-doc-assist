@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -20,9 +21,63 @@ const serve_handler = async (req: Request): Promise<Response> => {
   }
 
   try {
+    // Check for authorization header
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      console.error('SMS notification attempt without authorization');
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized: Missing authorization header' }),
+        { 
+          status: 401,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      );
+    }
+
+    // Initialize Supabase client with user's JWT
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
+    
+    const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: authHeader } }
+    });
+
+    // Verify user authentication
+    const { data: user, error: userError } = await supabase.auth.getUser();
+    
+    if (userError || !user?.user) {
+      console.error('SMS notification attempt with invalid token:', userError?.message);
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized: Invalid token' }),
+        { 
+          status: 401,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      );
+    }
+
+    // Check if user has doctor role (only doctors should send SMS notifications)
+    const { data: userRoles, error: roleError } = await supabase
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', user.user.id);
+
+    const hasDocRole = userRoles?.some(r => r.role === 'doctor');
+    if (roleError || !hasDocRole) {
+      console.error('SMS notification attempt by non-doctor user:', user.user.id);
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized: Doctor role required' }),
+        { 
+          status: 403,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      );
+    }
+
     const { to, message, type, patientName, doctorName }: SMSRequest = await req.json();
     
-    console.log(`Sending SMS notification of type: ${type} to: ${to}`);
+    // Log without PII - only log type and success/failure
+    console.log(`Sending SMS notification of type: ${type}`);
 
     // Get Twilio credentials from environment
     const twilioAccountSid = Deno.env.get('TWILIO_ACCOUNT_SID');
@@ -78,7 +133,7 @@ const serve_handler = async (req: Request): Promise<Response> => {
       throw new Error(`Twilio error: ${result.message || 'Failed to send SMS'}`);
     }
 
-    console.log('SMS sent successfully:', result.sid);
+    console.log('SMS sent successfully, SID:', result.sid);
 
     return new Response(JSON.stringify({ 
       success: true, 

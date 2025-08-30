@@ -166,11 +166,6 @@ const DoctorLogin = () => {
               {isSignUp ? "Already have an account? Sign In" : "Need an account? Sign Up"}
             </Button>
 
-            <div className="text-center text-sm text-muted-foreground">
-              <p>Test Credentials:</p>
-              <p>Email: waseem@5thvital.com</p>
-              <p>Password: doctor123</p>
-            </div>
 
             <div className="pt-4 border-t">
               <Button
