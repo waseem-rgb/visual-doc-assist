@@ -7,9 +7,12 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { X, Plus, Search, Pill, Brain, Loader2 } from "lucide-react";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { X, Plus, Search, Pill, Brain, Loader2, Check, ChevronDown } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { getMedicationInsights, suggestMedicationsForDiagnosis } from "@/utils/aiService";
+import { cn } from "@/lib/utils";
 
 // Utility function to strip markdown formatting
 const stripMarkdown = (text: string): string => {
@@ -62,6 +65,7 @@ const MedicationSelector = ({
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
   const [showCustomMed, setShowCustomMed] = useState(false);
   const [customMedication, setCustomMedication] = useState({
     name: "",
@@ -139,7 +143,12 @@ const MedicationSelector = ({
 
     setPrescribedMedications(prev => [...prev, prescribedMed]);
     setSearchQuery("");
-    setShowSearch(false);
+    setSearchOpen(false);
+    
+    toast({
+      title: "Medication Added",
+      description: `${medication.name}${medication.brand_names ? ` (${medication.brand_names.split(',')[0]?.trim()})` : ''} has been added to the prescription.`,
+    });
   };
 
   const addCustomMedication = () => {
@@ -301,15 +310,81 @@ const MedicationSelector = ({
       {/* Add Medication Buttons */}
       {!disabled && (
         <div className="flex flex-wrap gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setShowSearch(!showSearch)}
-            className="flex items-center gap-2"
-          >
-            <Plus className="h-4 w-4" />
-            Add from Database
-          </Button>
+          <Popover open={searchOpen} onOpenChange={setSearchOpen}>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                size="sm"
+                className="flex items-center gap-2 justify-between min-w-[200px]"
+                role="combobox"
+                aria-expanded={searchOpen}
+              >
+                <div className="flex items-center gap-2">
+                  <Search className="h-4 w-4" />
+                  {searchQuery ? (
+                    <span className="truncate">{searchQuery}</span>
+                  ) : (
+                    "Search medications..."
+                  )}
+                </div>
+                <ChevronDown className="h-4 w-4 shrink-0 opacity-50" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-[400px] p-0" align="start">
+              <Command>
+                <CommandInput 
+                  placeholder="Search by name, generic name, or brand..." 
+                  value={searchQuery}
+                  onValueChange={setSearchQuery}
+                />
+                <CommandList>
+                  <CommandEmpty>
+                    {loading ? "Loading medications..." : "No medications found."}
+                  </CommandEmpty>
+                  <CommandGroup>
+                    {filteredMedications.slice(0, 8).map((med) => (
+                      <CommandItem
+                        key={med.id}
+                        value={`${med.name} ${med.generic_name} ${med.brand_names}`}
+                        onSelect={() => addMedication(med)}
+                        className="flex flex-col items-start gap-1 p-3"
+                      >
+                        <div className="flex items-center gap-2 w-full">
+                          <Check
+                            className={cn(
+                              "h-4 w-4",
+                              prescribedMedications.some(pm => pm.id === med.id)
+                                ? "opacity-100"
+                                : "opacity-0"
+                            )}
+                          />
+                          <div className="flex-1">
+                            <div className="font-medium">{med.name}</div>
+                            {med.brand_names && (
+                              <div className="text-sm text-primary font-medium">
+                                Brand: {med.brand_names.split(',').slice(0, 2).join(', ')}
+                                {med.brand_names.split(',').length > 2 && '...'}
+                              </div>
+                            )}
+                            {med.generic_name && med.generic_name !== med.name && (
+                              <div className="text-xs text-muted-foreground">
+                                Generic: {med.generic_name}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                        {med.category && (
+                          <Badge variant="secondary" className="text-xs ml-6">
+                            {med.category}
+                          </Badge>
+                        )}
+                      </CommandItem>
+                    ))}
+                  </CommandGroup>
+                </CommandList>
+              </Command>
+            </PopoverContent>
+          </Popover>
           <Button
             variant="outline"
             size="sm"
@@ -338,66 +413,6 @@ const MedicationSelector = ({
         </div>
       )}
 
-      {/* Search Interface */}
-      {showSearch && !disabled && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-lg">
-              <Search className="h-5 w-5" />
-              Search Medications
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              <Input
-                placeholder="Search by medication name, generic name, or brand name..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full"
-              />
-              
-              {loading ? (
-                <div className="text-center py-4 text-muted-foreground">
-                  Loading medications...
-                </div>
-              ) : (
-                <div className="max-h-60 overflow-y-auto space-y-2">
-                  {filteredMedications.length === 0 ? (
-                    <div className="text-center py-4 text-muted-foreground">
-                      {searchQuery ? "No medications found" : "Start typing to search medications"}
-                    </div>
-                  ) : (
-                    filteredMedications.map((med) => (
-                      <div
-                        key={med.id}
-                        className="flex justify-between items-center p-3 border rounded-lg hover:bg-muted/50 cursor-pointer"
-                        onClick={() => addMedication(med)}
-                      >
-                        <div>
-                          <p className="font-medium">{med.name}</p>
-                          {med.generic_name && (
-                            <p className="text-sm text-muted-foreground">
-                              Generic: {med.generic_name}
-                            </p>
-                          )}
-                          {med.category && (
-                            <Badge variant="secondary" className="text-xs mt-1">
-                              {med.category}
-                            </Badge>
-                          )}
-                        </div>
-                        <Button variant="ghost" size="sm">
-                          <Plus className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    ))
-                  )}
-                </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-      )}
 
       {/* Custom Medication Form */}
       {showCustomMed && !disabled && (
