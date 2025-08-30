@@ -252,20 +252,20 @@ const UniversalSymptomSelector = ({
 
         <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
           {/* Image Container - Full width in rail mode or mobile, 3/4 width in desktop column mode */}
-          <div className={`${viewMode === 'column' && !isMobile ? (isFullscreen ? 'flex-1' : 'flex-1') : 'flex-1'} relative bg-gray-50 select-none flex items-center justify-center`} ref={containerRef}>
-            <div className="w-full h-full flex items-center justify-center p-4 max-h-full overflow-hidden">
+          <div className={`${viewMode === 'column' && !isMobile ? (isFullscreen ? 'flex-1' : 'flex-1') : 'flex-1'} relative bg-gray-50`} ref={containerRef}>
+            <div className="w-full h-full flex items-center justify-center p-4 overflow-auto">
               {imageUrl ? (
                 <img
                   ref={imageRef}
                   src={imageUrl}
                   alt={`${bodyPart} ${view} view`}
-                  className="max-w-full max-h-full object-contain cursor-crosshair select-none"
+                  className="max-w-none max-h-none object-contain cursor-grab active:cursor-grabbing"
                   onClick={handleImageClick}
+                  draggable={true}
                   style={{ 
-                    userSelect: 'none',
-                    WebkitUserSelect: 'none',
-                    msUserSelect: 'none',
-                    MozUserSelect: 'none'
+                    minWidth: '100%',
+                    minHeight: '100%',
+                    imageRendering: 'crisp-edges'
                   }}
                 />
               ) : (
@@ -372,22 +372,22 @@ const UniversalSymptomSelector = ({
 
         {/* Bottom Symptoms Rail (Rail View) */}
         {viewMode === 'rail' && (
-          <div className="border-t border-border bg-background flex-shrink-0">
-            <div className="p-4">
-              <h3 className="text-lg font-semibold text-foreground mb-3">Available Symptoms</h3>
+          <div className="border-t border-border bg-background flex-shrink-0 max-h-64">
+            <div className="p-4 h-full flex flex-col">
+              <h3 className="text-lg font-semibold text-foreground mb-3 flex-shrink-0">Available Symptoms</h3>
               <div 
                 ref={symptomRailRef}
-                className="overflow-x-auto overscroll-x-contain max-h-48 overflow-y-auto"
+                className="flex-1 overflow-x-auto overflow-y-auto overscroll-contain"
                 style={{ scrollBehavior: 'smooth' }}
               >
-                <div className="flex gap-3 pb-2" style={{ minWidth: 'max-content' }}>
+                <div className="flex flex-wrap gap-3 pb-2">
                   {isLoadingSymptoms ? (
-                    <div className="flex items-center justify-center py-4 px-8">
+                    <div className="flex items-center justify-center py-4 px-8 w-full">
                       <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary mr-2"></div>
                       <p className="text-sm text-muted-foreground">Loading symptoms...</p>
                     </div>
                   ) : availableSymptoms.length === 0 ? (
-                    <div className="py-4 px-8">
+                    <div className="py-4 px-8 w-full">
                       <p className="text-sm text-muted-foreground">No symptoms found for this body part.</p>
                     </div>
                   ) : (
@@ -406,7 +406,7 @@ const UniversalSymptomSelector = ({
                         onClick={() => handleSymptomClick(symptomData.Symptoms)}
                       >
                         <div className="space-y-1">
-                          <p className="text-sm font-medium text-foreground leading-tight line-clamp-2">
+                          <p className="text-sm font-medium text-foreground leading-tight">
                             {symptomData.Symptoms}
                           </p>
                           {selectedSymptoms.includes(symptomData.Symptoms) && (
