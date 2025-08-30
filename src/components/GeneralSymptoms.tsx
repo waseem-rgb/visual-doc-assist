@@ -68,7 +68,7 @@ const GeneralSymptoms = ({ patientData }: GeneralSymptomsProps) => {
   };
 
   const handleSymptomImageClick = (symptom: string) => {
-    if (symptomImages[symptom]) {
+    if (symptomImages[symptom] && !prescriptionSubmitted) {
       setCurrentSymptom(symptom);
       setShowSelector(true);
     }
@@ -238,9 +238,9 @@ const GeneralSymptoms = ({ patientData }: GeneralSymptomsProps) => {
                       symptomImages[symptom] && (
                         <div key={`image-${symptom}`} className="space-y-2">
                           <h5 className="text-sm font-medium">{symptom}</h5>
-                          <div 
-                            className="relative cursor-pointer group"
-                            onClick={() => handleSymptomImageClick(symptom)}
+                           <div 
+                            className={`relative group ${prescriptionSubmitted ? 'cursor-default' : 'cursor-pointer'}`}
+                            onClick={() => !prescriptionSubmitted && handleSymptomImageClick(symptom)}
                           >
                             <img
                               src={symptomImages[symptom]}

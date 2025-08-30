@@ -517,6 +517,35 @@ Deno.serve(async (req) => {
 
     console.log('VrDoc PDF generated successfully:', fileName);
 
+    // Send SMS notification to patient
+    if (requestData.patient_phone) {
+      try {
+        const smsResponse = await fetch(`${supabaseUrl}/functions/v1/send-sms-notification`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${supabaseServiceKey}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            to: requestData.patient_phone,
+            type: 'prescription_ready',
+            patientName: requestData.patient_name,
+            doctorName: doctor.full_name
+          })
+        });
+
+        const smsResult = await smsResponse.json();
+        if (smsResult.success) {
+          console.log('SMS notification sent successfully');
+        } else {
+          console.error('SMS notification failed:', smsResult.error);
+        }
+      } catch (smsError) {
+        console.error('Error sending SMS notification:', smsError);
+        // Don't fail the main request if SMS fails
+      }
+    }
+
     return new Response(
       JSON.stringify({ 
         success: true, 
