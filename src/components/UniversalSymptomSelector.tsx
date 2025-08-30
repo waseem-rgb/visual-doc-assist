@@ -454,8 +454,12 @@ const UniversalSymptomSelector = ({
               <Button 
                 onClick={handleConfirm}
                 disabled={selectedSymptoms.length === 0}
+                className="bg-primary hover:bg-primary/90"
               >
-                Confirm Selection ({selectedSymptoms.length})
+                {selectedSymptoms.length === 0 
+                  ? "Select Symptoms First" 
+                  : `Proceed with ${selectedSymptoms.length} Symptom${selectedSymptoms.length === 1 ? '' : 's'}`
+                }
               </Button>
             </div>
           </div>
