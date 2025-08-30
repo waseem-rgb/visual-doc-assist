@@ -13,6 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Clock } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useConsultationStore } from "@/store/consultationStore";
 
 interface GeneralSymptomsProps {
   patientData: {
@@ -25,6 +26,7 @@ interface GeneralSymptomsProps {
 
 const GeneralSymptoms = ({ patientData }: GeneralSymptomsProps) => {
   const navigate = useNavigate();
+  const { patientData: storePatientData } = useConsultationStore();
   const [selectedSymptoms, setSelectedSymptoms] = useState<string[]>([]);
   const [symptomImages, setSymptomImages] = useState<{ [key: string]: string }>({});
   const [currentSymptom, setCurrentSymptom] = useState<string | null>(null);
@@ -86,6 +88,10 @@ const GeneralSymptoms = ({ patientData }: GeneralSymptomsProps) => {
 
   const handleClinicalSubmit = async () => {
     try {
+      // Get phone number from store or fallback
+      const phoneNumber = storePatientData.phone || patientData.phone || '';
+      console.log('📞 Phone number for SMS:', phoneNumber);
+      
       // Determine if prescription is required based on age and gender
       const age = parseInt(patientData.age);
       const prescriptionRequired = age >= 18 && patientData.gender === 'female';
@@ -97,7 +103,7 @@ const GeneralSymptoms = ({ patientData }: GeneralSymptomsProps) => {
           patient_name: patientData.name,
           patient_age: patientData.age,
           patient_gender: patientData.gender,
-          patient_phone: patientData.phone || '',
+          patient_phone: phoneNumber,
           symptoms: selectedSymptoms.join(', '),
           body_part: 'general',
           clinical_history: `Duration: ${clinicalData.duration}\nSeverity: ${clinicalData.severity}\nPrevious Treatment: ${clinicalData.previousTreatment}\nAllergies: ${clinicalData.allergies}`,
