@@ -19,6 +19,7 @@ interface GeneralSymptomsProps {
     name: string;
     age: string;
     gender: string;
+    phone?: string;
   };
 }
 
@@ -38,8 +39,7 @@ const GeneralSymptoms = ({ patientData }: GeneralSymptomsProps) => {
     previousTreatment: '',
     allergies: '',
     currentMedications: '',
-    additionalInfo: '',
-    phone: ''
+    additionalInfo: ''
   });
 
   const commonSymptoms = [
@@ -97,7 +97,7 @@ const GeneralSymptoms = ({ patientData }: GeneralSymptomsProps) => {
           patient_name: patientData.name,
           patient_age: patientData.age,
           patient_gender: patientData.gender,
-          patient_phone: clinicalData.phone,
+          patient_phone: patientData.phone || '',
           symptoms: selectedSymptoms.join(', '),
           body_part: 'general',
           clinical_history: `Duration: ${clinicalData.duration}\nSeverity: ${clinicalData.severity}\nPrevious Treatment: ${clinicalData.previousTreatment}\nAllergies: ${clinicalData.allergies}`,
@@ -333,20 +333,6 @@ const GeneralSymptoms = ({ patientData }: GeneralSymptomsProps) => {
                 </p>
               </CardHeader>
               <CardContent className="space-y-6 max-h-[70vh] overflow-y-auto">
-                {/* Phone Number */}
-                <div className="space-y-2">
-                  <Label htmlFor="phone">
-                    Phone Number <span className="text-red-500">*</span>
-                  </Label>
-                  <Input
-                    id="phone"
-                    type="tel"
-                    placeholder="Enter your phone number"
-                    value={clinicalData.phone}
-                    onChange={(e) => setClinicalData(prev => ({ ...prev, phone: e.target.value }))}
-                    required
-                  />
-                </div>
 
                 {/* Duration of Symptoms */}
                 <div className="space-y-2">
@@ -451,7 +437,6 @@ const GeneralSymptoms = ({ patientData }: GeneralSymptomsProps) => {
                   </Button>
                   <Button
                     onClick={handleClinicalSubmit}
-                    disabled={!clinicalData.phone}
                     className="flex-1"
                   >
                     Submit Request
