@@ -61,6 +61,23 @@ const UniversalSymptomSelector = ({
   const [availableSymptoms, setAvailableSymptoms] = useState<SymptomData[]>([]);
   const [showOverlays, setShowOverlays] = useState(true);
   const [viewMode, setViewMode] = useState<'column' | 'rail'>('column');
+  const [isMobile, setIsMobile] = useState(false);
+  
+  // Check if mobile and set default view mode accordingly
+  useEffect(() => {
+    const checkMobile = () => {
+      const mobile = window.innerWidth < 768;
+      setIsMobile(mobile);
+      // Auto-switch to rail view on mobile for better UX
+      if (mobile && viewMode === 'column') {
+        setViewMode('rail');
+      }
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
   const [staticMode] = useState(true); // Static image mode
 
   const { toast } = useToast();
@@ -238,8 +255,8 @@ const UniversalSymptomSelector = ({
         </DialogHeader>
 
         <div className="flex-1 flex min-h-0 overflow-hidden">
-          {/* Left Side - Static Image */}
-          <div className={`${viewMode === 'column' ? (isFullscreen ? 'w-3/4' : 'w-3/4') : 'w-full'} relative bg-gray-50 select-none h-full`} ref={containerRef}>
+          {/* Image Container - Full width in rail mode or mobile, 3/4 width in desktop column mode */}
+          <div className={`${viewMode === 'column' && !isMobile ? (isFullscreen ? 'w-3/4' : 'w-3/4') : 'w-full'} relative bg-gray-50 select-none h-full`} ref={containerRef}>
             <div className="w-full h-full flex items-center justify-center p-4">
               {imageUrl ? (
                 <img
@@ -296,8 +313,8 @@ const UniversalSymptomSelector = ({
             )}
           </div>
 
-          {/* Right Side - Symptom List (Column View) */}
-          {viewMode === 'column' && (
+          {/* Right Side - Symptom List (Column View - Desktop Only) */}
+          {viewMode === 'column' && !isMobile && (
             <div className={`${isFullscreen ? 'w-1/4' : 'w-1/4'} bg-background border-l border-border flex flex-col h-full`}>
               <div className="p-4 border-b border-border flex-shrink-0">
                 <h3 className="text-lg font-semibold text-foreground mb-2">Available Symptoms</h3>
@@ -357,8 +374,8 @@ const UniversalSymptomSelector = ({
           )}
         </div>
 
-        {/* Bottom Symptoms Rail (Rail View) */}
-        {viewMode === 'rail' && (
+        {/* Bottom Symptoms Rail (Rail View or Mobile) */}
+        {(viewMode === 'rail' || isMobile) && (
           <div className="border-t border-border bg-background flex-shrink-0">
             <div className="p-4">
               <h3 className="text-lg font-semibold text-foreground mb-3">Available Symptoms</h3>
@@ -389,7 +406,7 @@ const UniversalSymptomSelector = ({
                             ? 'bg-green-50 border-green-200'
                             : 'bg-card border-border hover:border-accent-foreground'
                         }`}
-                        style={{ minWidth: '200px', maxWidth: '300px' }}
+                        style={{ minWidth: isMobile ? '250px' : '200px', maxWidth: isMobile ? '350px' : '300px' }}
                         onClick={() => handleSymptomClick(symptomData.Symptoms)}
                       >
                         <div className="space-y-1">
