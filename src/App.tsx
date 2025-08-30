@@ -14,6 +14,7 @@ import DoctorLogin from "./pages/DoctorLogin";
 import DoctorDashboard from "./pages/DoctorDashboard";
 import CustomerAuth from "./pages/CustomerAuth";
 import CustomerDashboard from "./pages/CustomerDashboard";
+import TeleconsultationBookingPage from "./pages/TeleconsultationBooking";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -33,6 +34,11 @@ const DesktopApp = () => (
     <Route path="/customer/dashboard" element={
       <ProtectedRoute redirectTo="/customer/login">
         <CustomerDashboard />
+      </ProtectedRoute>
+    } />
+    <Route path="/teleconsultation" element={
+      <ProtectedRoute redirectTo="/customer/login">
+        <TeleconsultationBookingPage />
       </ProtectedRoute>
     } />
     {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
@@ -55,6 +61,11 @@ const MobileApp = () => (
     <Route path="/customer/dashboard" element={
       <ProtectedRoute redirectTo="/customer/login">
         <MobileLayout><CustomerDashboard /></MobileLayout>
+      </ProtectedRoute>
+    } />
+    <Route path="/teleconsultation" element={
+      <ProtectedRoute redirectTo="/customer/login">
+        <TeleconsultationBookingPage />
       </ProtectedRoute>
     } />
     {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

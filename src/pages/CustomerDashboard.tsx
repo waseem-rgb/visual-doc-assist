@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { 
   Heart, 
+  ArrowRight,
   User, 
   Calendar,
   Eye,
@@ -18,7 +19,7 @@ import {
   CheckCircle,
   AlertCircle,
   Stethoscope,
-  Video
+  MessageCircle
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import PrescriptionStatus from "@/components/PrescriptionStatus";
@@ -290,17 +291,11 @@ const CustomerDashboard = () => {
             <div className="flex items-center gap-3">
               <Button 
                 variant="outline"
-                onClick={() => {
-                  // Placeholder for teleconsultation integration
-                  toast({
-                    title: "Teleconsultation",
-                    description: "Video consultation feature coming soon!",
-                  });
-                }}
+                onClick={() => navigate("/teleconsultation")}
                 className="hidden md:flex"
               >
-                <Video className="h-4 w-4 mr-2" />
-                Teleconsultation
+                <MessageCircle className="h-4 w-4 mr-2" />
+                Book Teleconsultation
               </Button>
               <Button 
                 onClick={() => {
@@ -312,7 +307,7 @@ const CustomerDashboard = () => {
                 className="hidden md:flex"
               >
                 <Heart className="h-4 w-4 mr-2" />
-                Start New Consultation
+                Start Instant Consultation
               </Button>
             </div>
           </div>
@@ -325,14 +320,30 @@ const CustomerDashboard = () => {
                   <Heart className="h-12 w-12 mx-auto mb-4 opacity-50" />
                   <p className="text-lg mb-2">No consultations yet</p>
                   <p>Start your first consultation to see your medical records here.</p>
-                  <Button onClick={() => {
-                  console.log('Start Consultation clicked - navigating to /consultation');
-                  // Reset consultation store before starting new consultation
-                  resetConsultation();
-                  navigate("/consultation");
-                  }} className="mt-4">
-                    Start Consultation
-                  </Button>
+                  <div className="text-center py-8 space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-md mx-auto">
+                      <Button
+                        size="lg"
+                        className="gradient-primary shadow-medium transition-bounce hover:shadow-large"
+                        onClick={() => {
+                          resetConsultation();
+                          navigate("/consultation");
+                        }}
+                      >
+                        Start Instant Consultation
+                        <ArrowRight className="ml-2 h-5 w-5" />
+                      </Button>
+                      <Button
+                        size="lg"
+                        variant="outline"
+                        className="border-primary text-primary hover:bg-primary hover:text-primary-foreground"
+                        onClick={() => navigate("/teleconsultation")}
+                      >
+                        Book Teleconsultation
+                        <MessageCircle className="ml-2 h-5 w-5" />
+                      </Button>
+                    </div>
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -387,19 +398,30 @@ const CustomerDashboard = () => {
                       </div>
 
                       <div className="flex flex-col gap-2 ml-4">
-                        {/* Always show view details */}
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => {
-                            // Reset consultation store before starting reconsultation
-                            resetConsultation();
-                            navigate("/consultation");
-                          }}
-                        >
-                          <Eye className="h-4 w-4 mr-1" />
-                          Reconsult
-                        </Button>
+                        <div className="grid grid-cols-2 gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              // Reset consultation store before starting reconsultation
+                              resetConsultation();
+                              navigate("/consultation");
+                            }}
+                            className="w-full"
+                          >
+                            <Eye className="h-4 w-4 mr-1" />
+                            Instant Reconsult
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => navigate("/teleconsultation")}
+                            className="w-full"
+                          >
+                            <MessageCircle className="h-4 w-4 mr-1" />
+                            Book Teleconsult
+                          </Button>
+                        </div>
                         
                         {/* Show prescription status */}
                         <PrescriptionStatus request={request} />
@@ -426,7 +448,7 @@ const CustomerDashboard = () => {
           className="shadow-lg hover:shadow-xl transition-shadow"
         >
           <Heart className="h-5 w-5 mr-2" />
-          Start New Consultation
+          Start Instant Consultation
         </Button>
       </div>
     </div>

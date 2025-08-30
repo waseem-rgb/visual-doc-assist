@@ -14,6 +14,93 @@ export type Database = {
   }
   public: {
     Tables: {
+      appointments: {
+        Row: {
+          appointment_date: string
+          chief_complaint: string | null
+          created_at: string
+          customer_id: string
+          doctor_id: string
+          duration_minutes: number
+          id: string
+          notes: string | null
+          patient_age: string
+          patient_gender: string
+          patient_name: string
+          patient_phone: string
+          status: Database["public"]["Enums"]["appointment_status"]
+          updated_at: string
+          whatsapp_link: string | null
+        }
+        Insert: {
+          appointment_date: string
+          chief_complaint?: string | null
+          created_at?: string
+          customer_id: string
+          doctor_id: string
+          duration_minutes?: number
+          id?: string
+          notes?: string | null
+          patient_age: string
+          patient_gender: string
+          patient_name: string
+          patient_phone: string
+          status?: Database["public"]["Enums"]["appointment_status"]
+          updated_at?: string
+          whatsapp_link?: string | null
+        }
+        Update: {
+          appointment_date?: string
+          chief_complaint?: string | null
+          created_at?: string
+          customer_id?: string
+          doctor_id?: string
+          duration_minutes?: number
+          id?: string
+          notes?: string | null
+          patient_age?: string
+          patient_gender?: string
+          patient_name?: string
+          patient_phone?: string
+          status?: Database["public"]["Enums"]["appointment_status"]
+          updated_at?: string
+          whatsapp_link?: string | null
+        }
+        Relationships: []
+      }
+      doctor_availability: {
+        Row: {
+          created_at: string
+          day_of_week: number
+          doctor_id: string
+          end_time: string
+          id: string
+          is_available: boolean
+          start_time: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          day_of_week: number
+          doctor_id: string
+          end_time: string
+          id?: string
+          is_available?: boolean
+          start_time: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          day_of_week?: number
+          doctor_id?: string
+          end_time?: string
+          id?: string
+          is_available?: boolean
+          start_time?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       doctor_profiles: {
         Row: {
           created_at: string
@@ -131,6 +218,36 @@ export type Database = {
           "Probable Diagnosis"?: string | null
           "Short Summary"?: string | null
           Symptoms?: string
+        }
+        Relationships: []
+      }
+      phone_verifications: {
+        Row: {
+          attempts: number | null
+          created_at: string
+          expires_at: string
+          id: string
+          is_verified: boolean | null
+          otp_code: string
+          phone_number: string
+        }
+        Insert: {
+          attempts?: number | null
+          created_at?: string
+          expires_at: string
+          id?: string
+          is_verified?: boolean | null
+          otp_code: string
+          phone_number: string
+        }
+        Update: {
+          attempts?: number | null
+          created_at?: string
+          expires_at?: string
+          id?: string
+          is_verified?: boolean | null
+          otp_code?: string
+          phone_number?: string
         }
         Relationships: []
       }
@@ -286,6 +403,48 @@ export type Database = {
           },
         ]
       }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          date_of_birth: string | null
+          full_name: string | null
+          gender: string | null
+          id: string
+          is_rural_user: boolean | null
+          phone_number: string | null
+          preferred_language: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          date_of_birth?: string | null
+          full_name?: string | null
+          gender?: string | null
+          id?: string
+          is_rural_user?: boolean | null
+          phone_number?: string | null
+          preferred_language?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          date_of_birth?: string | null
+          full_name?: string | null
+          gender?: string | null
+          id?: string
+          is_rural_user?: boolean | null
+          phone_number?: string | null
+          preferred_language?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -312,6 +471,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      cleanup_expired_otps: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -322,6 +485,12 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "doctor"
+      appointment_status:
+        | "scheduled"
+        | "confirmed"
+        | "in_progress"
+        | "completed"
+        | "cancelled"
       request_status: "pending" | "in_progress" | "completed"
     }
     CompositeTypes: {
@@ -451,6 +620,13 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "doctor"],
+      appointment_status: [
+        "scheduled",
+        "confirmed",
+        "in_progress",
+        "completed",
+        "cancelled",
+      ],
       request_status: ["pending", "in_progress", "completed"],
     },
   },

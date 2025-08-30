@@ -12,7 +12,7 @@ const tabs = [
   },
   { 
     id: 'consult', 
-    label: 'Consult', 
+    label: 'Instant Consult', 
     icon: Stethoscope, 
     path: '/consultation' 
   },

@@ -17,10 +17,12 @@ import {
   Calendar,
   Phone,
   FileText,
-  Eye
+  Eye,
+  MessageCircle
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import PrescriptionRequestDetail from "@/components/PrescriptionRequestDetail";
+import { AppointmentManagement } from "@/components/AppointmentManagement";
 
 interface PrescriptionRequest {
   id: string;
@@ -419,15 +421,19 @@ const DoctorDashboard = () => {
 
         {/* Request Tabs */}
         <Tabs defaultValue="pending" className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="pending">
-              Pending ({stats.pending})
+              Instant Consults ({stats.pending})
             </TabsTrigger>
             <TabsTrigger value="in_progress">
               In Progress ({stats.in_progress})
             </TabsTrigger>
             <TabsTrigger value="completed">
               Completed ({stats.completed})
+            </TabsTrigger>
+            <TabsTrigger value="appointments">
+              <MessageCircle className="h-4 w-4 mr-2" />
+              Teleconsultations
             </TabsTrigger>
           </TabsList>
 
@@ -514,6 +520,11 @@ const DoctorDashboard = () => {
               </div>
             </TabsContent>
           ))}
+
+          {/* Appointments Tab */}
+          <TabsContent value="appointments" className="mt-6">
+            <AppointmentManagement userRole="doctor" />
+          </TabsContent>
         </Tabs>
       </div>
     </div>
