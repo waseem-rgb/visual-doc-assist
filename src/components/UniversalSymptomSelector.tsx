@@ -60,18 +60,14 @@ const UniversalSymptomSelector = ({
   const [isLoadingSymptoms, setIsLoadingSymptoms] = useState(false);
   const [availableSymptoms, setAvailableSymptoms] = useState<SymptomData[]>([]);
   const [showOverlays, setShowOverlays] = useState(true);
-  const [viewMode, setViewMode] = useState<'column' | 'rail'>('column');
+  const [viewMode, setViewMode] = useState<'column' | 'rail'>('rail'); // Default to rail for better mobile UX
   const [isMobile, setIsMobile] = useState(false);
   
-  // Check if mobile and set default view mode accordingly
+  // Check if mobile 
   useEffect(() => {
     const checkMobile = () => {
       const mobile = window.innerWidth < 768;
       setIsMobile(mobile);
-      // Auto-switch to rail view on mobile for better UX
-      if (mobile && viewMode === 'column') {
-        setViewMode('rail');
-      }
     };
     
     checkMobile();
@@ -374,8 +370,8 @@ const UniversalSymptomSelector = ({
           )}
         </div>
 
-        {/* Bottom Symptoms Rail (Rail View or Mobile) */}
-        {(viewMode === 'rail' || isMobile) && (
+        {/* Bottom Symptoms Rail (Rail View) */}
+        {viewMode === 'rail' && (
           <div className="border-t border-border bg-background flex-shrink-0">
             <div className="p-4">
               <h3 className="text-lg font-semibold text-foreground mb-3">Available Symptoms</h3>
