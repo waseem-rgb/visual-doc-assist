@@ -76,6 +76,7 @@ export function TeleconsultationBooking({ onBookingSuccess }: TeleconsultationBo
         .eq('is_available', true);
 
       if (error) throw error;
+      console.log('Availability data:', data);
       setAvailability(data || []);
     } catch (error) {
       console.error('Error fetching availability:', error);
@@ -152,7 +153,9 @@ export function TeleconsultationBooking({ onBookingSuccess }: TeleconsultationBo
     // Don't allow more than 30 days in advance
     if (isAfter(date, addDays(today, 30))) return false;
 
-    return availability.some(a => a.day_of_week === dayOfWeek);
+    const hasAvailability = availability.some(a => a.day_of_week === dayOfWeek);
+    console.log(`Date ${date.toDateString()}, dayOfWeek: ${dayOfWeek}, hasAvailability: ${hasAvailability}, availabilityLength: ${availability.length}`);
+    return hasAvailability;
   };
 
   const generateWhatsAppLink = (phoneNumber: string) => {
@@ -310,7 +313,10 @@ export function TeleconsultationBooking({ onBookingSuccess }: TeleconsultationBo
               <Calendar
                 mode="single"
                 selected={selectedDate}
-                onSelect={setSelectedDate}
+                onSelect={(date) => {
+                  console.log('Date selected:', date);
+                  setSelectedDate(date);
+                }}
                 disabled={(date) => !isDateAvailable(date)}
                 className="rounded-md border"
               />
