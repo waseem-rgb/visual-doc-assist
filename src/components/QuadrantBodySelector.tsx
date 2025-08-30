@@ -14,37 +14,32 @@ const getQuadrants = (view: string) => {
       {
         id: "head",
         name: "Head & Face",
-        description: "Eyes, Nose, Mouth, Ears, Hair",
         x1: 0.32, y1: 0.02, x2: 0.68, y2: 0.22,
-        color: "rgba(59, 130, 246, 0.2)", // Blue
+        color: "rgba(29, 78, 216, 0.3)", // Deep Blue
       },
       {
         id: "chest", 
         name: "Chest & Upper Body",
-        description: "Chest, Shoulders, Upper Back, Neck",
         x1: 0.25, y1: 0.18, x2: 0.75, y2: 0.40,
-        color: "rgba(16, 185, 129, 0.2)", // Green
+        color: "rgba(5, 150, 105, 0.3)", // Deep Green
       },
       {
         id: "abdomen",
         name: "Abdomen & Core", 
-        description: "Stomach, Bowels, Groin, Lower Back",
         x1: 0.32, y1: 0.38, x2: 0.68, y2: 0.62,
-        color: "rgba(245, 101, 101, 0.2)", // Red
+        color: "rgba(220, 38, 38, 0.3)", // Deep Red
       },
       {
         id: "arms",
         name: "Arms & Hands",
-        description: "Upper Arms, Forearms, Hands, Wrists",
         x1: 0.02, y1: 0.22, x2: 0.32, y2: 0.75,
-        color: "rgba(168, 85, 247, 0.2)", // Purple
+        color: "rgba(88, 28, 135, 0.3)", // Deep Purple
       },
       {
         id: "legs",
         name: "Legs & Feet", 
-        description: "Thighs, Knees, Lower Legs, Feet",
         x1: 0.35, y1: 0.62, x2: 0.65, y2: 0.98,
-        color: "rgba(245, 158, 11, 0.2)", // Orange
+        color: "rgba(180, 83, 9, 0.3)", // Deep Orange
       }
     ];
   } else {
@@ -52,37 +47,32 @@ const getQuadrants = (view: string) => {
       {
         id: "head",
         name: "Head & Scalp",
-        description: "Hair, Scalp, Head Back",
         x1: 0.32, y1: 0.02, x2: 0.68, y2: 0.18,
-        color: "rgba(59, 130, 246, 0.2)",
+        color: "rgba(29, 78, 216, 0.3)", // Deep Blue
       },
       {
         id: "back",
         name: "Back & Shoulders", 
-        description: "Upper Back, Lower Back, Shoulders",
         x1: 0.25, y1: 0.12, x2: 0.75, y2: 0.54,
-        color: "rgba(16, 185, 129, 0.2)",
+        color: "rgba(5, 150, 105, 0.3)", // Deep Green
       },
       {
         id: "buttocks",
         name: "Buttocks & Hip",
-        description: "Buttocks, Anus, Hip Back",
         x1: 0.32, y1: 0.52, x2: 0.68, y2: 0.68,
-        color: "rgba(245, 101, 101, 0.2)",
+        color: "rgba(220, 38, 38, 0.3)", // Deep Red
       },
       {
         id: "arms",
         name: "Arms & Hands",
-        description: "Upper Arms, Elbows, Hands Back",
         x1: 0.02, y1: 0.20, x2: 0.32, y2: 0.70,
-        color: "rgba(168, 85, 247, 0.2)",
+        color: "rgba(88, 28, 135, 0.3)", // Deep Purple
       },
       {
         id: "legs",
         name: "Legs & Feet",
-        description: "Thighs Back, Knees Back, Lower Legs",
         x1: 0.35, y1: 0.72, x2: 0.65, y2: 0.98,
-        color: "rgba(245, 158, 11, 0.2)",
+        color: "rgba(180, 83, 9, 0.3)", // Deep Orange
       }
     ];
   }
@@ -130,11 +120,10 @@ const QuadrantBodySelector = ({
                 }}
                 onClick={() => onQuadrantSelect(quadrant.id)}
               >
-                {/* Quadrant label - black text with shadow for visibility */}
+                {/* Quadrant label - with deeper colors */}
                 <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-2">
                   <div>
-                    <h3 className="font-bold text-sm text-black drop-shadow-lg">{quadrant.name}</h3>
-                    <p className="text-xs text-gray-800 mt-1 drop-shadow-md">{quadrant.description}</p>
+                    <h3 className="font-bold text-lg text-white drop-shadow-2xl bg-black/30 px-3 py-1 rounded-lg">{quadrant.name}</h3>
                   </div>
                 </div>
               </div>
