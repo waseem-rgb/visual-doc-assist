@@ -306,6 +306,12 @@ const GeneralSymptoms = ({ patientData }: GeneralSymptomsProps) => {
                 <strong>Note:</strong> You will be redirected to your dashboard shortly to track the status.
               </p>
             </div>
+            <Button 
+              onClick={() => window.location.href = '/'}
+              className="w-full mt-4"
+            >
+              Back to Home
+            </Button>
           </CardContent>
         </Card>
       )}
