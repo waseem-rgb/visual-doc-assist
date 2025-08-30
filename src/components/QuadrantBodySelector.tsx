@@ -123,7 +123,7 @@ const QuadrantBodySelector = ({
                 {/* Quadrant label - with deeper colors */}
                 <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-2">
                   <div>
-                    <h3 className="font-bold text-lg text-white drop-shadow-2xl bg-black/30 px-3 py-1 rounded-lg">{quadrant.name}</h3>
+                    <h3 className="font-bold text-sm text-white drop-shadow-2xl bg-black/30 px-2 py-1 rounded-lg">{quadrant.name}</h3>
                   </div>
                 </div>
               </div>
