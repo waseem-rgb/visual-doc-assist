@@ -136,8 +136,6 @@ const QuadrantBodySelector = ({
               <h4 className="font-semibold text-primary mb-2">How to use:</h4>
               <ol className="text-sm text-muted-foreground space-y-1">
                 <li>1. Click on the body area that contains your symptoms</li>
-                <li>2. You'll see a detailed view with specific body parts</li>
-                <li>3. Select the exact body part from the detailed view</li>
               </ol>
             </div>
           </div>

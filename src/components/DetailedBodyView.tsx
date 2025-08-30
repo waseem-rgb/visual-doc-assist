@@ -368,7 +368,7 @@ const DetailedBodyView = ({
             Back to Areas
           </Button>
           <div>
-            <CardTitle className="text-lg">Step 2: {title}</CardTitle>
+            <CardTitle className="text-lg">{title}</CardTitle>
             <p className="text-sm text-muted-foreground">
               Click on the specific body part where you have symptoms
             </p>

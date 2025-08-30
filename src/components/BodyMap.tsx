@@ -285,7 +285,7 @@ const BodyMap = ({ gender, patientData }: BodyMapProps) => {
           <p className="text-muted-foreground mb-6">
             {selectionStep === "quadrant" 
               ? "First, select the general area of your body where you have symptoms"
-              : "Now, select the specific body part from the detailed view"
+              : "Now, select the specific body part"
             }
           </p>
           
