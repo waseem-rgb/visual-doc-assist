@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { useConsultationStore } from "@/store/consultationStore";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -52,6 +53,7 @@ const CustomerDashboard = () => {
   const [user, setUser] = useState<AuthUser | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { resetConsultation } = useConsultationStore();
 
   useEffect(() => {
     checkAuthAndFetchData();
@@ -302,8 +304,10 @@ const CustomerDashboard = () => {
               </Button>
               <Button 
                 onClick={() => {
-                  console.log('Start New Consultation clicked - navigating to /consultation');
-                  navigate("/consultation");
+                console.log('Start New Consultation clicked - navigating to /consultation');
+                // Reset consultation store before starting new consultation
+                resetConsultation();
+                navigate("/consultation");
                 }} 
                 className="hidden md:flex"
               >
@@ -322,8 +326,10 @@ const CustomerDashboard = () => {
                   <p className="text-lg mb-2">No consultations yet</p>
                   <p>Start your first consultation to see your medical records here.</p>
                   <Button onClick={() => {
-                    console.log('Start Consultation clicked - navigating to /consultation');
-                    navigate("/consultation");
+                  console.log('Start Consultation clicked - navigating to /consultation');
+                  // Reset consultation store before starting new consultation
+                  resetConsultation();
+                  navigate("/consultation");
                   }} className="mt-4">
                     Start Consultation
                   </Button>
@@ -386,8 +392,9 @@ const CustomerDashboard = () => {
                           variant="outline"
                           size="sm"
                           onClick={() => {
-                            // Navigate to consultation page with this request details
-                            navigate(`/consultation?requestId=${request.id}`);
+                            // Reset consultation store before starting reconsultation
+                            resetConsultation();
+                            navigate("/consultation");
                           }}
                         >
                           <Eye className="h-4 w-4 mr-1" />
@@ -411,8 +418,10 @@ const CustomerDashboard = () => {
         <Button 
           onClick={() => {
             console.log('Mobile Start New Consultation clicked - navigating to /consultation');
+            // Reset consultation store before starting new consultation
+            resetConsultation();
             navigate("/consultation");
-          }} 
+          }}
           size="lg"
           className="shadow-lg hover:shadow-xl transition-shadow"
         >

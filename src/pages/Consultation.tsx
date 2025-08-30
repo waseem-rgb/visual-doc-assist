@@ -7,23 +7,20 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useConsultationStore } from "@/store/consultationStore";
 import BodyMap from "@/components/BodyMap";
 import GeneralSymptoms from "@/components/GeneralSymptoms";
 
 const Consultation = () => {
   const navigate = useNavigate();
-  const [patientData, setPatientData] = useState({
-    name: "",
-    age: "",
-    gender: ""
-  });
+  const { patientData, setPatientData, resetConsultation } = useConsultationStore();
   const [symptomType, setSymptomType] = useState("head-to-toe");
 
   const handlePatientDataChange = (field: string, value: string) => {
-    setPatientData(prev => ({ ...prev, [field]: value }));
+    setPatientData({ ...patientData, [field]: value });
   };
 
-  const isFormValid = patientData.name && patientData.age && patientData.gender;
+  const isFormValid = patientData.name && patientData.age && patientData.gender && patientData.phone;
 
   return (
     <div className="min-h-screen bg-background pt-20">
@@ -47,7 +44,7 @@ const Consultation = () => {
             <CardTitle>Patient Information</CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               <div className="space-y-2">
                 <Label htmlFor="name">Full Name</Label>
                 <Input
@@ -68,6 +65,15 @@ const Consultation = () => {
                 />
               </div>
               <div className="space-y-2">
+                <Label htmlFor="phone">Phone Number</Label>
+                <Input
+                  id="phone"
+                  placeholder="Enter phone number"
+                  value={patientData.phone}
+                  onChange={(e) => handlePatientDataChange("phone", e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
                 <Label>Gender</Label>
                 <RadioGroup
                   value={patientData.gender}
@@ -85,6 +91,27 @@ const Consultation = () => {
                 </RadioGroup>
               </div>
             </div>
+            
+            {/* Pregnancy question for females over 18 */}
+            {patientData.gender === 'female' && parseInt(patientData.age) >= 18 && (
+              <div className="space-y-2 pt-4 border-t">
+                <Label>Are you currently pregnant?</Label>
+                <RadioGroup
+                  value={patientData.isPregnant || ''}
+                  onValueChange={(value) => handlePatientDataChange("isPregnant", value)}
+                  className="flex flex-row space-x-6"
+                >
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="yes" id="pregnant-yes" />
+                    <Label htmlFor="pregnant-yes">Yes</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="no" id="pregnant-no" />
+                    <Label htmlFor="pregnant-no">No</Label>
+                  </div>
+                </RadioGroup>
+              </div>
+            )}
           </CardContent>
         </Card>
 
