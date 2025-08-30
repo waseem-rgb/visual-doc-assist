@@ -1,19 +1,15 @@
 import { Button } from "@/components/ui/button";
 import { Menu, X } from "lucide-react";
 import { useState } from "react";
-import LanguageSwitcher from "./LanguageSwitcher";
-import { useTranslation } from "react-i18next";
 
 const Navigation = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const { t } = useTranslation();
 
   const navItems = [
-    { label: t('navigation.features'), href: "#features" },
-    { label: t('navigation.howItWorks'), href: "#how-it-works" },
-    { label: t('navigation.forDoctors'), href: "#doctors" },
-    { label: t('navigation.contact'), href: "#contact" },
-    { label: "🧪 Bhashini Test", href: "/bhashini-test", isRoute: true },
+    { label: "Features", href: "#features" },
+    { label: "How It Works", href: "#how-it-works" },
+    { label: "For Doctors", href: "#doctors" },
+    { label: "Contact", href: "#contact" },
   ];
 
   return (
@@ -34,18 +30,16 @@ const Navigation = () => {
                 key={item.label}
                 href={item.href}
                 className="text-muted-foreground hover:text-foreground transition-smooth"
-                onClick={item.isRoute ? () => window.location.href = item.href : undefined}
               >
                 {item.label}
               </a>
             ))}
-            <LanguageSwitcher variant="compact" />
             <Button 
               variant="default" 
               className="gradient-primary"
               onClick={() => window.location.href = "/customer/login"}
             >
-              {t('navigation.loginSignUp')}
+              Login / Sign Up
             </Button>
           </div>
 
@@ -67,23 +61,17 @@ const Navigation = () => {
                   key={item.label}
                   href={item.href}
                   className="text-muted-foreground hover:text-foreground transition-smooth"
-                  onClick={() => {
-                    setIsMenuOpen(false);
-                    if (item.isRoute) window.location.href = item.href;
-                  }}
+                  onClick={() => setIsMenuOpen(false)}
                 >
                   {item.label}
                 </a>
               ))}
-              <div className="pt-2">
-                <LanguageSwitcher />
-              </div>
               <Button 
                 variant="default" 
                 className="gradient-primary w-full"
                 onClick={() => window.location.href = "/customer/login"}
               >
-                {t('navigation.loginSignUp')}
+                Login / Sign Up
               </Button>
             </div>
           </div>
