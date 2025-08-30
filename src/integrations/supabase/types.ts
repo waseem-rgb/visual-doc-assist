@@ -230,6 +230,7 @@ export type Database = {
           is_verified: boolean | null
           otp_code: string
           phone_number: string
+          user_id: string | null
         }
         Insert: {
           attempts?: number | null
@@ -239,6 +240,7 @@ export type Database = {
           is_verified?: boolean | null
           otp_code: string
           phone_number: string
+          user_id?: string | null
         }
         Update: {
           attempts?: number | null
@@ -248,6 +250,7 @@ export type Database = {
           is_verified?: boolean | null
           otp_code?: string
           phone_number?: string
+          user_id?: string | null
         }
         Relationships: []
       }
