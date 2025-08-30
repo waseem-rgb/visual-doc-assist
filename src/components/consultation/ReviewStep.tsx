@@ -120,6 +120,24 @@ export function ReviewStep({ onBack, onReset }: ReviewStepProps) {
 
       if (requestError) throw requestError;
 
+      // Send SMS notification about prescription request submission
+      if (patientData.phone) {
+        try {
+          await supabase.functions.invoke('send-sms-notification', {
+            body: {
+              to: patientData.phone,
+              type: prescriptionRequired ? 'prescription_requested' : 'referral_submitted',
+              patientName: patientData.name,
+              isReferral: isReferralCase,
+              referralSpecialist: referralSpecialist
+            }
+          });
+        } catch (smsError) {
+          console.error('Failed to send SMS notification:', smsError);
+          // Don't fail the entire operation if SMS fails
+        }
+      }
+
       // Generate prescription/referral PDF
       const { data: pdfResult, error: pdfError } = await supabase.functions
         .invoke('generate-prescription-pdf-simple', {

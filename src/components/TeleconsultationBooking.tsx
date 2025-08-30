@@ -208,6 +208,25 @@ export function TeleconsultationBooking({ onBookingSuccess }: TeleconsultationBo
 
       if (error) throw error;
 
+      // Send SMS notification about appointment booking
+      if (patientData.phone) {
+        try {
+          await supabase.functions.invoke('send-sms-notification', {
+            body: {
+              to: patientData.phone,
+              type: 'appointment_booked',
+              patientName: patientData.name,
+              doctorName: doctorInfo?.full_name || 'Dr. ' + (doctorInfo?.id || 'Unknown'),
+              appointmentDate: format(appointmentDateTime, 'PPP'),
+              appointmentTime: selectedTime
+            }
+          });
+        } catch (smsError) {
+          console.error('Failed to send SMS notification:', smsError);
+          // Don't fail the entire operation if SMS fails
+        }
+      }
+
       toast({
         title: "Appointment Booked!",
         description: `Your teleconsultation is scheduled for ${format(appointmentDateTime, 'PPP')} at ${selectedTime}`,
