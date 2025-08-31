@@ -7,7 +7,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { MobileLayout } from "@/layouts/MobileLayout";
 import { AuthProvider } from "@/components/AuthProvider";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
-import Index from "./pages/Index";
+import IndexCustomer from "./pages/IndexCustomer";
 import Consultation from "./pages/Consultation";
 import { ConsultationWizard } from "./pages/consultation/ConsultationWizard";
 import CustomerAuth from "./pages/CustomerAuth";
@@ -21,7 +21,7 @@ const queryClient = new QueryClient();
 // Customer Desktop App
 const CustomerDesktopApp = () => (
   <Routes>
-    <Route path="/" element={<Index />} />
+    <Route path="/" element={<IndexCustomer />} />
     <Route path="/consultation" element={<Consultation />} />
     <Route path="/login" element={<CustomerAuth />} />
     <Route path="/dashboard" element={
@@ -46,7 +46,7 @@ const CustomerDesktopApp = () => (
 // Customer Mobile App
 const CustomerMobileApp = () => (
   <Routes>
-    <Route path="/" element={<MobileLayout><Index /></MobileLayout>} />
+    <Route path="/" element={<MobileLayout><IndexCustomer /></MobileLayout>} />
     <Route path="/consultation" element={<ConsultationWizard />} />
     <Route path="/login" element={<MobileLayout hideBottomNav={true}><CustomerAuth /></MobileLayout>} />
     <Route path="/dashboard" element={

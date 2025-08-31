@@ -7,6 +7,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { MobileLayout } from "@/layouts/MobileLayout";
 import { AuthProvider } from "@/components/AuthProvider";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+import IndexDoctor from "./pages/IndexDoctor";
 import DoctorLogin from "./pages/DoctorLogin";
 import DoctorDashboard from "./pages/DoctorDashboard";
 import VideoConsultationRoom from "./pages/VideoConsultationRoom";
@@ -17,7 +18,7 @@ const queryClient = new QueryClient();
 // Doctor Desktop App
 const DoctorDesktopApp = () => (
   <Routes>
-    <Route path="/" element={<Navigate to="/login" replace />} />
+    <Route path="/" element={<IndexDoctor />} />
     <Route path="/login" element={<DoctorLogin />} />
     <Route path="/dashboard" element={
       <ProtectedRoute redirectTo="/login">
@@ -36,7 +37,7 @@ const DoctorDesktopApp = () => (
 // Doctor Mobile App
 const DoctorMobileApp = () => (
   <Routes>
-    <Route path="/" element={<Navigate to="/login" replace />} />
+    <Route path="/" element={<MobileLayout><IndexDoctor /></MobileLayout>} />
     <Route path="/login" element={<MobileLayout hideBottomNav={true}><DoctorLogin /></MobileLayout>} />
     <Route path="/dashboard" element={
       <ProtectedRoute redirectTo="/login">
