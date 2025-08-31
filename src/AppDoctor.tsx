@@ -19,6 +19,7 @@ const queryClient = new QueryClient();
 const DoctorDesktopApp = () => (
   <Routes>
     <Route path="/" element={<IndexDoctor />} />
+    <Route path="/doctor.html" element={<IndexDoctor />} />
     <Route path="/login" element={<DoctorLogin />} />
     <Route path="/dashboard" element={
       <ProtectedRoute redirectTo="/login">
@@ -38,6 +39,7 @@ const DoctorDesktopApp = () => (
 const DoctorMobileApp = () => (
   <Routes>
     <Route path="/" element={<MobileLayout><IndexDoctor /></MobileLayout>} />
+    <Route path="/doctor.html" element={<MobileLayout><IndexDoctor /></MobileLayout>} />
     <Route path="/login" element={<MobileLayout hideBottomNav={true}><DoctorLogin /></MobileLayout>} />
     <Route path="/dashboard" element={
       <ProtectedRoute redirectTo="/login">
