@@ -285,37 +285,7 @@ const UniversalSymptomSelector = ({
               )}
             </div>
 
-            {/* Confirmation Popup */}
-            {showConfirmation && selectedSymptom && (
-              <div className="absolute inset-0 bg-black/50 flex items-center justify-center z-50">
-                <Card className="w-96 max-w-[90vw]">
-                  <CardContent className="p-6">
-                    <h3 className="font-semibold mb-2">Confirm Symptom Selection</h3>
-                    <p className="text-sm text-muted-foreground mb-4">
-                      Do you want to add this symptom?
-                    </p>
-                    <div className="bg-muted p-3 rounded mb-4">
-                      <p className="text-sm font-medium">{selectedSymptom}</p>
-                    </div>
-                    <div className="flex gap-2 justify-end">
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => {
-                          setSelectedSymptom('');
-                          setShowConfirmation(false);
-                        }}
-                      >
-                        Cancel
-                      </Button>
-                      <Button size="sm" onClick={confirmSymptomSelection}>
-                        Add Symptom
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-            )}
+            {/* Removed confirmation popup - no longer needed */}
           </div>
 
           {/* Right Side - Symptom List (Column View - Desktop Only) */}
@@ -462,11 +432,10 @@ const UniversalSymptomSelector = ({
               </Button>
               <Button 
                 onClick={handleConfirm}
-                disabled={selectedSymptoms.length === 0}
                 className="bg-primary hover:bg-primary/90"
               >
                 {selectedSymptoms.length === 0 
-                  ? "Select Symptoms First" 
+                  ? "Continue Without Symptoms" 
                   : `Proceed with ${selectedSymptoms.length} Symptom${selectedSymptoms.length === 1 ? '' : 's'}`
                 }
               </Button>
