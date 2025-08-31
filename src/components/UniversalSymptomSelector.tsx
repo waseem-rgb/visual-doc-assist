@@ -259,21 +259,18 @@ const UniversalSymptomSelector = ({
           </div>
         </DialogHeader>
 
-        <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
-          {/* Image Container - Full width in rail mode or mobile, 3/4 width in desktop column mode */}
-          <div className={`${viewMode === 'column' && !isMobile ? (isFullscreen ? 'flex-1' : 'flex-1') : 'flex-1'} relative bg-gray-50`} ref={containerRef}>
-            <div className="w-full h-full flex items-center justify-center p-4 overflow-auto">
+        <div className="flex-1 flex min-h-0 overflow-hidden">
+          {/* Image Container - Takes 3/4 width in desktop column mode */}
+          <div className={`${viewMode === 'column' && !isMobile ? 'flex-[3]' : 'flex-1'} relative bg-gray-50 border-r border-border`} ref={containerRef}>
+            <div className="w-full h-full flex items-center justify-center p-4">
               {imageUrl ? (
                 <img
                   ref={imageRef}
                   src={imageUrl}
                   alt={`${bodyPart} ${view} view`}
-                  className="max-w-none max-h-none object-contain cursor-grab active:cursor-grabbing"
+                  className="max-w-full max-h-full object-contain cursor-pointer hover:scale-105 transition-transform"
                   onClick={handleImageClick}
-                  draggable={true}
                   style={{ 
-                    minWidth: '100%',
-                    minHeight: '100%',
                     imageRendering: 'crisp-edges'
                   }}
                 />
@@ -284,8 +281,6 @@ const UniversalSymptomSelector = ({
                 </div>
               )}
             </div>
-
-            {/* Removed confirmation popup - no longer needed */}
           </div>
 
           {/* Right Side - Symptom List (Column View - Desktop Only) */}
