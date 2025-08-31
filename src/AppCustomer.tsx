@@ -23,19 +23,25 @@ const CustomerDesktopApp = () => (
   <Routes>
     <Route path="/" element={<IndexCustomer />} />
     <Route path="/consultation" element={<Consultation />} />
+    <Route path="/customer/login" element={<CustomerAuth />} />
     <Route path="/login" element={<CustomerAuth />} />
+    <Route path="/customer/dashboard" element={
+      <ProtectedRoute redirectTo="/customer/login">
+        <CustomerDashboard />
+      </ProtectedRoute>
+    } />
     <Route path="/dashboard" element={
-      <ProtectedRoute redirectTo="/login">
+      <ProtectedRoute redirectTo="/customer/login">
         <CustomerDashboard />
       </ProtectedRoute>
     } />
     <Route path="/teleconsultation" element={
-      <ProtectedRoute redirectTo="/login">
+      <ProtectedRoute redirectTo="/customer/login">
         <TeleconsultationBookingPage />
       </ProtectedRoute>
     } />
     <Route path="/consultation/video/:appointmentId" element={
-      <ProtectedRoute redirectTo="/login">
+      <ProtectedRoute redirectTo="/customer/login">
         <VideoConsultationRoom />
       </ProtectedRoute>
     } />
@@ -48,19 +54,25 @@ const CustomerMobileApp = () => (
   <Routes>
     <Route path="/" element={<MobileLayout><IndexCustomer /></MobileLayout>} />
     <Route path="/consultation" element={<ConsultationWizard />} />
+    <Route path="/customer/login" element={<MobileLayout hideBottomNav={true}><CustomerAuth /></MobileLayout>} />
     <Route path="/login" element={<MobileLayout hideBottomNav={true}><CustomerAuth /></MobileLayout>} />
+    <Route path="/customer/dashboard" element={
+      <ProtectedRoute redirectTo="/customer/login">
+        <MobileLayout><CustomerDashboard /></MobileLayout>
+      </ProtectedRoute>
+    } />
     <Route path="/dashboard" element={
-      <ProtectedRoute redirectTo="/login">
+      <ProtectedRoute redirectTo="/customer/login">
         <MobileLayout><CustomerDashboard /></MobileLayout>
       </ProtectedRoute>
     } />
     <Route path="/teleconsultation" element={
-      <ProtectedRoute redirectTo="/login">
+      <ProtectedRoute redirectTo="/customer/login">
         <TeleconsultationBookingPage />
       </ProtectedRoute>
     } />
     <Route path="/consultation/video/:appointmentId" element={
-      <ProtectedRoute redirectTo="/login">
+      <ProtectedRoute redirectTo="/customer/login">
         <VideoConsultationRoom />
       </ProtectedRoute>
     } />
