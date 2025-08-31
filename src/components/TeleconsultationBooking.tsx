@@ -56,7 +56,7 @@ export function TeleconsultationBooking({ onBookingSuccess }: TeleconsultationBo
     try {
       const { data, error } = await supabase
         .from('doctor_profiles')
-        .select('*')
+        .select('id, full_name, specialization')
         .limit(1);
 
       if (error) throw error;
