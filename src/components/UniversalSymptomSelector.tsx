@@ -60,20 +60,35 @@ const UniversalSymptomSelector = ({
   const [isLoadingSymptoms, setIsLoadingSymptoms] = useState(false);
   const [availableSymptoms, setAvailableSymptoms] = useState<SymptomData[]>([]);
   const [showOverlays, setShowOverlays] = useState(true);
-  const [viewMode, setViewMode] = useState<'column' | 'rail'>('rail'); // Default to rail for better mobile UX
+  const [viewMode, setViewMode] = useState<'column' | 'rail'>(() => {
+    // Set default view mode based on screen size
+    // Column view for desktop/tablet (>= 768px), rail view for mobile (< 768px)
+    return window.innerWidth >= 768 ? 'column' : 'rail';
+  });
   const [isMobile, setIsMobile] = useState(false);
   
-  // Check if mobile 
+  // Check if mobile and update view mode accordingly
   useEffect(() => {
     const checkMobile = () => {
       const mobile = window.innerWidth < 768;
+      const previousIsMobile = isMobile;
       setIsMobile(mobile);
+      
+      // Auto-switch view mode when transitioning between mobile and desktop
+      // Only if user is using the "default" view for their current screen size
+      if (mobile && !previousIsMobile && viewMode === 'column') {
+        // Switched to mobile - change to rail view
+        setViewMode('rail');
+      } else if (!mobile && previousIsMobile && viewMode === 'rail') {
+        // Switched to desktop - change to column view
+        setViewMode('column');
+      }
     };
     
     checkMobile();
     window.addEventListener('resize', checkMobile);
     return () => window.removeEventListener('resize', checkMobile);
-  }, []);
+  }, [isMobile, viewMode]);
   const [staticMode] = useState(true); // Static image mode
 
   const { toast } = useToast();
