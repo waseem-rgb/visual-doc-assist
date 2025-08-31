@@ -27,6 +27,7 @@ const DesktopApp = () => (
     <Route path="/" element={<Index />} />
     <Route path="/doctor.html" element={<IndexDoctor />} />
     <Route path="/consultation" element={<Consultation />} />
+    <Route path="/login" element={<Navigate to="/customer/login" replace />} />
     <Route path="/doctor/login" element={<DoctorLogin />} />
     <Route path="/doctor/dashboard" element={
       <ProtectedRoute redirectTo="/doctor/login">
@@ -60,6 +61,7 @@ const MobileApp = () => (
     <Route path="/" element={<MobileLayout><Index /></MobileLayout>} />
     <Route path="/doctor.html" element={<MobileLayout><IndexDoctor /></MobileLayout>} />
     <Route path="/consultation" element={<ConsultationWizard />} />
+    <Route path="/login" element={<Navigate to="/customer/login" replace />} />  
     <Route path="/doctor/login" element={<MobileLayout hideBottomNav={true}><DoctorLogin /></MobileLayout>} />
     <Route path="/doctor/dashboard" element={
       <ProtectedRoute redirectTo="/doctor/login">
