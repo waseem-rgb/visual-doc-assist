@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useMLDataCollection } from '@/hooks/useMLDataCollection';
 import { format } from 'date-fns';
 
 interface VideoConsultationProps {
@@ -41,6 +42,7 @@ export function VideoConsultation({ appointmentId, userRole, onConsultationEnd }
   const [isVideoEnabled, setIsVideoEnabled] = useState(true);
   const [isAudioEnabled, setIsAudioEnabled] = useState(true);
   const { toast } = useToast();
+  const { submitToMLEngine } = useMLDataCollection();
 
   const localVideoRef = useRef<HTMLVideoElement>(null);
   const remoteVideoRef = useRef<HTMLVideoElement>(null);
@@ -428,12 +430,26 @@ export function VideoConsultation({ appointmentId, userRole, onConsultationEnd }
         })
         .eq('id', consultationSession.id);
 
+      // Submit consultation data to ML engine
+      try {
+        await submitToMLEngine({
+          videoConsultationId: consultationSession.id,
+          consultationType: 'teleconsultation',
+          symptoms: 'Video consultation symptoms - to be extracted from recording',
+          diagnosis: 'To be determined from consultation analysis',
+          treatmentPlan: 'To be determined by doctor during consultation'
+        });
+      } catch (mlError) {
+        console.error('Failed to submit to ML engine:', mlError);
+        // Don't fail the consultation end if ML submission fails
+      }
+
       cleanup();
       onConsultationEnd();
 
       toast({
         title: "Consultation Ended",
-        description: "The video consultation has been completed"
+        description: "The video consultation has been completed and submitted for ML training"
       });
 
     } catch (error) {
