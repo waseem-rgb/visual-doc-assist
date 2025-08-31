@@ -36,13 +36,21 @@ const Navigation = () => {
                 {item.label}
               </a>
             ))}
-            <Button 
-              variant="default" 
-              className="gradient-primary"
-              onClick={() => navigate("/login")}
-            >
-              Login / Sign Up
-            </Button>
+            <div className="flex items-center gap-3">
+              <Button 
+                variant="outline"
+                onClick={() => navigate("/customer/login")}
+              >
+                Patient Login
+              </Button>
+              <Button 
+                variant="default" 
+                className="gradient-primary"
+                onClick={() => navigate("/doctor/login")}
+              >
+                Doctor Login
+              </Button>
+            </div>
           </div>
 
           {/* Mobile Menu Button */}
@@ -68,13 +76,28 @@ const Navigation = () => {
                   {item.label}
                 </a>
               ))}
-               <Button 
-                 variant="default" 
-                 className="gradient-primary w-full"
-                 onClick={() => navigate("/login")}
-               >
-                 Login / Sign Up
-               </Button>
+               <div className="flex flex-col gap-2">
+                 <Button 
+                   variant="outline" 
+                   className="w-full"
+                   onClick={() => {
+                     navigate("/customer/login");
+                     setIsMenuOpen(false);
+                   }}
+                 >
+                   Patient Login
+                 </Button>
+                 <Button 
+                   variant="default" 
+                   className="gradient-primary w-full"
+                   onClick={() => {
+                     navigate("/doctor/login");
+                     setIsMenuOpen(false);
+                   }}
+                 >
+                   Doctor Login
+                 </Button>
+               </div>
             </div>
           </div>
         )}

@@ -60,12 +60,30 @@ const CustomerAuth = () => {
           throw new Error("Authentication failed");
         }
 
+        // Check user role and redirect accordingly
+        const { data: roleData, error: roleError } = await supabase
+          .from("user_roles")
+          .select("role")
+          .eq("user_id", data.user.id)
+          .single();
+
+        if (roleError && roleError.code !== 'PGRST116') {
+          console.error("Error checking user role:", roleError);
+        }
+
+        const isDoctor = roleData?.role === 'doctor';
+        
         toast({
           title: "Welcome Back!",
-          description: "You've been signed in successfully.",
+          description: `You've been signed in successfully.${isDoctor ? ' Redirecting to doctor dashboard...' : ''}`,
         });
         
-        navigate("/customer/dashboard");
+        // Redirect based on role
+        if (isDoctor) {
+          navigate("/doctor/dashboard");
+        } else {
+          navigate("/customer/dashboard");
+        }
       }
     } catch (error: any) {
       setError(error.message);
