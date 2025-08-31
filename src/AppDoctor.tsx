@@ -56,6 +56,8 @@ const DoctorMobileApp = () => (
 const AppDoctor = () => {
   const isMobile = useIsMobile();
   
+  console.log('AppDoctor loading, current path:', window.location.pathname);
+  
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
