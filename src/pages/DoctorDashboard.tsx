@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import type { User as AuthUser } from "@supabase/supabase-js";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -46,6 +46,9 @@ interface PrescriptionRequest {
   clinical_history?: string;
   chief_complaint?: string;
   physical_examination?: string;
+  external_source?: string | null;
+  external_id?: string | null;
+  callback_url?: string | null;
   prescription?: {
     id: string;
     medications: string;
@@ -67,12 +70,27 @@ const DoctorDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [selectedRequest, setSelectedRequest] = useState<PrescriptionRequest | null>(null);
   const [user, setUser] = useState<AuthUser | null>(null);
+  const [importedRequestId, setImportedRequestId] = useState<string | null>(null);
   const navigate = useNavigate();
+  const location = useLocation();
   const { toast } = useToast();
 
   useEffect(() => {
     checkAuthAndFetchData();
   }, []);
+
+  useEffect(() => {
+    // Check for imported consultation parameter
+    const searchParams = new URLSearchParams(location.search);
+    const imported = searchParams.get('imported');
+    
+    if (imported) {
+      setImportedRequestId(imported);
+      // Clean URL after capturing the parameter
+      const cleanUrl = window.location.origin + window.location.pathname;
+      window.history.replaceState({}, document.title, cleanUrl);
+    }
+  }, [location.search]);
 
   const checkAuthAndFetchData = async () => {
     try {
@@ -444,7 +462,11 @@ const DoctorDashboard = () => {
                 {requests
                   .filter(request => request.status === status)
                   .map((request) => (
-                    <Card key={request.id} className="hover:shadow-md transition-shadow">
+                     <Card key={request.id} className={`hover:shadow-md transition-shadow ${
+                       importedRequestId === request.id 
+                         ? 'border-primary border-2 bg-primary/5' 
+                         : ''
+                     }`}>
                       <CardContent className="p-6">
                         <div className="flex items-center justify-between">
                           <div className="flex-1">
@@ -455,9 +477,19 @@ const DoctorDashboard = () => {
                                   {request.patient_name}
                                 </span>
                               </div>
-                              <Badge className={getStatusColor(request.status)}>
-                                {request.status.replace('_', ' ')}
-                              </Badge>
+                               <Badge className={getStatusColor(request.status)}>
+                                 {request.status.replace('_', ' ')}
+                               </Badge>
+                               {importedRequestId === request.id && (
+                                 <Badge variant="outline" className="border-primary text-primary">
+                                   Imported from DAIGASST
+                                 </Badge>
+                               )}
+                               {request.external_source && (
+                                 <Badge variant="secondary">
+                                   {request.external_source}
+                                 </Badge>
+                               )}
                             </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
