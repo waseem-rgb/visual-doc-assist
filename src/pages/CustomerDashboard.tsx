@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import PrescriptionStatus from "@/components/PrescriptionStatus";
+import { VideoConsultationsList } from '@/components/VideoConsultationsList';
 import type { User as AuthUser } from "@supabase/supabase-js";
 
 interface PrescriptionRequest {
@@ -440,6 +441,11 @@ const CustomerDashboard = () => {
               ))}
             </div>
           )}
+          {/* Video Consultations Section */}
+          <div className="mt-8">
+            <h3 className="text-xl font-semibold mb-4">Your Upcoming Video Consultations</h3>
+            <VideoConsultationsList userRole="patient" limit={3} />
+          </div>
         </div>
       </div>
 

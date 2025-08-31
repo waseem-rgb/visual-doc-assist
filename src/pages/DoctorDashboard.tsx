@@ -23,6 +23,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import PrescriptionRequestDetail from "@/components/PrescriptionRequestDetail";
 import { AppointmentManagement } from "@/components/AppointmentManagement";
+import { VideoConsultationsList } from '@/components/VideoConsultationsList';
 
 interface PrescriptionRequest {
   id: string;
@@ -523,7 +524,7 @@ const DoctorDashboard = () => {
 
           {/* Appointments Tab */}
           <TabsContent value="appointments" className="mt-6">
-            <AppointmentManagement userRole="doctor" />
+            <VideoConsultationsList userRole="doctor" />
           </TabsContent>
         </Tabs>
       </div>

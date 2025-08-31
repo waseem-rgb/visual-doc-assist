@@ -190,25 +190,21 @@ export function TeleconsultationBooking({ onBookingSuccess }: TeleconsultationBo
       
       // Use fallback doctor info if not loaded
       const defaultDoctorId = '9d2c7a4c-9da0-46c2-bc00-f102d0768e1a';
-      const defaultDoctorPhone = '+971501234567';
-      
-      const whatsappLink = generateWhatsAppLink(doctorInfo?.phone || defaultDoctorPhone);
 
       const { data: user } = await supabase.auth.getUser();
       
-      const { error } = await supabase.from('appointments').insert({
+      const { data: newAppointment, error } = await supabase.from('appointments').insert({
         customer_id: user.user?.id,
         doctor_id: doctorInfo?.id || defaultDoctorId,
         appointment_date: appointmentDateTime.toISOString(),
         duration_minutes: 30,
-        whatsapp_link: whatsappLink,
         patient_name: patientData.name,
         patient_age: patientData.age,
         patient_gender: patientData.gender,
         patient_phone: patientData.phone,
         chief_complaint: patientData.complaint,
         status: 'scheduled'
-      });
+      }).select().single();
 
       if (error) throw error;
 
@@ -231,22 +227,19 @@ export function TeleconsultationBooking({ onBookingSuccess }: TeleconsultationBo
         }
       }
 
+      const consultationLink = `/consultation/video/${newAppointment.id}`;
+      
       toast({
         title: "✅ Appointment Booked Successfully!",
-        description: `Teleconsultation: ${format(appointmentDateTime, 'PPP')} at ${selectedTime}. SMS sent to ${patientData.phone}`,
+        description: `Video consultation: ${format(appointmentDateTime, 'PPP')} at ${selectedTime}. SMS sent to ${patientData.phone}`,
       });
 
-      // Show WhatsApp link prominently
+      // Show consultation link prominently
       setTimeout(() => {
         toast({
-          title: "📱 Your WhatsApp Consultation Link",
-          description: "Click this link at your appointment time to join the consultation",
+          title: "🎥 Your Video Consultation Ready",
+          description: "You can join the consultation at your scheduled time",
         });
-        
-        // Auto-open WhatsApp link for easy access
-        if (confirm("Open WhatsApp now to save your consultation link?")) {
-          window.open(whatsappLink, '_blank');
-        }
       }, 2000);
 
       // Reset form
@@ -388,12 +381,12 @@ export function TeleconsultationBooking({ onBookingSuccess }: TeleconsultationBo
             </div>
           </div>
 
-          {/* WhatsApp Info */}
-          <div className="bg-green-50 border border-green-200 p-4 rounded-lg">
-            <h4 className="font-semibold text-green-800 mb-2">📱 WhatsApp Video Consultation</h4>
-            <p className="text-green-700 text-sm">
-              Your consultation will be conducted via WhatsApp video call. You'll receive a WhatsApp link 
-              to join the consultation at your scheduled time.
+          {/* Video Consultation Info */}
+          <div className="bg-blue-50 border border-blue-200 p-4 rounded-lg">
+            <h4 className="font-semibold text-blue-800 mb-2">🎥 Secure Video Consultation</h4>
+            <p className="text-blue-700 text-sm">
+              Your consultation will be conducted via our secure video platform. You'll receive a link 
+              to join the video consultation at your scheduled time. The session may be recorded with your consent for quality improvement.
             </p>
           </div>
 
