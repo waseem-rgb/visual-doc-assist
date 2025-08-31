@@ -164,10 +164,10 @@ export function TeleconsultationBooking({ onBookingSuccess }: TeleconsultationBo
   };
 
   const handleBookAppointment = async () => {
-    if (!selectedDate || !selectedTime || !doctorInfo) {
+    if (!selectedDate || !selectedTime) {
       toast({
         title: "Missing Information",
-        description: "Please select date, time, and fill in patient details.",
+        description: "Please select date and time.",
         variant: "destructive"
       });
       return;
