@@ -153,15 +153,20 @@ const UniversalSymptomSelector = ({
   // No canvas initialization needed in static mode
 
   const handleSymptomClick = (symptom: string) => {
-    // Direct toggle selection instead of confirmation dialog
+    // Allow only one symptom selection at a time
     if (selectedSymptoms.includes(symptom)) {
-      removeSymptom(symptom);
-    } else {
-      const newSymptoms = [...selectedSymptoms, symptom];
-      setSelectedSymptoms(newSymptoms);
+      // If clicking the same symptom, deselect it
+      setSelectedSymptoms([]);
       toast({
-        title: "Symptom Added",
-        description: `"${symptom}" has been added to your symptoms.`,
+        title: "Symptom Removed",
+        description: `"${symptom}" has been removed.`,
+      });
+    } else {
+      // Replace current selection with new symptom
+      setSelectedSymptoms([symptom]);
+      toast({
+        title: "Symptom Selected",
+        description: `"${symptom}" has been selected.`,
       });
     }
     scrollToSymptom(symptom);
@@ -402,9 +407,9 @@ const UniversalSymptomSelector = ({
         <div className="border-t border-border bg-background p-4 flex-shrink-0">
           <div className="flex flex-col gap-4">
             <div>
-              <h4 className="font-medium mb-2">Selected Symptoms ({selectedSymptoms.length})</h4>
+              <h4 className="font-medium mb-2">Selected Symptom ({selectedSymptoms.length})</h4>
               {selectedSymptoms.length === 0 ? (
-                <p className="text-sm text-muted-foreground">No symptoms selected yet.</p>
+                <p className="text-sm text-muted-foreground">No symptom selected yet.</p>
               ) : (
                 <div className="flex flex-wrap gap-2 max-h-20 overflow-y-auto">
                   {selectedSymptoms.map((symptom, index) => (
@@ -430,8 +435,8 @@ const UniversalSymptomSelector = ({
                 className="bg-primary hover:bg-primary/90"
               >
                 {selectedSymptoms.length === 0 
-                  ? "Continue Without Symptoms" 
-                  : `Proceed with ${selectedSymptoms.length} Symptom${selectedSymptoms.length === 1 ? '' : 's'}`
+                  ? "Continue Without Symptom" 
+                  : `Proceed with Symptom`
                 }
               </Button>
             </div>
