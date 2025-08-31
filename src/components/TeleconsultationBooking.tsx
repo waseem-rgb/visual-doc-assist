@@ -232,9 +232,22 @@ export function TeleconsultationBooking({ onBookingSuccess }: TeleconsultationBo
       }
 
       toast({
-        title: "Appointment Booked!",
-        description: `Your teleconsultation is scheduled for ${format(appointmentDateTime, 'PPP')} at ${selectedTime}`,
+        title: "✅ Appointment Booked Successfully!",
+        description: `Teleconsultation: ${format(appointmentDateTime, 'PPP')} at ${selectedTime}. SMS sent to ${patientData.phone}`,
       });
+
+      // Show WhatsApp link prominently
+      setTimeout(() => {
+        toast({
+          title: "📱 Your WhatsApp Consultation Link",
+          description: "Click this link at your appointment time to join the consultation",
+        });
+        
+        // Auto-open WhatsApp link for easy access
+        if (confirm("Open WhatsApp now to save your consultation link?")) {
+          window.open(whatsappLink, '_blank');
+        }
+      }, 2000);
 
       // Reset form
       setSelectedDate(undefined);
