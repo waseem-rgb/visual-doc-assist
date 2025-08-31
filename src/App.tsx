@@ -51,13 +51,13 @@ const MobileApp = () => (
   <Routes>
     <Route path="/" element={<MobileLayout><Index /></MobileLayout>} />
     <Route path="/consultation" element={<ConsultationWizard />} />
-    <Route path="/doctor/login" element={<MobileLayout><DoctorLogin /></MobileLayout>} />
+    <Route path="/doctor/login" element={<MobileLayout hideBottomNav={true}><DoctorLogin /></MobileLayout>} />
     <Route path="/doctor/dashboard" element={
       <ProtectedRoute redirectTo="/doctor/login">
-        <MobileLayout><DoctorDashboard /></MobileLayout>
+        <MobileLayout hideBottomNav={true}><DoctorDashboard /></MobileLayout>
       </ProtectedRoute>
     } />
-    <Route path="/customer/login" element={<MobileLayout><CustomerAuth /></MobileLayout>} />
+    <Route path="/customer/login" element={<MobileLayout hideBottomNav={true}><CustomerAuth /></MobileLayout>} />
     <Route path="/customer/dashboard" element={
       <ProtectedRoute redirectTo="/customer/login">
         <MobileLayout><CustomerDashboard /></MobileLayout>
@@ -69,7 +69,7 @@ const MobileApp = () => (
       </ProtectedRoute>
     } />
     {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-    <Route path="*" element={<MobileLayout><NotFound /></MobileLayout>} />
+    <Route path="*" element={<MobileLayout hideBottomNav={true}><NotFound /></MobileLayout>} />
   </Routes>
 );
 
