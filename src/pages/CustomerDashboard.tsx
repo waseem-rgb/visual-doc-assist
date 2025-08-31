@@ -81,6 +81,8 @@ const CustomerDashboard = () => {
         .eq("user_id", user.id)
         .single();
 
+      console.log("Role check result:", { roleData, roleError, userId: user.id });
+
       if (!roleError && roleData?.role === 'doctor') {
         console.log("Doctor user detected, redirecting to doctor dashboard");
         navigate("/doctor/dashboard");
