@@ -191,6 +191,56 @@ export type Database = {
         }
         Relationships: []
       }
+      ml_training_sessions: {
+        Row: {
+          created_at: string
+          diagnosis: string | null
+          id: string
+          medical_entities: Json | null
+          processed_at: string | null
+          processing_status: string
+          symptoms_extracted: Json | null
+          transcription: string | null
+          treatment_plan: string | null
+          updated_at: string
+          video_consultation_id: string
+        }
+        Insert: {
+          created_at?: string
+          diagnosis?: string | null
+          id?: string
+          medical_entities?: Json | null
+          processed_at?: string | null
+          processing_status?: string
+          symptoms_extracted?: Json | null
+          transcription?: string | null
+          treatment_plan?: string | null
+          updated_at?: string
+          video_consultation_id: string
+        }
+        Update: {
+          created_at?: string
+          diagnosis?: string | null
+          id?: string
+          medical_entities?: Json | null
+          processed_at?: string | null
+          processing_status?: string
+          symptoms_extracted?: Json | null
+          transcription?: string | null
+          treatment_plan?: string | null
+          updated_at?: string
+          video_consultation_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ml_training_sessions_video_consultation_id_fkey"
+            columns: ["video_consultation_id"]
+            isOneToOne: false
+            referencedRelation: "video_consultations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       "New Master": {
         Row: {
           "Basic Investigations": string | null
@@ -468,6 +518,62 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      video_consultations: {
+        Row: {
+          appointment_id: string
+          created_at: string
+          ended_at: string | null
+          id: string
+          recording_consent_doctor: boolean | null
+          recording_consent_patient: boolean | null
+          recording_enabled: boolean
+          recording_metadata: Json | null
+          recording_url: string | null
+          room_id: string
+          started_at: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          appointment_id: string
+          created_at?: string
+          ended_at?: string | null
+          id?: string
+          recording_consent_doctor?: boolean | null
+          recording_consent_patient?: boolean | null
+          recording_enabled?: boolean
+          recording_metadata?: Json | null
+          recording_url?: string | null
+          room_id: string
+          started_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          appointment_id?: string
+          created_at?: string
+          ended_at?: string | null
+          id?: string
+          recording_consent_doctor?: boolean | null
+          recording_consent_patient?: boolean | null
+          recording_enabled?: boolean
+          recording_metadata?: Json | null
+          recording_url?: string | null
+          room_id?: string
+          started_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "video_consultations_appointment_id_fkey"
+            columns: ["appointment_id"]
+            isOneToOne: false
+            referencedRelation: "appointments"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
