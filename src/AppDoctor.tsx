@@ -20,6 +20,21 @@ const DoctorDesktopApp = () => (
   <Routes>
     <Route path="/" element={<IndexDoctor />} />
     <Route path="/doctor.html" element={<IndexDoctor />} />
+    
+    {/* Doctor-prefixed routes */}
+    <Route path="/doctor/login" element={<DoctorLogin />} />
+    <Route path="/doctor/dashboard" element={
+      <ProtectedRoute redirectTo="/doctor/login">
+        <DoctorDashboard />
+      </ProtectedRoute>
+    } />
+    <Route path="/doctor/consultation/video/:appointmentId" element={
+      <ProtectedRoute redirectTo="/doctor/login">
+        <VideoConsultationRoom />
+      </ProtectedRoute>
+    } />
+    
+    {/* Legacy routes for backward compatibility */}
     <Route path="/login" element={<DoctorLogin />} />
     <Route path="/dashboard" element={
       <ProtectedRoute redirectTo="/login">
@@ -31,6 +46,7 @@ const DoctorDesktopApp = () => (
         <VideoConsultationRoom />
       </ProtectedRoute>
     } />
+    
     <Route path="*" element={<NotFound />} />
   </Routes>
 );
@@ -40,6 +56,21 @@ const DoctorMobileApp = () => (
   <Routes>
     <Route path="/" element={<MobileLayout><IndexDoctor /></MobileLayout>} />
     <Route path="/doctor.html" element={<MobileLayout><IndexDoctor /></MobileLayout>} />
+    
+    {/* Doctor-prefixed routes */}
+    <Route path="/doctor/login" element={<MobileLayout hideBottomNav={true}><DoctorLogin /></MobileLayout>} />
+    <Route path="/doctor/dashboard" element={
+      <ProtectedRoute redirectTo="/doctor/login">
+        <MobileLayout hideBottomNav={true}><DoctorDashboard /></MobileLayout>
+      </ProtectedRoute>
+    } />
+    <Route path="/doctor/consultation/video/:appointmentId" element={
+      <ProtectedRoute redirectTo="/doctor/login">
+        <VideoConsultationRoom />
+      </ProtectedRoute>
+    } />
+    
+    {/* Legacy routes for backward compatibility */}
     <Route path="/login" element={<MobileLayout hideBottomNav={true}><DoctorLogin /></MobileLayout>} />
     <Route path="/dashboard" element={
       <ProtectedRoute redirectTo="/login">
@@ -51,6 +82,7 @@ const DoctorMobileApp = () => (
         <VideoConsultationRoom />
       </ProtectedRoute>
     } />
+    
     <Route path="*" element={<MobileLayout hideBottomNav={true}><NotFound /></MobileLayout>} />
   </Routes>
 );
