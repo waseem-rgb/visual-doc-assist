@@ -156,7 +156,7 @@ const PrescriptionRequestDetail = ({ request, onBack, onUpdate }: PrescriptionRe
           if (user) {
             setTimeout(async () => {
               try {
-                await supabase.functions.invoke('generate-prescription-pdf', {
+                await supabase.functions.invoke('generate-prescription-pdf-simple', {
                   body: {
                     requestId: request.id,
                     doctorId: user.id

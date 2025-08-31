@@ -241,7 +241,7 @@ const DoctorDashboard = () => {
             description: "Please wait while we prepare your prescription...",
           });
 
-          const { data: generateData, error: generateError } = await supabase.functions.invoke('generate-prescription-pdf', {
+          const { data: generateData, error: generateError } = await supabase.functions.invoke('generate-prescription-pdf-simple', {
             body: {
               requestId: request.id,
               doctorId: user?.id

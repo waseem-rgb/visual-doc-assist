@@ -161,15 +161,41 @@ const PrescriptionStatus = ({ request }: PrescriptionStatusProps) => {
 
   if (request.status === 'completed' && !request.prescription) {
     return (
-      <Button
-        variant="outline"
-        size="sm"
-        disabled
-        className="text-orange-600 border-orange-200"
-      >
-        <Clock className="h-4 w-4 mr-1" />
-        {isReferral ? 'Generating Referral' : 'Generating Prescription'}
-      </Button>
+      <div className="flex flex-col gap-2">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={async () => {
+            try {
+              setIsDownloading(true);
+              await supabase.functions.invoke('generate-prescription-pdf-simple', {
+                body: {
+                  requestId: request.id,
+                  isReferral: !request.prescription_required
+                }
+              });
+              toast({
+                title: "PDF Generation Started",
+                description: "Your prescription is being generated. Please wait a moment.",
+              });
+            } catch (error) {
+              console.error('Error generating PDF:', error);
+              toast({
+                title: "Generation Failed", 
+                description: "Failed to generate PDF. Please try again.",
+                variant: "destructive",
+              });
+            } finally {
+              setIsDownloading(false);
+            }
+          }}
+          disabled={isDownloading}
+          className="text-blue-600 border-blue-200 bg-blue-50 hover:bg-blue-100"
+        >
+          <Download className="h-4 w-4 mr-1" />
+          {isDownloading ? 'Generating...' : 'Generate PDF'}
+        </Button>
+      </div>
     );
   }
 

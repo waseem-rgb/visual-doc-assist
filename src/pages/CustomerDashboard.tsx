@@ -138,8 +138,16 @@ const CustomerDashboard = () => {
   // Auto-refresh data every 10 seconds to catch PDF generation updates
   useEffect(() => {
     const interval = setInterval(() => {
-      if (requests.some(r => r.status === 'completed' && r.prescription && !r.prescription.pdf_url)) {
-        console.log('Auto-refreshing data to check for PDF updates');
+      // Refresh if there are completed requests without prescriptions OR prescriptions without PDFs
+      const needsRefresh = requests.some(r => 
+        r.status === 'completed' && (
+          !r.prescription || // No prescription record yet
+          (r.prescription && !r.prescription.pdf_url) // Prescription exists but no PDF
+        )
+      );
+      
+      if (needsRefresh) {
+        console.log('Auto-refreshing data to check for prescription/PDF updates');
         checkAuthAndFetchData();
       }
     }, 10000);
