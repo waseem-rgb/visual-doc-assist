@@ -44,6 +44,9 @@ interface PrescriptionRequest {
   chief_complaint?: string;
   physical_examination?: string;
   medication_history?: string;
+  analysis_pdf_url?: string;
+  test_report_pdf_url?: string;
+  external_source?: string;
 }
 
 interface PrescriptionRequestDetailProps {
@@ -371,8 +374,48 @@ const PrescriptionRequestDetail = ({ request, onBack, onUpdate }: PrescriptionRe
                     {new Date(request.created_at).toLocaleDateString()}
                   </p>
                 </div>
+                {request.external_source === 'daigasst-health-ai' && (
+                  <div>
+                    <p className="text-muted-foreground">Source</p>
+                    <p className="font-medium text-purple-600">DAIGASST Health AI</p>
+                  </div>
+                )}
               </CardContent>
             </Card>
+
+            {/* DAIGASST Reports */}
+            {request.external_source === 'daigasst-health-ai' && (request.analysis_pdf_url || request.test_report_pdf_url) && (
+              <Card className="mt-4">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <FileText className="h-5 w-5" />
+                    DAIGASST Reports
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  {request.analysis_pdf_url && (
+                    <Button 
+                      variant="outline" 
+                      className="w-full"
+                      onClick={() => window.open(request.analysis_pdf_url, '_blank')}
+                    >
+                      <FileText className="h-4 w-4 mr-2" />
+                      View Analysis Report
+                    </Button>
+                  )}
+                  {request.test_report_pdf_url && (
+                    <Button 
+                      variant="outline" 
+                      className="w-full"
+                      onClick={() => window.open(request.test_report_pdf_url, '_blank')}
+                    >
+                      <FileText className="h-4 w-4 mr-2" />
+                      View Test Report
+                    </Button>
+                  )}
+                </CardContent>
+              </Card>
+            )}
 
             {/* Actions */}
             <Card className="mt-4">

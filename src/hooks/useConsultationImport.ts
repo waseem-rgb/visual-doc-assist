@@ -19,7 +19,8 @@ interface ConsultationAnalysis {
     phone?: string;
   };
   analysis_results: any;
-  pdf_url?: string;
+  analysis_pdf_url?: string;
+  test_report_pdf_url?: string;
 }
 
 export const useConsultationImport = () => {
@@ -91,6 +92,8 @@ export const useConsultationImport = () => {
           short_summary: 'Imported analysis from DAIGASST Health AI',
           prescription_required: true,
           status: 'pending',
+          analysis_pdf_url: consultationData.analysis_pdf_url,
+          test_report_pdf_url: consultationData.test_report_pdf_url,
         })
         .select()
         .single();

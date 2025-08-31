@@ -38,7 +38,7 @@ serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        action: 'get_analysis',
+        action: 'get_analysis_with_reports',
         analysis_id: analysis_id,
         token: token
       })
@@ -50,10 +50,17 @@ serve(async (req) => {
 
     const consultationData = await daigasstResponse.json();
     
-    console.log('Successfully fetched consultation data:', consultationData);
+    // Ensure both PDF URLs are included in the response
+    const enhancedData = {
+      ...consultationData,
+      analysis_pdf_url: consultationData.analysis_pdf_url || consultationData.pdf_url,
+      test_report_pdf_url: consultationData.test_report_pdf_url
+    };
+    
+    console.log('Successfully fetched consultation data with PDFs:', enhancedData);
 
     return new Response(
-      JSON.stringify(consultationData),
+      JSON.stringify(enhancedData),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       }

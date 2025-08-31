@@ -316,6 +316,7 @@ export type Database = {
       prescription_requests: {
         Row: {
           ai_diagnosis: string | null
+          analysis_pdf_url: string | null
           assigned_doctor_id: string | null
           basic_investigations: string | null
           body_part: string
@@ -342,10 +343,12 @@ export type Database = {
           short_summary: string | null
           status: Database["public"]["Enums"]["request_status"]
           symptoms: string | null
+          test_report_pdf_url: string | null
           updated_at: string
         }
         Insert: {
           ai_diagnosis?: string | null
+          analysis_pdf_url?: string | null
           assigned_doctor_id?: string | null
           basic_investigations?: string | null
           body_part: string
@@ -372,10 +375,12 @@ export type Database = {
           short_summary?: string | null
           status?: Database["public"]["Enums"]["request_status"]
           symptoms?: string | null
+          test_report_pdf_url?: string | null
           updated_at?: string
         }
         Update: {
           ai_diagnosis?: string | null
+          analysis_pdf_url?: string | null
           assigned_doctor_id?: string | null
           basic_investigations?: string | null
           body_part?: string
@@ -402,6 +407,7 @@ export type Database = {
           short_summary?: string | null
           status?: Database["public"]["Enums"]["request_status"]
           symptoms?: string | null
+          test_report_pdf_url?: string | null
           updated_at?: string
         }
         Relationships: []
