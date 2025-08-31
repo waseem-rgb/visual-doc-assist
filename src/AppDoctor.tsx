@@ -19,15 +19,8 @@ const queryClient = new QueryClient();
 const DoctorDesktopApp = () => (
   <Routes>
     <Route path="/" element={<IndexDoctor />} />
-    <Route path="/doctor.html" element={<IndexDoctor />} />
     <Route path="/login" element={<DoctorLogin />} />
-    <Route path="/doctor/login" element={<DoctorLogin />} />
     <Route path="/dashboard" element={
-      <ProtectedRoute redirectTo="/login">
-        <DoctorDashboard />
-      </ProtectedRoute>
-    } />
-    <Route path="/doctor/dashboard" element={
       <ProtectedRoute redirectTo="/login">
         <DoctorDashboard />
       </ProtectedRoute>
@@ -45,15 +38,8 @@ const DoctorDesktopApp = () => (
 const DoctorMobileApp = () => (
   <Routes>
     <Route path="/" element={<MobileLayout><IndexDoctor /></MobileLayout>} />
-    <Route path="/doctor.html" element={<MobileLayout><IndexDoctor /></MobileLayout>} />
     <Route path="/login" element={<MobileLayout hideBottomNav={true}><DoctorLogin /></MobileLayout>} />
-    <Route path="/doctor/login" element={<MobileLayout hideBottomNav={true}><DoctorLogin /></MobileLayout>} />
     <Route path="/dashboard" element={
-      <ProtectedRoute redirectTo="/login">
-        <MobileLayout hideBottomNav={true}><DoctorDashboard /></MobileLayout>
-      </ProtectedRoute>
-    } />
-    <Route path="/doctor/dashboard" element={
       <ProtectedRoute redirectTo="/login">
         <MobileLayout hideBottomNav={true}><DoctorDashboard /></MobileLayout>
       </ProtectedRoute>
