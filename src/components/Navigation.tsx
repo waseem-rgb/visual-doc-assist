@@ -1,11 +1,9 @@
 import { Button } from "@/components/ui/button";
 import { Menu, X } from "lucide-react";
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
 
 const Navigation = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const navigate = useNavigate();
 
   const navItems = [
     { label: "Features", href: "#features" },
@@ -36,21 +34,13 @@ const Navigation = () => {
                 {item.label}
               </a>
             ))}
-            <div className="flex items-center gap-3">
-              <Button 
-                variant="outline"
-                onClick={() => navigate("/customer/login")}
-              >
-                Patient Login
-              </Button>
-              <Button 
-                variant="default" 
-                className="gradient-primary"
-                onClick={() => navigate("/doctor/login")}
-              >
-                Doctor Login
-              </Button>
-            </div>
+            <Button 
+              variant="default" 
+              className="gradient-primary"
+              onClick={() => window.location.href = "/customer/login"}
+            >
+              Login / Sign Up
+            </Button>
           </div>
 
           {/* Mobile Menu Button */}
@@ -76,28 +66,13 @@ const Navigation = () => {
                   {item.label}
                 </a>
               ))}
-               <div className="flex flex-col gap-2">
-                 <Button 
-                   variant="outline" 
-                   className="w-full"
-                   onClick={() => {
-                     navigate("/customer/login");
-                     setIsMenuOpen(false);
-                   }}
-                 >
-                   Patient Login
-                 </Button>
-                 <Button 
-                   variant="default" 
-                   className="gradient-primary w-full"
-                   onClick={() => {
-                     navigate("/doctor/login");
-                     setIsMenuOpen(false);
-                   }}
-                 >
-                   Doctor Login
-                 </Button>
-               </div>
+              <Button 
+                variant="default" 
+                className="gradient-primary w-full"
+                onClick={() => window.location.href = "/customer/login"}
+              >
+                Login / Sign Up
+              </Button>
             </div>
           </div>
         )}

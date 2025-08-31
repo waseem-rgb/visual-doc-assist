@@ -8,7 +8,6 @@ import { Separator } from '@/components/ui/separator';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { useMLDataCollection } from '@/hooks/useMLDataCollection';
 import { 
   CheckCircle, 
   User, 
@@ -29,7 +28,6 @@ export function ReviewStep({ onBack, onReset }: ReviewStepProps) {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [isGenerating, setIsGenerating] = useState(false);
-  const { submitToMLEngine } = useMLDataCollection();
   
   const {
     patientData,
@@ -150,17 +148,6 @@ export function ReviewStep({ onBack, onReset }: ReviewStepProps) {
         });
 
       if (pdfError) throw pdfError;
-
-      // Submit data to ML engine for training
-      await submitToMLEngine({
-        consultationType: 'instant',
-        symptoms: selectedSymptoms.join(', '),
-        bodyPart: selectedBodyParts.join(', '),
-        patientAge: patientData.age,
-        patientGender: patientData.gender,
-        diagnosis: prescriptionRequest.probable_diagnosis || 'Processed via instant consultation',
-        treatmentPlan: prescriptionRequired ? 'Doctor review required' : 'Referral provided'
-      });
 
       toast({
         title: referralSpecialist ? `Referred to ${referralSpecialist}` : 

@@ -19,12 +19,4 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
-  build: {
-    rollupOptions: {
-      input: {
-        customer: path.resolve(__dirname, 'index.html'),
-        doctor: path.resolve(__dirname, 'doctor.html'),
-      },
-    },
-  },
 }));

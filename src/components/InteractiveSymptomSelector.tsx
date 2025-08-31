@@ -164,59 +164,35 @@ const InteractiveSymptomSelector = ({ bodyPart, patientData, onBack }: Interacti
     // Automatically fetch diagnosis from database when symptom is selected
     setLoadingDiagnosis(true);
     try {
-      console.log('🔍 [DIAGNOSIS] Searching for symptom:', symptom.text, 'Body part:', bodyPart);
-      
-      // First, try to match by body part to get relevant records
-      const { data: bodyPartMatches, error: bodyPartError } = await supabase
+      // Query the "New Master" table to find matching symptom and get probable diagnosis
+      const { data, error } = await supabase
         .from('New Master')
-        .select('"Probable Diagnosis", "Symptoms"')
-        .eq('Part of body_and general full body symptom', bodyPart.toUpperCase())
-        .limit(10);
+        .select('"Probable Diagnosis"')
+        .ilike('Symptoms', `%${symptom.text}%`)
+        .maybeSingle();
 
-      console.log('🔍 [DIAGNOSIS] Body part matches:', bodyPartMatches?.length || 0);
-
-      let bestMatch = null;
-      
-      if (!bodyPartError && bodyPartMatches && bodyPartMatches.length > 0) {
-        // Extract key words from the selected symptom for better matching
-        const symptomWords = symptom.text.toLowerCase()
-          .split(/[\s,.-]+/)
-          .filter(word => word.length > 2 && !['the', 'and', 'for', 'with', 'pain', 'ache'].includes(word));
+      if (error) {
+        console.error('Error fetching diagnosis:', error);
+        // If exact match fails, try with symptom ID keywords
+        const keywords = symptom.id.replace(/-/g, ' ');
+        const { data: fallbackData, error: fallbackError } = await supabase
+          .from('New Master')
+          .select('"Probable Diagnosis"')
+          .ilike('Symptoms', `%${keywords}%`)
+          .maybeSingle();
         
-        console.log('🔍 [DIAGNOSIS] Symptom keywords:', symptomWords);
-        
-        // Score each potential match
-        for (const record of bodyPartMatches) {
-          const recordSymptoms = record.Symptoms?.toLowerCase() || '';
-          let score = 0;
-          
-          // Score based on keyword matches
-          symptomWords.forEach(word => {
-            if (recordSymptoms.includes(word)) {
-              score += 1;
-            }
-          });
-          
-          console.log('🔍 [DIAGNOSIS] Checking:', record['Probable Diagnosis'], 'Score:', score);
-          
-          if (score > 0 && (!bestMatch || score > bestMatch.score)) {
-            bestMatch = { record, score };
-          }
+        if (fallbackError) {
+          console.error('Error fetching fallback diagnosis:', fallbackError);
+          setDiagnosis('Unable to determine diagnosis. Please consult with a healthcare provider.');
+        } else {
+          setDiagnosis(fallbackData?.['Probable Diagnosis'] || 'No diagnosis information available.');
         }
-      }
-      
-      if (bestMatch) {
-        console.log('🔍 [DIAGNOSIS] Best match found:', bestMatch.record['Probable Diagnosis']);
-        setDiagnosis(bestMatch.record['Probable Diagnosis']);
       } else {
-        console.log('🔍 [DIAGNOSIS] No keyword match, using first record from body part');
-        // If no keyword match, use the first diagnosis for the body part
-        const firstMatch = bodyPartMatches?.[0]?.['Probable Diagnosis'];
-        setDiagnosis(firstMatch || 'Please consult with a healthcare provider for proper diagnosis.');
+        setDiagnosis(data?.['Probable Diagnosis'] || 'No diagnosis information available.');
       }
     } catch (err) {
       console.error('Unexpected error:', err);
-      setDiagnosis('Please consult with a healthcare provider for proper diagnosis.');
+      setDiagnosis('Unable to determine diagnosis. Please consult with a healthcare provider.');
     } finally {
       setLoadingDiagnosis(false);
     }
@@ -253,59 +229,35 @@ const InteractiveSymptomSelector = ({ bodyPart, patientData, onBack }: Interacti
     
     setLoadingDiagnosis(true);
     try {
-      console.log('🔍 [DIAGNOSIS CONTINUE] Searching for symptom:', finalSelection.text, 'Body part:', bodyPart);
-      
-      // Use the same improved matching logic as handleSymptomSubmit
-      const { data: bodyPartMatches, error: bodyPartError } = await supabase
+      // Query the "New Master" table to find matching symptom and get probable diagnosis
+      const { data, error } = await supabase
         .from('New Master')
-        .select('"Probable Diagnosis", "Symptoms"')
-        .eq('Part of body_and general full body symptom', bodyPart.toUpperCase())
-        .limit(10);
+        .select('"Probable Diagnosis"')
+        .ilike('Symptoms', `%${finalSelection.text}%`)
+        .maybeSingle();
 
-      console.log('🔍 [DIAGNOSIS CONTINUE] Body part matches:', bodyPartMatches?.length || 0);
-
-      let bestMatch = null;
-      
-      if (!bodyPartError && bodyPartMatches && bodyPartMatches.length > 0) {
-        // Extract key words from the selected symptom for better matching
-        const symptomWords = finalSelection.text.toLowerCase()
-          .split(/[\s,.-]+/)
-          .filter(word => word.length > 2 && !['the', 'and', 'for', 'with', 'pain', 'ache'].includes(word));
+      if (error) {
+        console.error('Error fetching diagnosis:', error);
+        // If exact match fails, try with symptom ID keywords
+        const keywords = finalSelection.id.replace(/-/g, ' ');
+        const { data: fallbackData, error: fallbackError } = await supabase
+          .from('New Master')
+          .select('"Probable Diagnosis"')
+          .ilike('Symptoms', `%${keywords}%`)
+          .maybeSingle();
         
-        console.log('🔍 [DIAGNOSIS CONTINUE] Symptom keywords:', symptomWords);
-        
-        // Score each potential match
-        for (const record of bodyPartMatches) {
-          const recordSymptoms = record.Symptoms?.toLowerCase() || '';
-          let score = 0;
-          
-          // Score based on keyword matches
-          symptomWords.forEach(word => {
-            if (recordSymptoms.includes(word)) {
-              score += 1;
-            }
-          });
-          
-          console.log('🔍 [DIAGNOSIS CONTINUE] Checking:', record['Probable Diagnosis'], 'Score:', score);
-          
-          if (score > 0 && (!bestMatch || score > bestMatch.score)) {
-            bestMatch = { record, score };
-          }
+        if (fallbackError) {
+          console.error('Error fetching fallback diagnosis:', fallbackError);
+          setDiagnosis('Unable to determine diagnosis. Please consult with a healthcare provider.');
+        } else {
+          setDiagnosis(fallbackData['Probable Diagnosis'] || 'No diagnosis information available.');
         }
-      }
-      
-      if (bestMatch) {
-        console.log('🔍 [DIAGNOSIS CONTINUE] Best match found:', bestMatch.record['Probable Diagnosis']);
-        setDiagnosis(bestMatch.record['Probable Diagnosis']);
       } else {
-        console.log('🔍 [DIAGNOSIS CONTINUE] No keyword match, using first record from body part');
-        // If no keyword match, use the first diagnosis for the body part
-        const firstMatch = bodyPartMatches?.[0]?.['Probable Diagnosis'];
-        setDiagnosis(firstMatch || 'Please consult with a healthcare provider for proper diagnosis.');
+        setDiagnosis(data['Probable Diagnosis'] || 'No diagnosis information available.');
       }
     } catch (err) {
       console.error('Unexpected error:', err);
-      setDiagnosis('Please consult with a healthcare provider for proper diagnosis.');
+      setDiagnosis('Unable to determine diagnosis. Please consult with a healthcare provider.');
     } finally {
       setLoadingDiagnosis(false);
     }

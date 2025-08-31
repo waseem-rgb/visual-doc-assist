@@ -8,7 +8,6 @@ import { MobileLayout } from "@/layouts/MobileLayout";
 import { AuthProvider } from "@/components/AuthProvider";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import Index from "./pages/Index";
-import IndexDoctor from "./pages/IndexDoctor";
 import Consultation from "./pages/Consultation";
 import { ConsultationWizard } from "./pages/consultation/ConsultationWizard";
 import DoctorLogin from "./pages/DoctorLogin";
@@ -25,9 +24,7 @@ const queryClient = new QueryClient();
 const DesktopApp = () => (
   <Routes>
     <Route path="/" element={<Index />} />
-    <Route path="/doctor.html" element={<IndexDoctor />} />
     <Route path="/consultation" element={<Consultation />} />
-    <Route path="/login" element={<Navigate to="/customer/login" replace />} />
     <Route path="/doctor/login" element={<DoctorLogin />} />
     <Route path="/doctor/dashboard" element={
       <ProtectedRoute redirectTo="/doctor/login">
@@ -59,9 +56,7 @@ const DesktopApp = () => (
 const MobileApp = () => (
   <Routes>
     <Route path="/" element={<MobileLayout><Index /></MobileLayout>} />
-    <Route path="/doctor.html" element={<MobileLayout><IndexDoctor /></MobileLayout>} />
     <Route path="/consultation" element={<ConsultationWizard />} />
-    <Route path="/login" element={<Navigate to="/customer/login" replace />} />  
     <Route path="/doctor/login" element={<MobileLayout hideBottomNav={true}><DoctorLogin /></MobileLayout>} />
     <Route path="/doctor/dashboard" element={
       <ProtectedRoute redirectTo="/doctor/login">
