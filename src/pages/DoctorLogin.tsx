@@ -41,6 +41,21 @@ const DoctorLogin = () => {
 
         if (signUpError) throw signUpError;
 
+        // If user was created, assign doctor role
+        if (data.user) {
+          const { error: roleError } = await supabase
+            .from('user_roles')
+            .insert({
+              user_id: data.user.id,
+              role: 'doctor'
+            });
+          
+          if (roleError) {
+            console.error("Error assigning doctor role:", roleError);
+            // Don't fail the signup for role assignment errors
+          }
+        }
+
         toast({
           title: "Account Created",
           description: "Please check your email to confirm your account, then sign in.",
