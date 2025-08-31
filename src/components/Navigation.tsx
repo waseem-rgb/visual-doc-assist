@@ -1,9 +1,11 @@
 import { Button } from "@/components/ui/button";
 import { Menu, X } from "lucide-react";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 const Navigation = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const navigate = useNavigate();
 
   const navItems = [
     { label: "Features", href: "#features" },
@@ -37,7 +39,7 @@ const Navigation = () => {
             <Button 
               variant="default" 
               className="gradient-primary"
-              onClick={() => window.location.href = "/customer/login"}
+              onClick={() => navigate("/login")}
             >
               Login / Sign Up
             </Button>
@@ -66,13 +68,13 @@ const Navigation = () => {
                   {item.label}
                 </a>
               ))}
-              <Button 
-                variant="default" 
-                className="gradient-primary w-full"
-                onClick={() => window.location.href = "/customer/login"}
-              >
-                Login / Sign Up
-              </Button>
+               <Button 
+                 variant="default" 
+                 className="gradient-primary w-full"
+                 onClick={() => navigate("/login")}
+               >
+                 Login / Sign Up
+               </Button>
             </div>
           </div>
         )}

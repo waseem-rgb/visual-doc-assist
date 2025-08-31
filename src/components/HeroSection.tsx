@@ -24,23 +24,23 @@ const HeroSection = () => {
             </div>
 
             <div className="flex flex-col sm:flex-row gap-4">
-              <Button 
-                size="lg" 
-                className="gradient-primary shadow-medium transition-bounce hover:shadow-large"
-                onClick={() => navigate("/customer/login")}
-              >
-                Login/My Dashboard & Prescription Download
-                <ArrowRight className="ml-2 h-5 w-5" />
-              </Button>
-              <Button 
-                size="lg" 
-                variant="outline" 
-                className="border-primary text-primary hover:bg-primary hover:text-primary-foreground transition-smooth"
-                onClick={() => navigate("/doctor/login")}
-              >
-                For Healthcare Providers
-                <Stethoscope className="ml-2 h-5 w-5" />
-              </Button>
+               <Button 
+                 size="lg" 
+                 className="gradient-primary shadow-medium transition-bounce hover:shadow-large"
+                 onClick={() => navigate("/login")}
+               >
+                 Login/My Dashboard & Prescription Download
+                 <ArrowRight className="ml-2 h-5 w-5" />
+               </Button>
+               <Button 
+                 size="lg" 
+                 variant="outline" 
+                 className="border-primary text-primary hover:bg-primary hover:text-primary-foreground transition-smooth"
+                 onClick={() => window.open('/doctor.html', '_blank')}
+               >
+                 For Healthcare Providers
+                 <Stethoscope className="ml-2 h-5 w-5" />
+               </Button>
             </div>
 
             <div className="flex items-center space-x-8">
