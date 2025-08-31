@@ -1,11 +1,15 @@
 import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Button } from "@/components/ui/button";
 import { StickyFooterActions } from "@/components/common/StickyFooterActions";
-import { User, Calendar, Users, Phone } from "lucide-react";
+import { User, Calendar, Users, Phone, FileCheck } from "lucide-react";
 import { useConsultationStore, PatientData } from "@/store/consultationStore";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 interface PatientInfoStepProps {
   onNext: () => void;
@@ -14,8 +18,13 @@ interface PatientInfoStepProps {
 }
 
 export function PatientInfoStep({ onNext, onBack }: PatientInfoStepProps) {
-  const { patientData, setPatientData } = useConsultationStore();
+  const [searchParams] = useSearchParams();
+  const { patientData, setPatientData, selectedSymptoms, symptomNotes, diagnosis, resetConsultation } = useConsultationStore();
   const [formData, setFormData] = useState<PatientData>(patientData);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { toast } = useToast();
+  
+  const isImported = searchParams.get('imported') === 'true';
 
   useEffect(() => {
     console.log('🔍 [PATIENT INFO] Setting patient data in store:', formData);
@@ -29,6 +38,65 @@ export function PatientInfoStep({ onNext, onBack }: PatientInfoStepProps) {
     console.log('🔍 [PATIENT INFO] Phone number:', updatedData.phone);
   };
 
+  const handleSubmitImportedConsultation = async () => {
+    try {
+      setIsSubmitting(true);
+      
+      const { data: user } = await supabase.auth.getUser();
+      if (!user.user) {
+        toast({
+          title: 'Authentication Error',
+          description: 'Please log in to submit consultation',
+          variant: 'destructive'
+        });
+        return;
+      }
+
+      // Create prescription request with imported data
+      const { data: prescriptionRequest, error } = await supabase
+        .from('prescription_requests')
+        .insert({
+          customer_id: user.user.id,
+          external_source: 'daigasst-health-ai',
+          patient_name: formData.name,
+          patient_age: formData.age,
+          patient_gender: formData.gender,
+          patient_phone: formData.phone,
+          body_part: 'Imported Analysis',
+          symptoms: selectedSymptoms.join(', ') + (symptomNotes ? `\n\nNotes: ${symptomNotes}` : ''),
+          probable_diagnosis: diagnosis || 'Analysis imported from DAIGASST Health AI',
+          short_summary: 'Consultation imported from DAIGASST Health AI system',
+          prescription_required: true,
+          status: 'pending',
+        })
+        .select()
+        .single();
+
+      if (error) {
+        throw error;
+      }
+
+      toast({
+        title: 'Consultation Submitted',
+        description: 'Your consultation has been submitted to the doctor for review.',
+      });
+
+      // Reset consultation data and navigate to dashboard
+      resetConsultation();
+      window.location.href = '/customer-dashboard';
+
+    } catch (error) {
+      console.error('Error submitting consultation:', error);
+      toast({
+        title: 'Submission Failed',
+        description: 'Failed to submit consultation. Please try again.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const isValid = formData.name.trim() && formData.age.trim() && formData.gender && formData.phone.trim() &&
     (formData.gender !== 'female' || parseInt(formData.age) <= 18 || formData.isPregnant);
 
@@ -38,9 +106,16 @@ export function PatientInfoStep({ onNext, onBack }: PatientInfoStepProps) {
         <Card>
           <CardHeader className="text-center pb-4">
             <div className="mx-auto w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mb-3">
-              <User className="h-6 w-6 text-primary" />
+              {isImported ? <FileCheck className="h-6 w-6 text-primary" /> : <User className="h-6 w-6 text-primary" />}
             </div>
-            <CardTitle className="text-xl">Patient Information</CardTitle>
+            <CardTitle className="text-xl">
+              {isImported ? 'Imported Patient Information' : 'Patient Information'}
+            </CardTitle>
+            {isImported && (
+              <p className="text-sm text-muted-foreground">
+                This data was imported from DAIGASST Health AI. Please review and submit to doctor.
+              </p>
+            )}
           </CardHeader>
           
           <CardContent className="space-y-6 px-6 pb-6">
@@ -145,12 +220,31 @@ export function PatientInfoStep({ onNext, onBack }: PatientInfoStepProps) {
         </Card>
       </div>
 
-      <StickyFooterActions
-        onBack={onBack}
-        onNext={onNext}
-        nextDisabled={!isValid}
-        nextLabel="Continue to Body Areas"
-      />
+      {isImported ? (
+        <div className="p-4 space-y-4">
+          <Button
+            onClick={handleSubmitImportedConsultation}
+            disabled={!isValid || isSubmitting}
+            className="w-full h-12 text-base"
+          >
+            {isSubmitting ? 'Submitting...' : 'Submit to Doctor for Review'}
+          </Button>
+          <StickyFooterActions
+            onBack={onBack}
+            onNext={onNext}
+            nextDisabled={!isValid}
+            nextLabel="Continue Editing"
+            backLabel="Back"
+          />
+        </div>
+      ) : (
+        <StickyFooterActions
+          onBack={onBack}
+          onNext={onNext}
+          nextDisabled={!isValid}
+          nextLabel="Continue to Body Areas"
+        />
+      )}
     </div>
   );
 }

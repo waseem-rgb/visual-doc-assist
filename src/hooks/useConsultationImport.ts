@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { useConsultationStore } from '@/store/consultationStore';
 
 interface ConsultationImportData {
   analysis_id: string;
@@ -25,6 +26,7 @@ export const useConsultationImport = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { setPatientData, setSelectedSymptoms, setSymptomNotes, setDiagnosis } = useConsultationStore();
   const [isImporting, setIsImporting] = useState(false);
 
   const importConsultationData = async (data: ConsultationImportData) => {
@@ -48,6 +50,30 @@ export const useConsultationImport = () => {
       }
 
       const consultationData: ConsultationAnalysis = await response.json();
+
+      // Populate consultation store with imported data
+      setPatientData({
+        name: consultationData.patient_data.name,
+        age: consultationData.patient_data.age,
+        gender: consultationData.patient_data.gender,
+        phone: consultationData.patient_data.phone || '',
+        isPregnant: undefined
+      });
+
+      // Set symptoms and diagnosis if available
+      if (consultationData.analysis_results?.symptoms) {
+        setSelectedSymptoms(Array.isArray(consultationData.analysis_results.symptoms) 
+          ? consultationData.analysis_results.symptoms 
+          : [consultationData.analysis_results.symptoms]);
+      }
+
+      if (consultationData.analysis_results?.notes) {
+        setSymptomNotes(consultationData.analysis_results.notes);
+      }
+
+      if (consultationData.analysis_results?.diagnosis) {
+        setDiagnosis(consultationData.analysis_results.diagnosis);
+      }
 
       // Create prescription request with the imported data
       const { data: prescriptionRequest, error } = await supabase
@@ -82,8 +108,8 @@ export const useConsultationImport = () => {
       const cleanUrl = window.location.origin + window.location.pathname;
       window.history.replaceState({}, document.title, cleanUrl);
       
-      // Navigate to the consultation request
-      navigate(`/doctor-dashboard?imported=${prescriptionRequest.id}`);
+      // Navigate to the consultation page with imported data
+      navigate('/consultation?imported=true');
 
     } catch (error) {
       console.error('Error importing consultation:', error);
