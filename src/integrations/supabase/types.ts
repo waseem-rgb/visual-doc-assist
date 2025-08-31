@@ -17,11 +17,14 @@ export type Database = {
       appointments: {
         Row: {
           appointment_date: string
+          callback_url: string | null
           chief_complaint: string | null
           created_at: string
           customer_id: string
           doctor_id: string
           duration_minutes: number
+          external_id: string | null
+          external_source: string | null
           id: string
           notes: string | null
           patient_age: string
@@ -34,11 +37,14 @@ export type Database = {
         }
         Insert: {
           appointment_date: string
+          callback_url?: string | null
           chief_complaint?: string | null
           created_at?: string
           customer_id: string
           doctor_id: string
           duration_minutes?: number
+          external_id?: string | null
+          external_source?: string | null
           id?: string
           notes?: string | null
           patient_age: string
@@ -51,11 +57,14 @@ export type Database = {
         }
         Update: {
           appointment_date?: string
+          callback_url?: string | null
           chief_complaint?: string | null
           created_at?: string
           customer_id?: string
           doctor_id?: string
           duration_minutes?: number
+          external_id?: string | null
+          external_source?: string | null
           id?: string
           notes?: string | null
           patient_age?: string
@@ -310,6 +319,7 @@ export type Database = {
           assigned_doctor_id: string | null
           basic_investigations: string | null
           body_part: string
+          callback_url: string | null
           chief_complaint: string | null
           clinical_history: string | null
           common_treatments: string | null
@@ -317,6 +327,8 @@ export type Database = {
           customer_email: string | null
           customer_id: string | null
           database_diagnosis: string | null
+          external_id: string | null
+          external_source: string | null
           id: string
           medication_history: string | null
           patient_age: string
@@ -337,6 +349,7 @@ export type Database = {
           assigned_doctor_id?: string | null
           basic_investigations?: string | null
           body_part: string
+          callback_url?: string | null
           chief_complaint?: string | null
           clinical_history?: string | null
           common_treatments?: string | null
@@ -344,6 +357,8 @@ export type Database = {
           customer_email?: string | null
           customer_id?: string | null
           database_diagnosis?: string | null
+          external_id?: string | null
+          external_source?: string | null
           id?: string
           medication_history?: string | null
           patient_age: string
@@ -364,6 +379,7 @@ export type Database = {
           assigned_doctor_id?: string | null
           basic_investigations?: string | null
           body_part?: string
+          callback_url?: string | null
           chief_complaint?: string | null
           clinical_history?: string | null
           common_treatments?: string | null
@@ -371,6 +387,8 @@ export type Database = {
           customer_email?: string | null
           customer_id?: string | null
           database_diagnosis?: string | null
+          external_id?: string | null
+          external_source?: string | null
           id?: string
           medication_history?: string | null
           patient_age?: string
