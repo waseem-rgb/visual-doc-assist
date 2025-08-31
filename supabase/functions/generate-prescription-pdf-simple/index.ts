@@ -153,7 +153,9 @@ Deno.serve(async (req) => {
       }
 
       referralText = masterData?.['prescription_Y-N'] || 'specialist';
+      const masterDiagnosis = masterData?.['Probable Diagnosis'] || null;
       console.log('Referral text found:', referralText ? 'yes' : 'no');
+      console.log('Master diagnosis found:', masterDiagnosis ? 'yes' : 'no');
 
       // Create a referral prescription if it doesn't exist - use NULL doctor_id
       const { data: existingPrescription } = await adminSupabase
@@ -171,7 +173,7 @@ Deno.serve(async (req) => {
             patient_name: requestData.patient_name,
             patient_age: requestData.patient_age,
             patient_gender: requestData.patient_gender,
-            diagnosis: requestData.database_diagnosis || requestData.probable_diagnosis || 'Referral required',
+            diagnosis: masterDiagnosis || requestData.database_diagnosis || requestData.probable_diagnosis || 'Unable to determine diagnosis. Please consult with a healthcare provider.',
             medications: '[]',
             instructions: `Referred to: ${referralText}`,
             prescription_date: new Date().toISOString()
@@ -188,6 +190,21 @@ Deno.serve(async (req) => {
         }
         prescription = newPrescription;
       } else {
+        // Update existing prescription with latest master data if available
+        if (masterDiagnosis) {
+          const { error: updateError } = await adminSupabase
+            .from('prescriptions')
+            .update({
+              diagnosis: masterDiagnosis,
+              instructions: `Referred to: ${referralText}`
+            })
+            .eq('id', existingPrescription.id);
+          
+          if (!updateError) {
+            existingPrescription.diagnosis = masterDiagnosis;
+            existingPrescription.instructions = `Referred to: ${referralText}`;
+          }
+        }
         prescription = existingPrescription;
       }
 
