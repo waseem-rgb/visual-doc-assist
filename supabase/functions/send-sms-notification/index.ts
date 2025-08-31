@@ -96,8 +96,18 @@ const serve_handler = async (req: Request): Promise<Response> => {
       throw new Error('Missing Twilio credentials');
     }
 
-    // Format phone number - ensure it starts with +
-    let formattedTo = to.startsWith('+') ? to : `+${to}`;
+    // Format phone number with proper country code
+    let formattedTo = to;
+    
+    if (!to.startsWith('+')) {
+      // Check if it's an Indian number (10 digits starting with 6-9)
+      if (/^[6-9]\d{9}$/.test(to)) {
+        formattedTo = `+91${to}`;
+      } else {
+        // Default to adding + prefix for other numbers
+        formattedTo = `+${to}`;
+      }
+    }
     
     // Generate message based on type if not provided
     let finalMessage = message;
