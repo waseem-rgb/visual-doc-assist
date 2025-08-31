@@ -188,13 +188,17 @@ export function TeleconsultationBooking({ onBookingSuccess }: TeleconsultationBo
       const [hours, minutes] = selectedTime.split(':').map(Number);
       const appointmentDateTime = setMinutes(setHours(selectedDate, hours), minutes);
       
-      const whatsappLink = generateWhatsAppLink(doctorInfo.phone || '+971501234567');
+      // Use fallback doctor info if not loaded
+      const defaultDoctorId = '9d2c7a4c-9da0-46c2-bc00-f102d0768e1a';
+      const defaultDoctorPhone = '+971501234567';
+      
+      const whatsappLink = generateWhatsAppLink(doctorInfo?.phone || defaultDoctorPhone);
 
       const { data: user } = await supabase.auth.getUser();
       
       const { error } = await supabase.from('appointments').insert({
         customer_id: user.user?.id,
-        doctor_id: doctorInfo.id,
+        doctor_id: doctorInfo?.id || defaultDoctorId,
         appointment_date: appointmentDateTime.toISOString(),
         duration_minutes: 30,
         whatsapp_link: whatsappLink,
