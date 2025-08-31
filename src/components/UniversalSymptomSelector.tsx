@@ -153,8 +153,17 @@ const UniversalSymptomSelector = ({
   // No canvas initialization needed in static mode
 
   const handleSymptomClick = (symptom: string) => {
-    setSelectedSymptom(symptom);
-    setShowConfirmation(true);
+    // Direct toggle selection instead of confirmation dialog
+    if (selectedSymptoms.includes(symptom)) {
+      removeSymptom(symptom);
+    } else {
+      const newSymptoms = [...selectedSymptoms, symptom];
+      setSelectedSymptoms(newSymptoms);
+      toast({
+        title: "Symptom Added",
+        description: `"${symptom}" has been added to your symptoms.`,
+      });
+    }
     scrollToSymptom(symptom);
   };
 
