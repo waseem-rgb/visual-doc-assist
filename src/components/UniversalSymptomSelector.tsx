@@ -172,17 +172,9 @@ const UniversalSymptomSelector = ({
     if (selectedSymptoms.includes(symptom)) {
       // If clicking the same symptom, deselect it
       setSelectedSymptoms([]);
-      toast({
-        title: "Symptom Removed",
-        description: `"${symptom}" has been removed.`,
-      });
     } else {
       // Replace current selection with new symptom
       setSelectedSymptoms([symptom]);
-      toast({
-        title: "Symptom Selected",
-        description: `"${symptom}" has been selected.`,
-      });
     }
     scrollToSymptom(symptom);
   };
@@ -191,10 +183,6 @@ const UniversalSymptomSelector = ({
     if (selectedSymptom && !selectedSymptoms.includes(selectedSymptom)) {
       const newSymptoms = [...selectedSymptoms, selectedSymptom];
       setSelectedSymptoms(newSymptoms);
-      toast({
-        title: "Symptom Added",
-        description: `"${selectedSymptom}" has been added to your symptoms.`,
-      });
     }
     setSelectedSymptom('');
     setShowConfirmation(false);
@@ -203,10 +191,6 @@ const UniversalSymptomSelector = ({
   const removeSymptom = (symptom: string) => {
     const newSymptoms = selectedSymptoms.filter(s => s !== symptom);
     setSelectedSymptoms(newSymptoms);
-    toast({
-      title: "Symptom Removed",
-      description: `"${symptom}" has been removed from your symptoms.`,
-    });
   };
 
   // Zoom controls removed for static mode
