@@ -34,13 +34,21 @@ const Navigation = () => {
                 {item.label}
               </a>
             ))}
-            <Button 
-              variant="default" 
-              className="gradient-primary"
-              onClick={() => window.location.href = "/customer/login"}
-            >
-              Login / Sign Up
-            </Button>
+            <div className="flex items-center space-x-2">
+              <Button 
+                variant="outline" 
+                onClick={() => window.location.href = "/doctor/login"}
+              >
+                Doctor Login
+              </Button>
+              <Button 
+                variant="default" 
+                className="gradient-primary"
+                onClick={() => window.location.href = "/customer/login"}
+              >
+                Patient Login
+              </Button>
+            </div>
           </div>
 
           {/* Mobile Menu Button */}
@@ -67,11 +75,18 @@ const Navigation = () => {
                 </a>
               ))}
               <Button 
+                variant="outline" 
+                className="w-full mb-2"
+                onClick={() => window.location.href = "/doctor/login"}
+              >
+                Doctor Login
+              </Button>
+              <Button 
                 variant="default" 
                 className="gradient-primary w-full"
                 onClick={() => window.location.href = "/customer/login"}
               >
-                Login / Sign Up
+                Patient Login
               </Button>
             </div>
           </div>

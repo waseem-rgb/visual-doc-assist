@@ -33,8 +33,11 @@ export const ProtectedRoute = ({
     return <Navigate to={redirectTo} replace />;
   }
 
-  // Role-based redirects will be handled by the specific dashboard components
-  // since they already have role checking logic
+  // If a specific role is required, check for it
+  if (requireRole) {
+    // For now, we'll assume role checking is handled by individual dashboard components
+    // since we need async role checking from the database
+  }
 
   return <>{children}</>;
 };

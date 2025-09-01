@@ -60,12 +60,29 @@ const CustomerAuth = () => {
           throw new Error("Authentication failed");
         }
 
+        // Check user roles to determine correct dashboard
+        const { data: roles, error: roleError } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', data.user.id);
+
+        if (roleError) {
+          console.error("Error checking user roles:", roleError);
+        }
+
+        const hasDocRole = roles?.some(r => r.role === 'doctor');
+        
         toast({
           title: "Welcome Back!",
           description: "You've been signed in successfully.",
         });
         
-        navigate("/customer/dashboard");
+        // Redirect based on user role
+        if (hasDocRole) {
+          navigate("/doctor/dashboard");
+        } else {
+          navigate("/customer/dashboard");
+        }
       }
     } catch (error: any) {
       setError(error.message);
