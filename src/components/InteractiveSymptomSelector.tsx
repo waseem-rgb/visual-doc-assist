@@ -163,35 +163,46 @@ const InteractiveSymptomSelector = ({ bodyPart, patientData, onBack }: Interacti
     
     // Automatically fetch diagnosis from database when symptom is selected
     setLoadingDiagnosis(true);
+    console.log('🔍 [DIAGNOSIS FETCH] Fetching diagnosis for symptom:', symptom.text);
+    
     try {
-      // Query the "New Master" table to find matching symptom and get probable diagnosis
-      const { data, error } = await supabase
-        .from('New Master')
-        .select('"Probable Diagnosis"')
-        .ilike('Symptoms', `%${symptom.text}%`)
-        .maybeSingle();
+      // Multiple search strategies to find the best match in "New Master" table
+      const searchTerms = [
+        symptom.text,
+        symptom.id.replace(/-/g, ' '),
+        symptom.text.split(' ').slice(0, 3).join(' '), // First 3 words
+        ...symptom.text.split(' ').filter(word => word.length > 3) // Individual significant words
+      ];
 
-      if (error) {
-        console.error('Error fetching diagnosis:', error);
-        // If exact match fails, try with symptom ID keywords
-        const keywords = symptom.id.replace(/-/g, ' ');
-        const { data: fallbackData, error: fallbackError } = await supabase
-          .from('New Master')
-          .select('"Probable Diagnosis"')
-          .ilike('Symptoms', `%${keywords}%`)
-          .maybeSingle();
+      let bestMatch = null;
+      
+      for (const term of searchTerms) {
+        console.log('🔍 [DIAGNOSIS FETCH] Trying search term:', term);
         
-        if (fallbackError) {
-          console.error('Error fetching fallback diagnosis:', fallbackError);
-          setDiagnosis('Unable to determine diagnosis. Please consult with a healthcare provider.');
-        } else {
-          setDiagnosis(fallbackData?.['Probable Diagnosis'] || 'No diagnosis information available.');
+        const { data, error } = await supabase
+          .from('New Master')
+          .select('"Probable Diagnosis", "Symptoms"')
+          .ilike('Symptoms', `%${term}%`)
+          .not('Probable Diagnosis', 'is', null)
+          .limit(5);
+
+        if (!error && data && data.length > 0) {
+          console.log('🔍 [DIAGNOSIS FETCH] Found matches:', data);
+          bestMatch = data[0]; // Take first match
+          break;
         }
+      }
+
+      if (bestMatch) {
+        const diagnosis = bestMatch['Probable Diagnosis'];
+        console.log('✅ [DIAGNOSIS FETCH] Found diagnosis:', diagnosis);
+        setDiagnosis(diagnosis || 'No specific diagnosis information available.');
       } else {
-        setDiagnosis(data?.['Probable Diagnosis'] || 'No diagnosis information available.');
+        console.log('❌ [DIAGNOSIS FETCH] No matches found');
+        setDiagnosis('Unable to determine specific diagnosis. Please consult with a healthcare provider.');
       }
     } catch (err) {
-      console.error('Unexpected error:', err);
+      console.error('Unexpected error in diagnosis fetch:', err);
       setDiagnosis('Unable to determine diagnosis. Please consult with a healthcare provider.');
     } finally {
       setLoadingDiagnosis(false);
@@ -228,35 +239,46 @@ const InteractiveSymptomSelector = ({ bodyPart, patientData, onBack }: Interacti
     if (!finalSelection) return;
     
     setLoadingDiagnosis(true);
+    console.log('🔍 [FINAL DIAGNOSIS FETCH] Fetching diagnosis for final selection:', finalSelection.text);
+    
     try {
-      // Query the "New Master" table to find matching symptom and get probable diagnosis
-      const { data, error } = await supabase
-        .from('New Master')
-        .select('"Probable Diagnosis"')
-        .ilike('Symptoms', `%${finalSelection.text}%`)
-        .maybeSingle();
+      // Multiple search strategies to find the best match in "New Master" table
+      const searchTerms = [
+        finalSelection.text,
+        finalSelection.id.replace(/-/g, ' '),
+        finalSelection.text.split(' ').slice(0, 3).join(' '), // First 3 words
+        ...finalSelection.text.split(' ').filter(word => word.length > 3) // Individual significant words
+      ];
 
-      if (error) {
-        console.error('Error fetching diagnosis:', error);
-        // If exact match fails, try with symptom ID keywords
-        const keywords = finalSelection.id.replace(/-/g, ' ');
-        const { data: fallbackData, error: fallbackError } = await supabase
-          .from('New Master')
-          .select('"Probable Diagnosis"')
-          .ilike('Symptoms', `%${keywords}%`)
-          .maybeSingle();
+      let bestMatch = null;
+      
+      for (const term of searchTerms) {
+        console.log('🔍 [FINAL DIAGNOSIS FETCH] Trying search term:', term);
         
-        if (fallbackError) {
-          console.error('Error fetching fallback diagnosis:', fallbackError);
-          setDiagnosis('Unable to determine diagnosis. Please consult with a healthcare provider.');
-        } else {
-          setDiagnosis(fallbackData['Probable Diagnosis'] || 'No diagnosis information available.');
+        const { data, error } = await supabase
+          .from('New Master')
+          .select('"Probable Diagnosis", "Symptoms"')
+          .ilike('Symptoms', `%${term}%`)
+          .not('Probable Diagnosis', 'is', null)
+          .limit(5);
+
+        if (!error && data && data.length > 0) {
+          console.log('🔍 [FINAL DIAGNOSIS FETCH] Found matches:', data);
+          bestMatch = data[0]; // Take first match
+          break;
         }
+      }
+
+      if (bestMatch) {
+        const diagnosis = bestMatch['Probable Diagnosis'];
+        console.log('✅ [FINAL DIAGNOSIS FETCH] Found diagnosis:', diagnosis);
+        setDiagnosis(diagnosis || 'No specific diagnosis information available.');
       } else {
-        setDiagnosis(data['Probable Diagnosis'] || 'No diagnosis information available.');
+        console.log('❌ [FINAL DIAGNOSIS FETCH] No matches found');
+        setDiagnosis('Unable to determine specific diagnosis. Please consult with a healthcare provider.');
       }
     } catch (err) {
-      console.error('Unexpected error:', err);
+      console.error('Unexpected error in final diagnosis fetch:', err);
       setDiagnosis('Unable to determine diagnosis. Please consult with a healthcare provider.');
     } finally {
       setLoadingDiagnosis(false);
