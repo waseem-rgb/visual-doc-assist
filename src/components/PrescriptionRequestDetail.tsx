@@ -14,7 +14,8 @@ import {
   Phone,
   CheckCircle,
   Download,
-  AlertCircle
+  AlertCircle,
+  Send
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import MedicationSelector from "./MedicationSelector";
@@ -57,6 +58,7 @@ interface PrescriptionRequestDetailProps {
 
 const PrescriptionRequestDetail = ({ request, onBack, onUpdate }: PrescriptionRequestDetailProps) => {
   const [loading, setLoading] = useState(false);
+  const [sendingToGramaSathi, setSendingToGramaSathi] = useState(false);
   const [prescribedMedications, setPrescribedMedications] = useState<any[]>([]);
   const [instructions, setInstructions] = useState("");
   const [followUpNotes, setFollowUpNotes] = useState("");
@@ -309,6 +311,43 @@ const PrescriptionRequestDetail = ({ request, onBack, onUpdate }: PrescriptionRe
     }
   };
 
+  const handleSendToGramaSathi = async () => {
+    setSendingToGramaSathi(true);
+    try {
+      const consultationData = {
+        id: request.id,
+        patient_name: request.patient_name,
+        patient_age: request.patient_age,
+        patient_gender: request.patient_gender,
+        patient_phone: request.patient_phone,
+        symptoms: request.symptoms,
+        probable_diagnosis: selectedDiagnosis === 'ai' ? request.ai_diagnosis : request.database_diagnosis || request.probable_diagnosis,
+        common_treatments: updatedTreatments,
+        created_at: request.created_at,
+        severity: 'moderate' // Default severity
+      };
+
+      const { data, error } = await supabase.functions.invoke('send-to-gramasathi', {
+        body: { consultationData }
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Sent to Grama-Sathi",
+        description: "Consultation data has been successfully sent to Grama-Sathi project.",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to send consultation to Grama-Sathi.",
+        variant: "destructive",
+      });
+    } finally {
+      setSendingToGramaSathi(false);
+    }
+  };
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'pending': return 'bg-yellow-500';
@@ -437,6 +476,16 @@ const PrescriptionRequestDetail = ({ request, onBack, onUpdate }: PrescriptionRe
                 <Button variant="outline" className="w-full">
                   <Phone className="h-4 w-4 mr-2" />
                   Call Patient
+                </Button>
+
+                <Button 
+                  variant="outline" 
+                  className="w-full"
+                  onClick={handleSendToGramaSathi}
+                  disabled={sendingToGramaSathi}
+                >
+                  <Send className="h-4 w-4 mr-2" />
+                  {sendingToGramaSathi ? 'Sending...' : 'Send to Grama-Sathi'}
                 </Button>
                 
                 {request.status === 'completed' && (
