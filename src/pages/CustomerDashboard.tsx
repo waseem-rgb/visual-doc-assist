@@ -74,6 +74,23 @@ const CustomerDashboard = () => {
         return;
       }
 
+      // Check if user has doctor role - if so, redirect to doctor dashboard
+      const { data: roles, error: roleError } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', user.id);
+
+      if (roleError) {
+        console.error("Error checking user roles:", roleError);
+      } else {
+        const hasDocRole = roles?.some(r => r.role === 'doctor');
+        if (hasDocRole) {
+          console.log("User has doctor role - redirecting to doctor dashboard");
+          navigate("/doctor/dashboard");
+          return;
+        }
+      }
+
       setUser(user);
 
       // Fetch customer's prescription requests
