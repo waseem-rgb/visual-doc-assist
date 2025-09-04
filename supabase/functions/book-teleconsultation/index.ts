@@ -152,10 +152,61 @@ serve(async (req) => {
       console.log('Continuing without video consultation room');
     }
 
-    // Generate join URLs (these would be actual WebRTC URLs in production)
-    const baseUrl = supabaseUrl.replace('.supabase.co', '.lovable.app'); // Adjust based on your domain
-    const doctorJoinUrl = `${baseUrl}/video-consultation/${appointment.id}?role=doctor`;
-    const patientJoinUrl = `${baseUrl}/video-consultation/${appointment.id}?role=patient`;
+    // Generate join URLs
+    const baseUrl = 'https://9ef9f016-bd2c-406c-a384-b239fe6ec4e2.sandbox.lovable.dev'; // Use actual domain
+    const doctorJoinUrl = `${baseUrl}/consultation/video/${appointment.id}?role=doctor`;
+    const patientJoinUrl = `${baseUrl}/consultation/video/${appointment.id}?role=patient`;
+
+    // Send SMS to patient
+    try {
+      console.log('📱 Sending SMS to patient:', requestData.patient.phone);
+      await supabase.functions.invoke('send-sms-notification', {
+        body: {
+          to: requestData.patient.phone,
+          type: 'teleconsultation_booked',
+          patientName: requestData.patient.name,
+          doctorName: 'Doctor', // We can fetch actual doctor name if needed
+          appointmentDate: new Date(requestData.appointment_date).toDateString(),
+          appointmentTime: new Date(requestData.appointment_date).toTimeString().slice(0, 5),
+          joinLink: patientJoinUrl,
+          appointmentId: appointment.id
+        }
+      });
+      console.log('✅ Patient SMS sent successfully');
+    } catch (smsError) {
+      console.error('❌ Failed to send patient SMS:', smsError);
+    }
+
+    // Send SMS to doctor
+    try {
+      // Get doctor's phone number
+      const { data: doctorData } = await supabase
+        .from('doctor_profiles')
+        .select('phone, full_name')
+        .eq('id', doctorId)
+        .single();
+
+      if (doctorData?.phone) {
+        console.log('📱 Sending SMS to doctor:', doctorData.phone);
+        await supabase.functions.invoke('send-sms-notification', {
+          body: {
+            to: doctorData.phone,
+            type: 'new_teleconsultation_assigned',
+            doctorName: doctorData.full_name,
+            patientName: requestData.patient.name,
+            appointmentDate: new Date(requestData.appointment_date).toDateString(),
+            appointmentTime: new Date(requestData.appointment_date).toTimeString().slice(0, 5),
+            joinLink: doctorJoinUrl,
+            appointmentId: appointment.id
+          }
+        });
+        console.log('✅ Doctor SMS sent successfully');
+      } else {
+        console.log('⚠️ No doctor phone number found');
+      }
+    } catch (smsError) {
+      console.error('❌ Failed to send doctor SMS:', smsError);
+    }
 
     console.log('Successfully created appointment:', appointment.id);
 

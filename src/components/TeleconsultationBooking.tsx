@@ -208,27 +208,33 @@ export function TeleconsultationBooking({ onBookingSuccess }: TeleconsultationBo
 
       if (error) throw error;
 
-      // Send SMS notification about appointment booking
+      // Generate consultation join link  
+      const consultationLink = `${window.location.origin}/consultation/video/${newAppointment.id}?role=patient`;
+      
+      // Send SMS notification about appointment booking with join link
       if (patientData.phone) {
         try {
           console.log('📱 [TELECONSULT] Attempting to send SMS to:', patientData.phone);
           console.log('📱 [TELECONSULT] SMS request body:', {
             to: patientData.phone,
-            type: 'appointment_booked',
+            type: 'teleconsultation_booked',
             patientName: patientData.name,
             doctorName: doctorInfo?.full_name || 'Dr. ' + (doctorInfo?.id || 'Unknown'),
             appointmentDate: format(appointmentDateTime, 'PPP'),
-            appointmentTime: selectedTime
+            appointmentTime: selectedTime,
+            joinLink: consultationLink
           });
           
           const { data: smsResult, error: smsError } = await supabase.functions.invoke('send-sms-notification', {
             body: {
               to: patientData.phone,
-              type: 'appointment_booked',
+              type: 'teleconsultation_booked',
               patientName: patientData.name,
               doctorName: doctorInfo?.full_name || 'Dr. ' + (doctorInfo?.id || 'Unknown'),
               appointmentDate: format(appointmentDateTime, 'PPP'),
-              appointmentTime: selectedTime
+              appointmentTime: selectedTime,
+              joinLink: consultationLink,
+              appointmentId: newAppointment.id
             }
           });
 
@@ -240,7 +246,7 @@ export function TeleconsultationBooking({ onBookingSuccess }: TeleconsultationBo
           console.log('📱 [TELECONSULT] SMS sent successfully:', smsResult);
           toast({
             title: "SMS Notification Sent",
-            description: `Appointment confirmation sent to ${patientData.phone}`,
+            description: `Consultation link sent to ${patientData.phone}`,
           });
         } catch (smsError) {
           console.error('Failed to send SMS notification:', smsError);
@@ -260,18 +266,16 @@ export function TeleconsultationBooking({ onBookingSuccess }: TeleconsultationBo
         });
       }
 
-      const consultationLink = `/consultation/video/${newAppointment.id}`;
-      
       toast({
         title: "✅ Appointment Booked Successfully!",
-        description: `Video consultation: ${format(appointmentDateTime, 'PPP')} at ${selectedTime}. SMS sent to ${patientData.phone}`,
+        description: `Video consultation: ${format(appointmentDateTime, 'PPP')} at ${selectedTime}`,
       });
 
       // Show consultation link prominently
       setTimeout(() => {
         toast({
           title: "🎥 Your Video Consultation Ready",
-          description: "You can join the consultation at your scheduled time",
+          description: `Join at: ${consultationLink}`,
         });
       }, 2000);
 

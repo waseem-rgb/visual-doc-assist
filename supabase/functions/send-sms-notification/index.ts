@@ -9,13 +9,15 @@ const corsHeaders = {
 interface SMSRequest {
   to: string;
   message?: string;
-  type: 'case_claimed' | 'prescription_ready' | 'consultation_update' | 'prescription_requested' | 'referral_submitted' | 'appointment_booked';
+  type: 'case_claimed' | 'prescription_ready' | 'consultation_update' | 'prescription_requested' | 'referral_submitted' | 'appointment_booked' | 'teleconsultation_booked' | 'new_teleconsultation_assigned';
   patientName?: string;
   doctorName?: string;
   appointmentDate?: string;
   appointmentTime?: string;
   isReferral?: boolean;
   referralSpecialist?: string;
+  joinLink?: string;
+  appointmentId?: string;
 }
 
 const serve_handler = async (req: Request): Promise<Response> => {
@@ -60,7 +62,7 @@ const serve_handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    const { to, message, type, patientName, doctorName, appointmentDate, appointmentTime, isReferral, referralSpecialist }: SMSRequest = await req.json();
+    const { to, message, type, patientName, doctorName, appointmentDate, appointmentTime, isReferral, referralSpecialist, joinLink, appointmentId }: SMSRequest = await req.json();
     
     // Log without PII - only log type and success/failure
     console.log(`Sending SMS notification of type: ${type}`);
@@ -134,6 +136,12 @@ const serve_handler = async (req: Request): Promise<Response> => {
           break;
         case 'appointment_booked':
           finalMessage = `Hello ${patientName || 'Patient'}, your teleconsultation appointment with Dr. ${doctorName || 'your doctor'} has been confirmed for ${appointmentDate || 'the scheduled date'}${appointmentTime ? ` at ${appointmentTime}` : ''}. You'll receive a WhatsApp link shortly.`;
+          break;
+        case 'teleconsultation_booked':
+          finalMessage = `🎥 Teleconsultation Booked! Hello ${patientName || 'Patient'}, your video consultation with Dr. ${doctorName || 'your doctor'} is confirmed for ${appointmentDate || 'the scheduled date'}${appointmentTime ? ` at ${appointmentTime}` : ''}. ${joinLink ? `Join here: ${joinLink}` : 'You will receive the join link shortly.'}`;
+          break;
+        case 'new_teleconsultation_assigned':
+          finalMessage = `📋 New Consultation Assigned. Hello Dr. ${doctorName || 'Doctor'}, you have a new teleconsultation with ${patientName || 'Patient'} on ${appointmentDate || 'the scheduled date'}${appointmentTime ? ` at ${appointmentTime}` : ''}. ${joinLink ? `Join here: ${joinLink}` : 'Check your dashboard for details.'}`;
           break;
         default:
           finalMessage = 'You have an update from your healthcare provider.';
