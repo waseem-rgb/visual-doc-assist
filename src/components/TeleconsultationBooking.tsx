@@ -211,7 +211,17 @@ export function TeleconsultationBooking({ onBookingSuccess }: TeleconsultationBo
       // Send SMS notification about appointment booking
       if (patientData.phone) {
         try {
-          await supabase.functions.invoke('send-sms-notification', {
+          console.log('📱 [TELECONSULT] Attempting to send SMS to:', patientData.phone);
+          console.log('📱 [TELECONSULT] SMS request body:', {
+            to: patientData.phone,
+            type: 'appointment_booked',
+            patientName: patientData.name,
+            doctorName: doctorInfo?.full_name || 'Dr. ' + (doctorInfo?.id || 'Unknown'),
+            appointmentDate: format(appointmentDateTime, 'PPP'),
+            appointmentTime: selectedTime
+          });
+          
+          const { data: smsResult, error: smsError } = await supabase.functions.invoke('send-sms-notification', {
             body: {
               to: patientData.phone,
               type: 'appointment_booked',
@@ -221,10 +231,33 @@ export function TeleconsultationBooking({ onBookingSuccess }: TeleconsultationBo
               appointmentTime: selectedTime
             }
           });
+
+          if (smsError) {
+            console.error('📱 [TELECONSULT] SMS Error:', smsError);
+            throw smsError;
+          }
+
+          console.log('📱 [TELECONSULT] SMS sent successfully:', smsResult);
+          toast({
+            title: "SMS Notification Sent",
+            description: `Appointment confirmation sent to ${patientData.phone}`,
+          });
         } catch (smsError) {
           console.error('Failed to send SMS notification:', smsError);
+          toast({
+            title: "SMS Failed",
+            description: "Appointment booked but SMS notification failed",
+            variant: "destructive"
+          });
           // Don't fail the entire operation if SMS fails
         }
+      } else {
+        console.log('📱 [TELECONSULT] No phone number provided for SMS');
+        toast({
+          title: "No Phone Number",
+          description: "Please provide a phone number to receive SMS notifications",
+          variant: "destructive"
+        });
       }
 
       const consultationLink = `/consultation/video/${newAppointment.id}`;
