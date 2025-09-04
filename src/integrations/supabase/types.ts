@@ -345,7 +345,9 @@ export type Database = {
           id: string
           is_verified: boolean | null
           otp_code: string
+          otp_hash: string | null
           phone_number: string
+          salt: string | null
           user_id: string | null
         }
         Insert: {
@@ -355,7 +357,9 @@ export type Database = {
           id?: string
           is_verified?: boolean | null
           otp_code: string
+          otp_hash?: string | null
           phone_number: string
+          salt?: string | null
           user_id?: string | null
         }
         Update: {
@@ -365,7 +369,9 @@ export type Database = {
           id?: string
           is_verified?: boolean | null
           otp_code?: string
+          otp_hash?: string | null
           phone_number?: string
+          salt?: string | null
           user_id?: string | null
         }
         Relationships: []
@@ -670,6 +676,14 @@ export type Database = {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
         }
+        Returns: boolean
+      }
+      hash_otp: {
+        Args: { otp_code: string; salt_value: string }
+        Returns: string
+      }
+      verify_otp: {
+        Args: { phone: string; provided_otp: string }
         Returns: boolean
       }
     }
