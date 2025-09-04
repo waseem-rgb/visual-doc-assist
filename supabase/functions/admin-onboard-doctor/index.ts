@@ -13,6 +13,10 @@ interface OnboardDoctorRequest {
   phone?: string;
   temporary_password: string;
   notes?: string;
+  qualification?: string;
+  experience_years?: number;
+  consultation_fee?: number;
+  availability?: string[]; // Array of day names like ['monday', 'tuesday']
 }
 
 Deno.serve(async (req) => {
@@ -172,7 +176,7 @@ Deno.serve(async (req) => {
         console.error('Error assigning doctor role:', roleError);
       }
 
-      // Create doctor profile
+      // Create doctor profile with new fields
       const { error: profileError } = await supabase
         .from('doctor_profiles')
         .insert({
@@ -180,11 +184,39 @@ Deno.serve(async (req) => {
           full_name: body.full_name,
           specialization: body.specialization || 'General Medicine',
           license_number: body.license_number,
-          phone: body.phone
+          phone: body.phone,
+          qualification: body.qualification,
+          experience_years: body.experience_years,
+          consultation_fee: body.consultation_fee,
+          email: body.email
         });
 
       if (profileError) {
         console.error('Error creating doctor profile:', profileError);
+      }
+
+      // Create doctor availability records if provided
+      if (body.availability && body.availability.length > 0) {
+        const dayMapping = {
+          'monday': 1, 'tuesday': 2, 'wednesday': 3, 'thursday': 4, 
+          'friday': 5, 'saturday': 6, 'sunday': 0
+        };
+        
+        const availabilityRecords = body.availability.map(day => ({
+          doctor_id: doctorUser.user.id,
+          day_of_week: dayMapping[day.toLowerCase()] ?? 1,
+          start_time: '09:00:00', // Default to 9 AM
+          end_time: '17:00:00',   // Default to 5 PM
+          is_available: true
+        }));
+
+        const { error: availabilityError } = await supabase
+          .from('doctor_availability')
+          .insert(availabilityRecords);
+
+        if (availabilityError) {
+          console.error('Error creating doctor availability:', availabilityError);
+        }
       }
 
       // Update onboarding request with success

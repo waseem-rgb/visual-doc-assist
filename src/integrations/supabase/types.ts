@@ -274,29 +274,41 @@ export type Database = {
       }
       doctor_profiles: {
         Row: {
+          consultation_fee: number | null
           created_at: string
+          email: string | null
+          experience_years: number | null
           full_name: string
           id: string
           license_number: string | null
           phone: string | null
+          qualification: string | null
           specialization: string | null
           updated_at: string
         }
         Insert: {
+          consultation_fee?: number | null
           created_at?: string
+          email?: string | null
+          experience_years?: number | null
           full_name: string
           id: string
           license_number?: string | null
           phone?: string | null
+          qualification?: string | null
           specialization?: string | null
           updated_at?: string
         }
         Update: {
+          consultation_fee?: number | null
           created_at?: string
+          email?: string | null
+          experience_years?: number | null
           full_name?: string
           id?: string
           license_number?: string | null
           phone?: string | null
+          qualification?: string | null
           specialization?: string | null
           updated_at?: string
         }

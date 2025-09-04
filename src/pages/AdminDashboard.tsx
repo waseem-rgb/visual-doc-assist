@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { 
   Shield, 
@@ -52,15 +54,39 @@ const AdminDashboard = () => {
   
   // Form state
   const [formData, setFormData] = useState({
-    email: "",
     full_name: "",
     specialization: "",
-    license_number: "",
+    qualification: "",
+    experience_years: "",
+    consultation_fee: "",
     phone: "",
-    temporary_password: "",
-    notes: ""
+    email: "",
+    availability: [] as string[]
   });
   const [submitting, setSubmitting] = useState(false);
+  
+  const specialties = [
+    "General Medicine",
+    "Cardiology", 
+    "Dermatology",
+    "Neurology",
+    "Orthopedics",
+    "Pediatrics",
+    "Psychiatry",
+    "Radiology",
+    "Surgery",
+    "Other"
+  ];
+
+  const daysOfWeek = [
+    { id: "monday", label: "Mon" },
+    { id: "tuesday", label: "Tue" },
+    { id: "wednesday", label: "Wed" },
+    { id: "thursday", label: "Thu" },
+    { id: "friday", label: "Fri" },
+    { id: "saturday", label: "Sat" },
+    { id: "sunday", label: "Sun" }
+  ];
 
   // Check if user is admin
   useEffect(() => {
@@ -122,8 +148,19 @@ const AdminDashboard = () => {
     setSubmitting(true);
 
     try {
+      // Generate email if not provided
+      const email = formData.email || `${formData.full_name.toLowerCase().replace(/\s+/g, '.')}@hospital.com`;
+      
+      const payload = {
+        ...formData,
+        email,
+        experience_years: formData.experience_years ? parseInt(formData.experience_years) : undefined,
+        consultation_fee: formData.consultation_fee ? parseFloat(formData.consultation_fee) : undefined,
+        temporary_password: 'TempPass123!', // Default temporary password
+      };
+
       const { data, error } = await supabase.functions.invoke('admin-onboard-doctor', {
-        body: formData
+        body: payload
       });
 
       if (error) throw error;
@@ -135,13 +172,14 @@ const AdminDashboard = () => {
 
       // Reset form
       setFormData({
-        email: "",
         full_name: "",
         specialization: "",
-        license_number: "",
+        qualification: "",
+        experience_years: "",
+        consultation_fee: "",
         phone: "",
-        temporary_password: "",
-        notes: ""
+        email: "",
+        availability: []
       });
 
       // Refresh the requests list
@@ -159,13 +197,18 @@ const AdminDashboard = () => {
     }
   };
 
-  const generatePassword = () => {
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*';
-    let password = '';
-    for (let i = 0; i < 12; i++) {
-      password += chars.charAt(Math.floor(Math.random() * chars.length));
+  const handleAvailabilityChange = (dayId: string, checked: boolean) => {
+    if (checked) {
+      setFormData(prev => ({
+        ...prev,
+        availability: [...prev.availability, dayId]
+      }));
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        availability: prev.availability.filter(day => day !== dayId)
+      }));
     }
-    setFormData(prev => ({ ...prev, temporary_password: password }));
   };
 
   const getStatusBadge = (status: string) => {
@@ -222,118 +265,149 @@ const AdminDashboard = () => {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <form onSubmit={handleSubmit} className="space-y-4">
+              <form onSubmit={handleSubmit} className="space-y-6">
+                {/* Full Name */}
+                <div className="space-y-2">
+                  <Label htmlFor="full_name">Full Name *</Label>
+                  <Input
+                    id="full_name"
+                    type="text"
+                    value={formData.full_name}
+                    onChange={(e) => setFormData(prev => ({ ...prev, full_name: e.target.value }))}
+                    placeholder=""
+                    required
+                  />
+                </div>
+
+                {/* Specialty */}
+                <div className="space-y-2">
+                  <Label htmlFor="specialization">Specialty *</Label>
+                  <Select
+                    value={formData.specialization}
+                    onValueChange={(value) => setFormData(prev => ({ ...prev, specialization: value }))}
+                    required
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select specialty" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {specialties.map((specialty) => (
+                        <SelectItem key={specialty} value={specialty}>
+                          {specialty}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Qualification */}
+                <div className="space-y-2">
+                  <Label htmlFor="qualification">Qualification</Label>
+                  <Input
+                    id="qualification"
+                    type="text"
+                    value={formData.qualification}
+                    onChange={(e) => setFormData(prev => ({ ...prev, qualification: e.target.value }))}
+                    placeholder="e.g., MBBS, MD, MS"
+                  />
+                </div>
+
+                {/* Experience and Consultation Fee */}
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="email">Email Address *</Label>
+                    <Label htmlFor="experience_years">Experience (Years) *</Label>
+                    <Input
+                      id="experience_years"
+                      type="number"
+                      min="0"
+                      max="50"
+                      value={formData.experience_years}
+                      onChange={(e) => setFormData(prev => ({ ...prev, experience_years: e.target.value }))}
+                      placeholder=""
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="consultation_fee">Consultation Fee (₹) *</Label>
+                    <Input
+                      id="consultation_fee"
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={formData.consultation_fee}
+                      onChange={(e) => setFormData(prev => ({ ...prev, consultation_fee: e.target.value }))}
+                      placeholder=""
+                      required
+                    />
+                  </div>
+                </div>
+
+                {/* Mobile Number and Email */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="phone">Mobile Number *</Label>
+                    <Input
+                      id="phone"
+                      type="tel"
+                      value={formData.phone}
+                      onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
+                      placeholder="10-digit mobile number"
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="email">Email (Optional)</Label>
                     <Input
                       id="email"
                       type="email"
                       value={formData.email}
                       onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
-                      placeholder="doctor@example.com"
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="full_name">Full Name *</Label>
-                    <Input
-                      id="full_name"
-                      type="text"
-                      value={formData.full_name}
-                      onChange={(e) => setFormData(prev => ({ ...prev, full_name: e.target.value }))}
-                      placeholder="Dr. John Smith"
-                      required
+                      placeholder=""
                     />
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="specialization">Specialization</Label>
-                    <Input
-                      id="specialization"
-                      type="text"
-                      value={formData.specialization}
-                      onChange={(e) => setFormData(prev => ({ ...prev, specialization: e.target.value }))}
-                      placeholder="General Medicine"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="license_number">License Number</Label>
-                    <Input
-                      id="license_number"
-                      type="text"
-                      value={formData.license_number}
-                      onChange={(e) => setFormData(prev => ({ ...prev, license_number: e.target.value }))}
-                      placeholder="MD12345"
-                    />
+                {/* Availability */}
+                <div className="space-y-3">
+                  <Label>Availability (Optional - defaults to Mon-Fri)</Label>
+                  <div className="flex flex-wrap gap-4">
+                    {daysOfWeek.map((day) => (
+                      <div key={day.id} className="flex items-center space-x-2">
+                        <Checkbox
+                          id={day.id}
+                          checked={formData.availability.includes(day.id)}
+                          onCheckedChange={(checked) => 
+                            handleAvailabilityChange(day.id, checked as boolean)
+                          }
+                        />
+                        <Label htmlFor={day.id} className="text-sm font-normal">
+                          {day.label}
+                        </Label>
+                      </div>
+                    ))}
                   </div>
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="phone">Phone Number</Label>
-                  <Input
-                    id="phone"
-                    type="tel"
-                    value={formData.phone}
-                    onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
-                    placeholder="+1234567890"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="temporary_password" className="flex items-center justify-between">
-                    Temporary Password *
-                    <Button 
-                      type="button" 
-                      variant="outline" 
-                      size="sm"
-                      onClick={generatePassword}
-                    >
-                      Generate
-                    </Button>
-                  </Label>
-                  <div className="relative">
-                    <Input
-                      id="temporary_password"
-                      type={showPassword ? "text" : "password"}
-                      value={formData.temporary_password}
-                      onChange={(e) => setFormData(prev => ({ ...prev, temporary_password: e.target.value }))}
-                      placeholder="Enter temporary password"
-                      required
-                    />
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      className="absolute right-2 top-1/2 transform -translate-y-1/2"
-                      onClick={() => setShowPassword(!showPassword)}
-                    >
-                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                    </Button>
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="notes">Notes</Label>
-                  <Textarea
-                    id="notes"
-                    value={formData.notes}
-                    onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
-                    placeholder="Additional notes about this doctor..."
-                    rows={3}
-                  />
-                </div>
-
+                {/* Submit Button */}
                 <Button
                   type="submit"
-                  className="w-full"
+                  className="w-full bg-primary hover:bg-primary/90 text-primary-foreground"
                   disabled={submitting}
                 >
-                  {submitting ? "Creating Account..." : "Create Doctor Account"}
+                  <UserPlus className="w-4 h-4 mr-2" />
+                  {submitting ? "Onboard Doctor" : "Onboard Doctor"}
                 </Button>
               </form>
+
+              {/* Admin Note */}
+              <div className="mt-6 p-4 bg-primary/5 rounded-lg">
+                <h4 className="font-medium text-primary mb-2">Admin Note:</h4>
+                <ul className="text-sm text-muted-foreground space-y-1">
+                  <li>• Doctor will receive an OTP on their mobile to verify account</li>
+                  <li>• They can then login using their mobile number</li>
+                  <li>• You can also manage doctors directly through Supabase dashboard</li>
+                </ul>
+              </div>
             </CardContent>
           </Card>
 
