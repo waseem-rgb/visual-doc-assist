@@ -15,7 +15,8 @@ import {
   CheckCircle,
   Download,
   AlertCircle,
-  Send
+  Send,
+  Copy
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import MedicationSelector from "./MedicationSelector";
@@ -393,6 +394,23 @@ const PrescriptionRequestDetail = ({ request, onBack, onUpdate }: PrescriptionRe
     }
   };
 
+  const handleCopyPhoneNumber = async (phoneNumber: string) => {
+    try {
+      await navigator.clipboard.writeText(phoneNumber);
+      toast({
+        title: "Phone Number Copied",
+        description: "Patient's phone number has been copied to clipboard.",
+      });
+    } catch (error) {
+      console.error('Failed to copy phone number:', error);
+      toast({
+        title: "Copy Failed",
+        description: "Could not copy phone number to clipboard.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'pending': return 'bg-yellow-500';
@@ -522,7 +540,17 @@ const PrescriptionRequestDetail = ({ request, onBack, onUpdate }: PrescriptionRe
                   <>
                     <div className="p-3 bg-muted rounded-lg">
                       <p className="text-sm text-muted-foreground">Patient Contact</p>
-                      <p className="font-mono font-medium">{request.patient_phone}</p>
+                      <div className="flex items-center justify-between">
+                        <p className="font-mono font-medium">{request.patient_phone}</p>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleCopyPhoneNumber(request.patient_phone!)}
+                          className="p-1 h-auto"
+                        >
+                          <Copy className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </div>
                     <Button 
                       variant="outline" 
