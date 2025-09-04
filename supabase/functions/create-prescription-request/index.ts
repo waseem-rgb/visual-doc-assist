@@ -48,7 +48,8 @@ serve(async (req) => {
 
     // Get body data
     const requestData: CreatePrescriptionRequest = await req.json();
-    console.log('Request data:', JSON.stringify(requestData, null, 2));
+    // SECURITY FIX: Remove PII from logs - only log basic request info without patient data
+    console.log('Processing prescription request from source:', requestData.source, 'with external_id:', requestData.external_id || 'none');
 
     // Validate source and integration key
     const gramasathiKey = Deno.env.get('GRAMASATHI_KEY');
@@ -105,7 +106,8 @@ serve(async (req) => {
       selected_diagnosis_type: 'database'
     };
 
-    console.log('Creating prescription request with data:', JSON.stringify(prescriptionRequestData, null, 2));
+    // SECURITY FIX: Remove PII from logs - only log request ID
+    console.log('Creating prescription request - patient data excluded from logs for privacy');
 
     const { data: prescriptionRequest, error } = await supabase
       .from('prescription_requests')

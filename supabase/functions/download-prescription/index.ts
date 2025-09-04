@@ -91,24 +91,8 @@ Deno.serve(async (req) => {
 
     console.log(`Attempting to access file in bucket: ${bucketName}`);
 
-    // For public buckets, use direct URL instead of signed URL
-    if (bucketName === 'new_prescription-templet' || bucketName === 'Prescription_templet') {
-      const publicUrl = `${supabaseUrl}/storage/v1/object/public/${bucketName}/${filePath}`;
-      
-      console.log(`Using public URL for prescription download`);
-      
-      return new Response(
-        JSON.stringify({ 
-          success: true, 
-          downloadUrl: publicUrl,
-          fileName: filePath
-        }),
-        { 
-          status: 200,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        }
-      );
-    }
+    // SECURITY FIX: Always use signed URLs for prescription downloads to prevent unauthorized access
+    // Public buckets expose sensitive medical data - use signed URLs with proper expiration
 
     // Create fresh signed URL (valid for 1 hour) using admin client for private buckets
     const { data: signedUrlData, error: signedUrlError } = await adminSupabase.storage

@@ -58,7 +58,8 @@ serve(async (req) => {
       consultationId: consultationData.id || consultationData.external_id
     };
 
-    console.log('Sending consultation data to Grama-Sathi:', payload);
+    // SECURITY FIX: Remove PII from logs - only log operation status without patient data
+    console.log('Sending consultation data to Grama-Sathi - patient data excluded from logs for privacy');
 
     // Send data to Grama-Sathi API
     const gramaSathiResponse = await fetch('https://api.gramasathi.com/v1/consultations', {
