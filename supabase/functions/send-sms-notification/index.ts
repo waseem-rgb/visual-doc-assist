@@ -27,10 +27,15 @@ const serve_handler = async (req: Request): Promise<Response> => {
   }
 
   try {
+    console.log('🚀 [SMS FUNCTION] SMS function invoked');
+    console.log('🚀 [SMS FUNCTION] Request method:', req.method);
+    
     // Check for authorization header
     const authHeader = req.headers.get('Authorization');
+    console.log('🚀 [SMS FUNCTION] Auth header present:', !!authHeader);
+    
     if (!authHeader) {
-      console.error('SMS notification attempt without authorization');
+      console.error('❌ [SMS FUNCTION] SMS notification attempt without authorization');
       return new Response(
         JSON.stringify({ error: 'Unauthorized: Missing authorization header' }),
         { 
@@ -44,6 +49,9 @@ const serve_handler = async (req: Request): Promise<Response> => {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
     
+    console.log('🔧 [SMS FUNCTION] Supabase URL configured:', !!supabaseUrl);
+    console.log('🔧 [SMS FUNCTION] Supabase anon key configured:', !!supabaseAnonKey);
+    
     const supabase = createClient(supabaseUrl, supabaseAnonKey, {
       global: { headers: { Authorization: authHeader } }
     });
@@ -52,7 +60,7 @@ const serve_handler = async (req: Request): Promise<Response> => {
     const { data: user, error: userError } = await supabase.auth.getUser();
     
     if (userError || !user?.user) {
-      console.error('SMS notification attempt with invalid token:', userError?.message);
+      console.error('❌ [SMS FUNCTION] SMS notification attempt with invalid token:', userError?.message);
       return new Response(
         JSON.stringify({ error: 'Unauthorized: Invalid token' }),
         { 
@@ -61,6 +69,8 @@ const serve_handler = async (req: Request): Promise<Response> => {
         }
       );
     }
+
+    console.log('✅ [SMS FUNCTION] User authenticated:', user.user.id);
 
     const { to, message, type, patientName, doctorName, appointmentDate, appointmentTime, isReferral, referralSpecialist, joinLink, appointmentId }: SMSRequest = await req.json();
     
@@ -94,7 +104,18 @@ const serve_handler = async (req: Request): Promise<Response> => {
     const twilioAuthToken = Deno.env.get('TWILIO_AUTH_TOKEN');
     const twilioPhoneNumber = Deno.env.get('TWILIO_PHONE_NUMBER');
 
+    console.log('📞 [SMS FUNCTION] Twilio credentials check:', {
+      accountSid: !!twilioAccountSid,
+      authToken: !!twilioAuthToken,
+      phoneNumber: !!twilioPhoneNumber
+    });
+
     if (!twilioAccountSid || !twilioAuthToken || !twilioPhoneNumber) {
+      console.error('❌ [SMS FUNCTION] Missing Twilio credentials:', {
+        accountSid: !!twilioAccountSid,
+        authToken: !!twilioAuthToken,
+        phoneNumber: !!twilioPhoneNumber
+      });
       throw new Error('Missing Twilio credentials');
     }
 
@@ -110,6 +131,11 @@ const serve_handler = async (req: Request): Promise<Response> => {
         formattedTo = `+${to}`;
       }
     }
+    
+    console.log('📱 [SMS FUNCTION] Phone number formatted:', {
+      original: to,
+      formatted: formattedTo
+    });
     
     // Generate message based on type if not provided
     let finalMessage = message;
@@ -152,6 +178,13 @@ const serve_handler = async (req: Request): Promise<Response> => {
     const twilioUrl = `https://api.twilio.com/2010-04-01/Accounts/${twilioAccountSid}/Messages.json`;
     const auth = btoa(`${twilioAccountSid}:${twilioAuthToken}`);
 
+    console.log('📤 [SMS FUNCTION] Sending SMS via Twilio:', {
+      url: twilioUrl,
+      from: twilioPhoneNumber,
+      to: formattedTo,
+      messageLength: finalMessage?.length || 0
+    });
+
     const response = await fetch(twilioUrl, {
       method: 'POST',
       headers: {
@@ -166,13 +199,16 @@ const serve_handler = async (req: Request): Promise<Response> => {
     });
 
     const result = await response.json();
+    
+    console.log('📨 [SMS FUNCTION] Twilio response status:', response.status);
+    console.log('📨 [SMS FUNCTION] Twilio response:', result);
 
     if (!response.ok) {
-      console.error('Twilio API error:', result);
+      console.error('❌ [SMS FUNCTION] Twilio API error:', result);
       throw new Error(`Twilio error: ${result.message || 'Failed to send SMS'}`);
     }
 
-    console.log('SMS sent successfully, SID:', result.sid);
+    console.log('✅ [SMS FUNCTION] SMS sent successfully, SID:', result.sid);
 
     return new Response(JSON.stringify({ 
       success: true, 

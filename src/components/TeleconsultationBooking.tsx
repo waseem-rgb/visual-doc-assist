@@ -225,6 +225,18 @@ export function TeleconsultationBooking({ onBookingSuccess }: TeleconsultationBo
             joinLink: consultationLink
           });
           
+          console.log('📱 [TELECONSULT] About to send SMS to:', patientData.phone);
+          console.log('📱 [TELECONSULT] SMS payload:', {
+            to: patientData.phone,
+            type: 'teleconsultation_booked',
+            patientName: patientData.name,
+            doctorName: doctorInfo?.full_name || 'Dr. ' + (doctorInfo?.id || 'Unknown'),
+            appointmentDate: format(appointmentDateTime, 'PPP'),
+            appointmentTime: selectedTime,
+            joinLink: consultationLink,
+            appointmentId: newAppointment.id
+          });
+          
           const { data: smsResult, error: smsError } = await supabase.functions.invoke('send-sms-notification', {
             body: {
               to: patientData.phone,
