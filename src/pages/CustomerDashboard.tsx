@@ -18,12 +18,11 @@ import {
   Clock,
   CheckCircle,
   AlertCircle,
-  Stethoscope,
-  MessageCircle
+  Stethoscope
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import PrescriptionStatus from "@/components/PrescriptionStatus";
-import { VideoConsultationsList } from '@/components/VideoConsultationsList';
+
 import type { User as AuthUser } from "@supabase/supabase-js";
 
 interface PrescriptionRequest {
@@ -299,28 +298,18 @@ const CustomerDashboard = () => {
         <div className="space-y-6">
           <div className="flex items-center justify-between">
             <h2 className="text-2xl font-bold">Your Medical Consultations</h2>
-            <div className="flex items-center gap-3">
-              <Button 
-                variant="outline"
-                onClick={() => navigate("/teleconsultation")}
-                className="hidden md:flex"
-              >
-                <MessageCircle className="h-4 w-4 mr-2" />
-                Book Teleconsultation
-              </Button>
-              <Button 
-                onClick={() => {
-                console.log('Start New Consultation clicked - navigating to /consultation');
-                // Reset consultation store before starting new consultation
-                resetConsultation();
-                navigate("/consultation");
-                }} 
-                className="hidden md:flex"
-              >
-                <Heart className="h-4 w-4 mr-2" />
-                Start Instant Consultation
-              </Button>
-            </div>
+            <Button 
+              onClick={() => {
+              console.log('Start New Consultation clicked - navigating to /consultation');
+              // Reset consultation store before starting new consultation
+              resetConsultation();
+              navigate("/consultation");
+              }} 
+              className="hidden md:flex"
+            >
+              <Heart className="h-4 w-4 mr-2" />
+              Start New Consultation
+            </Button>
           </div>
 
           {/* Request Cards */}
@@ -331,29 +320,18 @@ const CustomerDashboard = () => {
                   <Heart className="h-12 w-12 mx-auto mb-4 opacity-50" />
                   <p className="text-lg mb-2">No consultations yet</p>
                   <p>Start your first consultation to see your medical records here.</p>
-                  <div className="text-center py-8 space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-md mx-auto">
-                      <Button
-                        size="lg"
-                        className="gradient-primary shadow-medium transition-bounce hover:shadow-large"
-                        onClick={() => {
-                          resetConsultation();
-                          navigate("/consultation");
-                        }}
-                      >
-                        Start Instant Consultation
-                        <ArrowRight className="ml-2 h-5 w-5" />
-                      </Button>
-                      <Button
-                        size="lg"
-                        variant="outline"
-                        className="border-primary text-primary hover:bg-primary hover:text-primary-foreground"
-                        onClick={() => navigate("/teleconsultation")}
-                      >
-                        Book Teleconsultation
-                        <MessageCircle className="ml-2 h-5 w-5" />
-                      </Button>
-                    </div>
+                  <div className="text-center py-8">
+                    <Button
+                      size="lg"
+                      className="gradient-primary shadow-medium transition-bounce hover:shadow-large"
+                      onClick={() => {
+                        resetConsultation();
+                        navigate("/consultation");
+                      }}
+                    >
+                      Start New Consultation
+                      <ArrowRight className="ml-2 h-5 w-5" />
+                    </Button>
                   </div>
                 </div>
               </CardContent>
@@ -409,30 +387,19 @@ const CustomerDashboard = () => {
                       </div>
 
                       <div className="flex flex-col gap-2 ml-4">
-                        <div className="grid grid-cols-2 gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => {
-                              // Reset consultation store before starting reconsultation
-                              resetConsultation();
-                              navigate("/consultation");
-                            }}
-                            className="w-full"
-                          >
-                            <Eye className="h-4 w-4 mr-1" />
-                            Instant Reconsult
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => navigate("/teleconsultation")}
-                            className="w-full"
-                          >
-                            <MessageCircle className="h-4 w-4 mr-1" />
-                            Book Teleconsult
-                          </Button>
-                        </div>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            // Reset consultation store before starting reconsultation
+                            resetConsultation();
+                            navigate("/consultation");
+                          }}
+                          className="w-full"
+                        >
+                          <Eye className="h-4 w-4 mr-1" />
+                          New Consultation
+                        </Button>
                         
                         {/* Show prescription status */}
                         <PrescriptionStatus request={request} />
@@ -443,11 +410,6 @@ const CustomerDashboard = () => {
               ))}
             </div>
           )}
-          {/* Video Consultations Section */}
-          <div className="mt-8">
-            <h3 className="text-xl font-semibold mb-4">Your Upcoming Video Consultations</h3>
-            <VideoConsultationsList userRole="patient" limit={3} />
-          </div>
         </div>
       </div>
 

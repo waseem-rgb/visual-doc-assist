@@ -15,8 +15,6 @@ import DoctorDashboard from "./pages/DoctorDashboard";
 import CustomerAuth from "./pages/CustomerAuth";
 import CustomerDashboard from "./pages/CustomerDashboard";
 import AdminDashboard from "./pages/AdminDashboard";
-import TeleconsultationBookingPage from "./pages/TeleconsultationBooking";
-import VideoConsultationRoom from "./pages/VideoConsultationRoom";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -39,16 +37,6 @@ const DesktopApp = () => (
       </ProtectedRoute>
     } />
     <Route path="/admin/dashboard" element={<AdminDashboard />} />
-    <Route path="/teleconsultation" element={
-      <ProtectedRoute redirectTo="/customer/login">
-        <TeleconsultationBookingPage />
-      </ProtectedRoute>
-    } />
-    <Route path="/consultation/video/:appointmentId" element={
-      <ProtectedRoute redirectTo="/customer/login">
-        <VideoConsultationRoom />
-      </ProtectedRoute>
-    } />
     {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
     <Route path="*" element={<NotFound />} />
   </Routes>
@@ -72,16 +60,6 @@ const MobileApp = () => (
       </ProtectedRoute>
     } />
     <Route path="/admin/dashboard" element={<MobileLayout hideBottomNav={true}><AdminDashboard /></MobileLayout>} />
-    <Route path="/teleconsultation" element={
-      <ProtectedRoute redirectTo="/customer/login">
-        <TeleconsultationBookingPage />
-      </ProtectedRoute>
-    } />
-    <Route path="/consultation/video/:appointmentId" element={
-      <ProtectedRoute redirectTo="/customer/login">
-        <VideoConsultationRoom />
-      </ProtectedRoute>
-    } />
     {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
     <Route path="*" element={<MobileLayout hideBottomNav={true}><NotFound /></MobileLayout>} />
   </Routes>
