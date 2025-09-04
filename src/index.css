@@ -2,7 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
-/* VrDoc Design System - Apple-inspired design with purple gradients */
+/* VrDoc Design System - Believe Therapy inspired design with dark pink theme */
 
 @layer base {
   :root {
@@ -10,19 +10,19 @@
     --background: 0 0% 100%;
     --foreground: 220 9% 15%;
     
-    /* Purple Gradient System */
-    --primary: 270 91% 65%;
-    --primary-light: 275 100% 75%;
-    --primary-dark: 265 85% 55%;
+    /* Dark Pink Gradient System */
+    --primary: 330 81% 31%;
+    --primary-light: 330 85% 45%;
+    --primary-dark: 330 85% 25%;
     --primary-foreground: 0 0% 100%;
     
-    /* Secondary Purple Tones */
-    --secondary: 270 20% 96%;
-    --secondary-foreground: 270 15% 25%;
+    /* Secondary Pink Tones */
+    --secondary: 330 15% 96%;
+    --secondary-foreground: 330 25% 15%;
     
     /* Accent Colors */
-    --accent: 270 50% 95%;
-    --accent-foreground: 270 15% 25%;
+    --accent: 330 50% 95%;
+    --accent-foreground: 330 25% 15%;
     
     /* Neutral Grays */
     --muted: 220 13% 96%;
@@ -35,7 +35,7 @@
     --popover-foreground: 220 9% 15%;
     --border: 220 13% 91%;
     --input: 220 13% 91%;
-    --ring: 270 91% 65%;
+    --ring: 330 81% 31%;
     
     /* Status Colors */
     --destructive: 0 84% 60%;
