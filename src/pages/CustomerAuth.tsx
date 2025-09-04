@@ -31,13 +31,14 @@ const CustomerAuth = () => {
     try {
       if (isSignUp) {
         // Sign up new customer
-        console.log("Attempting signup with:", { email, redirectTo: `${window.location.origin}/customer/dashboard` });
+        const redirectUrl = `${window.location.origin}/customer/dashboard`;
+        console.log("Attempting signup with:", { email, redirectTo: redirectUrl });
         
         const { data, error: signUpError } = await supabase.auth.signUp({
           email,
           password,
           options: {
-            emailRedirectTo: `${window.location.origin}/customer/dashboard`
+            emailRedirectTo: redirectUrl
           }
         });
 
@@ -68,12 +69,25 @@ const CustomerAuth = () => {
         setIsSignUp(false);
       } else {
         // Sign in existing customer
+        console.log("Attempting sign in with:", { email });
+        
         const { data, error: signInError } = await supabase.auth.signInWithPassword({
           email,
           password,
         });
 
-        if (signInError) throw signInError;
+        console.log("Sign in response:", { data, error: signInError });
+
+        if (signInError) {
+          console.error("Sign in error details:", signInError);
+          
+          // Handle specific token errors
+          if (signInError.message?.includes('Invalid token') || signInError.message?.includes('signature is invalid')) {
+            throw new Error('Authentication token is invalid. Please try signing up again or contact support.');
+          }
+          
+          throw signInError;
+        }
 
         if (!data.user) {
           throw new Error("Authentication failed");

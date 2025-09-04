@@ -473,10 +473,27 @@ const PrescriptionRequestDetail = ({ request, onBack, onUpdate }: PrescriptionRe
                   </Button>
                 )}
                 
-                <Button variant="outline" className="w-full">
-                  <Phone className="h-4 w-4 mr-2" />
-                  Call Patient
-                </Button>
+                {request.patient_phone ? (
+                  <>
+                    <div className="p-3 bg-muted rounded-lg">
+                      <p className="text-sm text-muted-foreground">Patient Contact</p>
+                      <p className="font-mono font-medium">{request.patient_phone}</p>
+                    </div>
+                    <Button 
+                      variant="outline" 
+                      className="w-full"
+                      onClick={() => window.open(`tel:${request.patient_phone}`, '_self')}
+                    >
+                      <Phone className="h-4 w-4 mr-2" />
+                      Call {request.patient_phone}
+                    </Button>
+                  </>
+                ) : (
+                  <Button variant="outline" className="w-full" disabled>
+                    <Phone className="h-4 w-4 mr-2" />
+                    No Phone Number Available
+                  </Button>
+                )}
 
                 <Button 
                   variant="outline" 
