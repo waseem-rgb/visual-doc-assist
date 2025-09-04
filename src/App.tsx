@@ -38,7 +38,7 @@ const DesktopApp = () => (
         <CustomerDashboard />
       </ProtectedRoute>
     } />
-    <Route path="/admin" element={<AdminDashboard />} />
+    <Route path="/admin/dashboard" element={<AdminDashboard />} />
     <Route path="/teleconsultation" element={
       <ProtectedRoute redirectTo="/customer/login">
         <TeleconsultationBookingPage />
@@ -71,7 +71,7 @@ const MobileApp = () => (
         <MobileLayout><CustomerDashboard /></MobileLayout>
       </ProtectedRoute>
     } />
-    <Route path="/admin" element={<MobileLayout hideBottomNav={true}><AdminDashboard /></MobileLayout>} />
+    <Route path="/admin/dashboard" element={<MobileLayout hideBottomNav={true}><AdminDashboard /></MobileLayout>} />
     <Route path="/teleconsultation" element={
       <ProtectedRoute redirectTo="/customer/login">
         <TeleconsultationBookingPage />
