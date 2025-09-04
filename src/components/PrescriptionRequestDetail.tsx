@@ -98,6 +98,8 @@ const PrescriptionRequestDetail = ({ request, onBack, onUpdate }: PrescriptionRe
       }
 
       // Send SMS notification to patient
+      console.log('📱 SMS Debug - patient_phone:', request.patient_phone);
+      
       if (request.patient_phone) {
         try {
           const { data: doctorProfile } = await supabase
@@ -106,7 +108,8 @@ const PrescriptionRequestDetail = ({ request, onBack, onUpdate }: PrescriptionRe
             .eq('id', user.id)
             .single();
 
-          await supabase.functions.invoke('send-sms-notification', {
+          console.log('📱 Sending SMS notification for case claimed...');
+          const { data: smsResult, error: smsError } = await supabase.functions.invoke('send-sms-notification', {
             body: {
               to: request.patient_phone,
               type: 'case_claimed',
@@ -114,10 +117,32 @@ const PrescriptionRequestDetail = ({ request, onBack, onUpdate }: PrescriptionRe
               doctorName: doctorProfile?.full_name || 'Dr. ' + user.email?.split('@')[0]
             }
           });
+
+          if (smsError) {
+            console.error('SMS Error:', smsError);
+            throw smsError;
+          }
+
+          console.log('📱 SMS sent successfully:', smsResult);
+          toast({
+            title: "SMS Sent",
+            description: `Patient notified at ${request.patient_phone}`,
+          });
         } catch (smsError) {
           console.error('Failed to send SMS notification:', smsError);
-          // Don't fail the entire operation if SMS fails
+          toast({
+            title: "SMS Failed", 
+            description: "Could not send notification to patient",
+            variant: "destructive"
+          });
         }
+      } else {
+        console.log('📱 No phone number available for SMS');
+        toast({
+          title: "No Phone Number",
+          description: "Patient phone number not available for SMS notification",
+          variant: "destructive"
+        });
       }
 
       toast({
@@ -277,6 +302,8 @@ const PrescriptionRequestDetail = ({ request, onBack, onUpdate }: PrescriptionRe
       }, 100); // Start after 100ms to ensure UI updates first
 
       // Send SMS notification to patient about prescription being ready
+      console.log('📱 SMS Debug - prescription ready, patient_phone:', request.patient_phone);
+      
       if (request.patient_phone) {
         try {
           const { data: doctorProfile } = await supabase
@@ -285,7 +312,8 @@ const PrescriptionRequestDetail = ({ request, onBack, onUpdate }: PrescriptionRe
             .eq('id', user?.id)
             .single();
 
-          await supabase.functions.invoke('send-sms-notification', {
+          console.log('📱 Sending SMS notification for prescription ready...');
+          const { data: smsResult, error: smsError } = await supabase.functions.invoke('send-sms-notification', {
             body: {
               to: request.patient_phone,
               type: 'prescription_ready',
@@ -293,10 +321,27 @@ const PrescriptionRequestDetail = ({ request, onBack, onUpdate }: PrescriptionRe
               doctorName: doctorProfile?.full_name || 'Dr. ' + user?.email?.split('@')[0]
             }
           });
+
+          if (smsError) {
+            console.error('SMS Error:', smsError);
+            throw smsError;
+          }
+
+          console.log('📱 SMS sent successfully:', smsResult);
+          toast({
+            title: "SMS Sent",
+            description: `Prescription ready notification sent to ${request.patient_phone}`,
+          });
         } catch (smsError) {
           console.error('Failed to send SMS notification:', smsError);
-          // Don't fail the entire operation if SMS fails
+          toast({
+            title: "SMS Failed",
+            description: "Could not send prescription notification to patient", 
+            variant: "destructive"
+          });
         }
+      } else {
+        console.log('📱 No phone number available for SMS notification');
       }
 
       onUpdate(updatedRequest);
