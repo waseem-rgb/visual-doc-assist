@@ -120,24 +120,6 @@ export function ReviewStep({ onBack, onReset }: ReviewStepProps) {
 
       if (requestError) throw requestError;
 
-      // Send SMS notification about prescription request submission
-      if (patientData.phone) {
-        try {
-          await supabase.functions.invoke('send-sms-notification', {
-            body: {
-              to: patientData.phone,
-              type: prescriptionRequired ? 'prescription_requested' : 'referral_submitted',
-              patientName: patientData.name,
-              isReferral: isReferralCase,
-              referralSpecialist: referralSpecialist
-            }
-          });
-        } catch (smsError) {
-          console.error('Failed to send SMS notification:', smsError);
-          // Don't fail the entire operation if SMS fails
-        }
-      }
-
       // Generate prescription/referral PDF
       const { data: pdfResult, error: pdfError } = await supabase.functions
         .invoke('generate-prescription-pdf-simple', {
@@ -148,6 +130,44 @@ export function ReviewStep({ onBack, onReset }: ReviewStepProps) {
         });
 
       if (pdfError) throw pdfError;
+
+      // Send SMS notification for consultation review completion
+      if (patientData.phone && prescriptionRequest) {
+        try {
+          console.log('📱 [REVIEW STEP] Sending SMS notification');
+          const { data: smsResult, error: smsError } = await supabase.functions.invoke('send-sms-notification', {
+            body: {
+              to: patientData.phone,
+              type: prescriptionRequired ? 'prescription_requested' : 'referral_submitted',
+              patientName: patientData.name,
+              isReferral: isReferralCase,
+              referralSpecialist: referralSpecialist || undefined
+            }
+          });
+
+          if (smsError) {
+            console.error('📱 [REVIEW STEP] SMS Error:', smsError);
+            toast({
+              title: "SMS Failed",
+              description: "Consultation submitted but SMS notification failed",
+              variant: "destructive"
+            });
+          } else {
+            console.log('📱 [REVIEW STEP] SMS sent successfully:', smsResult);
+            toast({
+              title: "SMS Notification Sent",
+              description: `${prescriptionRequired ? 'Prescription request' : 'Consultation result'} sent to ${patientData.phone}`,
+            });
+          }
+        } catch (smsError) {
+          console.error('Failed to send SMS notification:', smsError);
+          toast({
+            title: "SMS Failed",
+            description: "Consultation submitted but SMS notification failed",
+            variant: "destructive"
+          });
+        }
+      }
 
       toast({
         title: referralSpecialist ? `Referred to ${referralSpecialist}` : 

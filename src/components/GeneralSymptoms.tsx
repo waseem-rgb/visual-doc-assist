@@ -132,6 +132,30 @@ const GeneralSymptoms = ({ patientData }: GeneralSymptomsProps) => {
         }
       }
 
+      // Send SMS notification for general symptoms consultation
+      if (phoneNumber && prescriptionRequest) {
+        try {
+          console.log('📱 [GENERAL SYMPTOMS] Sending SMS notification');
+          const { data: smsResult, error: smsError } = await supabase.functions.invoke('send-sms-notification', {
+            body: {
+              to: phoneNumber,
+              type: prescriptionRequired ? 'prescription_requested' : 'referral_submitted',
+              patientName: patientData.name,
+              isReferral: !prescriptionRequired
+            }
+          });
+
+          if (smsError) {
+            console.error('📱 [GENERAL SYMPTOMS] SMS Error:', smsError);
+            toast.error("Request submitted but SMS notification failed");
+          } else {
+            console.log('📱 [GENERAL SYMPTOMS] SMS sent successfully:', smsResult);
+          }
+        } catch (smsError) {
+          console.error('Failed to send SMS notification:', smsError);
+        }
+      }
+
       setShowClinicalForm(false);
       setPrescriptionSubmitted(true);
       

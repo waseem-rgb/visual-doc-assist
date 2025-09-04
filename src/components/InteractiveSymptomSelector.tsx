@@ -449,6 +449,47 @@ const InteractiveSymptomSelector = ({ bodyPart, patientData, onBack }: Interacti
       }
     }
 
+    // Send SMS notification for prescription request
+    if (clinicalData.mobileNumber && insertedData) {
+      try {
+        console.log('📱 [INSTANT CONSULT] Sending SMS notification for prescription request');
+        const { data: smsResult, error: smsError } = await supabase.functions.invoke('send-sms-notification', {
+          body: {
+            to: clinicalData.mobileNumber,
+            type: prescriptionRequired ? 'prescription_requested' : 'referral_submitted',
+            patientName: patientData.name,
+            isReferral: !prescriptionRequired,
+            referralSpecialist: isReferralCase_final ? 'specialist' : undefined
+          }
+        });
+
+        if (smsError) {
+          console.error('📱 [INSTANT CONSULT] SMS Error:', smsError);
+          // Don't fail the whole operation if SMS fails
+          toast({
+            title: "SMS Failed",
+            description: "Request submitted but SMS notification failed",
+            variant: "destructive"
+          });
+        } else {
+          console.log('📱 [INSTANT CONSULT] SMS sent successfully:', smsResult);
+          toast({
+            title: "SMS Notification Sent",
+            description: `${prescriptionRequired ? 'Prescription request' : 'Referral'} confirmation sent to ${clinicalData.mobileNumber}`,
+          });
+        }
+      } catch (smsError) {
+        console.error('Failed to send SMS notification:', smsError);
+        toast({
+          title: "SMS Failed",
+          description: "Request submitted but SMS notification failed",
+          variant: "destructive"
+        });
+      }
+    } else if (!clinicalData.mobileNumber) {
+      console.log('📱 [INSTANT CONSULT] No mobile number provided for SMS');
+    }
+
     // Immediately set submitted state
     setPrescriptionSubmitted(true);
     setShowClinicalForm(false);
