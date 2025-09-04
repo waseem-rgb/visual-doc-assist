@@ -156,7 +156,7 @@ export function VideoConsultationCard({ appointment, userRole }: VideoConsultati
               {isJoining ? 'Joining...' : getJoinButtonText()}
             </Button>
           ) : isFuture(appointmentDate) ? (
-            <div className="flex items-center gap-2 text-sm text-muted-foreground bg-blue-50 p-3 rounded-lg">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground bg-accent p-3 rounded-lg">
               <AlertCircle className="h-4 w-4" />
               <span>
                 You can join {userRole === 'doctor' ? '30' : '15'} minutes before the scheduled time

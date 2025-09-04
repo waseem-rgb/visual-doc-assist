@@ -351,7 +351,7 @@ const PrescriptionRequestDetail = ({ request, onBack, onUpdate }: PrescriptionRe
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'pending': return 'bg-yellow-500';
-      case 'in_progress': return 'bg-blue-500';
+      case 'in_progress': return 'bg-primary';
       case 'completed': return 'bg-green-500';
       default: return 'bg-gray-500';
     }
@@ -372,7 +372,7 @@ const PrescriptionRequestDetail = ({ request, onBack, onUpdate }: PrescriptionRe
             {request.status.replace('_', ' ')}
           </Badge>
           {isReferral && (
-            <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200">
+            <Badge variant="outline" className="bg-accent text-primary border-primary/20">
               <AlertCircle className="h-3 w-3 mr-1" />
               Referral Required
             </Badge>
@@ -416,7 +416,7 @@ const PrescriptionRequestDetail = ({ request, onBack, onUpdate }: PrescriptionRe
                 {request.external_source === 'daigasst-health-ai' && (
                   <div>
                     <p className="text-muted-foreground">Source</p>
-                    <p className="font-medium text-purple-600">DAIGASST Health AI</p>
+                    <p className="font-medium text-primary">DAIGASST Health AI</p>
                   </div>
                 )}
               </CardContent>
@@ -568,7 +568,7 @@ const PrescriptionRequestDetail = ({ request, onBack, onUpdate }: PrescriptionRe
                           className="mt-1 h-4 w-4 text-primary"
                         />
                         <div className="flex-1">
-                          <Label htmlFor="ai-diagnosis" className="text-sm font-medium text-blue-700 block mb-1">
+                          <Label htmlFor="ai-diagnosis" className="text-sm font-medium text-primary block mb-1">
                             AI Generated Diagnosis
                           </Label>
                           <p className="text-sm text-gray-700">

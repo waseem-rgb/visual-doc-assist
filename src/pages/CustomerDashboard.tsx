@@ -181,7 +181,7 @@ const CustomerDashboard = () => {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'pending': return 'bg-yellow-500';
-      case 'in_progress': return 'bg-blue-500';
+      case 'in_progress': return 'bg-primary';
       case 'completed': return 'bg-green-500';
       default: return 'bg-gray-500';
     }
@@ -256,8 +256,8 @@ const CustomerDashboard = () => {
           <Card>
             <CardContent className="p-6">
               <div className="flex items-center gap-4">
-                <div className="bg-blue-500/10 p-3 rounded-full">
-                  <FileText className="h-6 w-6 text-blue-500" />
+                 <div className="bg-primary/10 p-3 rounded-full">
+                   <FileText className="h-6 w-6 text-primary" />
                 </div>
                 <div>
                   <p className="text-2xl font-bold">{stats.total}</p>
@@ -284,8 +284,8 @@ const CustomerDashboard = () => {
           <Card>
             <CardContent className="p-6">
               <div className="flex items-center gap-4">
-                <div className="bg-blue-500/10 p-3 rounded-full">
-                  <Stethoscope className="h-6 w-6 text-blue-500" />
+                 <div className="bg-primary/10 p-3 rounded-full">
+                   <Stethoscope className="h-6 w-6 text-primary" />
                 </div>
                 <div>
                   <p className="text-2xl font-bold">{stats.in_progress}</p>
@@ -392,7 +392,7 @@ const CustomerDashboard = () => {
                             {request.status.replace('_', ' ')}
                           </Badge>
                           {request.is_referral && (
-                            <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200">
+                            <Badge variant="outline" className="bg-accent text-primary border-primary/20">
                               <AlertCircle className="h-3 w-3 mr-1" />
                               Referral Required
                             </Badge>

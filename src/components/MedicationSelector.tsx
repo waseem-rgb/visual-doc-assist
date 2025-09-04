@@ -443,7 +443,7 @@ const MedicationSelector = ({
               size="sm"
               onClick={getAIAssistMedications}
               disabled={loadingAIAssist}
-              className="flex items-center gap-2 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700"
+              className="flex items-center gap-2 gradient-primary hover:shadow-medium transition-smooth"
             >
               {loadingAIAssist ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -577,9 +577,9 @@ const MedicationSelector = ({
                   </CardTitle>
                   <div className="flex items-center gap-2">
                     {med.category === 'AI Suggested' && (
-                      <Badge variant="secondary" className="bg-gradient-to-r from-blue-100 to-purple-100 text-blue-700">
+                       <Badge variant="secondary" className="bg-accent text-primary">
                         AI Suggested
-                      </Badge>
+                       </Badge>
                     )}
                     {!disabled && (
                       <Button
@@ -699,10 +699,10 @@ const MedicationSelector = ({
                     </div>
                     
                     {aiInsights[index] && (
-                      <div className="p-3 bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 rounded-lg">
+                      <div className="p-3 bg-accent/50 border border-primary/20 rounded-lg">
                         <div className="flex items-center gap-2 mb-2">
-                          <Brain className="h-4 w-4 text-blue-600" />
-                          <Label className="text-sm font-medium text-blue-800">AI-Generated Clinical Summary</Label>
+                          <Brain className="h-4 w-4 text-primary" />
+                          <Label className="text-sm font-medium text-primary">AI-Generated Clinical Summary</Label>
                         </div>
                         <div className="text-sm text-gray-700 whitespace-pre-wrap">
                           {aiInsights[index]}

@@ -384,7 +384,7 @@ const DetailedBodyView = ({
             onMouseLeave={() => onBodyPartHover(null)}
           >
             {/* Dedicated body part image for this specific quadrant */}
-            <div className="overflow-hidden rounded-lg border bg-gradient-to-b from-blue-50 to-purple-50">
+            <div className="overflow-hidden rounded-lg border bg-gradient-to-b from-accent to-accent/70">
               <img 
                 src={dedicatedImage} 
                 alt={`${quadrant} ${currentView} detailed view`}
@@ -428,7 +428,7 @@ const DetailedBodyView = ({
                     <div 
                       className={`w-3 h-3 rounded-full border-2 border-white shadow-lg transition-all duration-200 ${
                         hoveredPart === part.name 
-                          ? 'bg-blue-500 scale-150' 
+                          ? 'bg-primary scale-150' 
                           : selectedBodyParts.includes(part.name)
                           ? 'bg-green-500 scale-125'
                           : 'bg-red-500 animate-pulse'

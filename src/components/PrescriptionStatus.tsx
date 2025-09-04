@@ -190,7 +190,7 @@ const PrescriptionStatus = ({ request }: PrescriptionStatusProps) => {
             }
           }}
           disabled={isDownloading}
-          className="text-blue-600 border-blue-200 bg-blue-50 hover:bg-blue-100"
+          className="text-primary border-primary/20 bg-accent hover:bg-accent/80"
         >
           <Download className="h-4 w-4 mr-1" />
           {isDownloading ? 'Generating...' : 'Generate PDF'}
@@ -210,7 +210,7 @@ const PrescriptionStatus = ({ request }: PrescriptionStatusProps) => {
 
   if (request.status === 'in_progress') {
     return (
-      <Badge variant="outline" className="text-blue-600 border-blue-200 bg-blue-50">
+      <Badge variant="outline" className="text-primary border-primary/20 bg-accent">
         <Stethoscope className="h-3 w-3 mr-1" />
         Doctor Reviewing
       </Badge>

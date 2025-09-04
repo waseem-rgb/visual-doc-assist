@@ -299,7 +299,7 @@ const DoctorDashboard = () => {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'pending': return 'bg-yellow-500';
-      case 'in_progress': return 'bg-blue-500';
+      case 'in_progress': return 'bg-primary';
       case 'completed': return 'bg-green-500';
       default: return 'bg-gray-500';
     }
@@ -384,8 +384,8 @@ const DoctorDashboard = () => {
           <Card>
             <CardContent className="p-6">
               <div className="flex items-center gap-4">
-                <div className="bg-blue-500/10 p-3 rounded-full">
-                  <Users className="h-6 w-6 text-blue-500" />
+                 <div className="bg-primary/10 p-3 rounded-full">
+                   <Users className="h-6 w-6 text-primary" />
                 </div>
                 <div>
                   <p className="text-2xl font-bold">{stats.total}</p>
@@ -412,8 +412,8 @@ const DoctorDashboard = () => {
           <Card>
             <CardContent className="p-6">
               <div className="flex items-center gap-4">
-                <div className="bg-blue-500/10 p-3 rounded-full">
-                  <FileText className="h-6 w-6 text-blue-500" />
+                 <div className="bg-primary/10 p-3 rounded-full">
+                   <FileText className="h-6 w-6 text-primary" />
                 </div>
                 <div>
                   <p className="text-2xl font-bold">{stats.in_progress}</p>

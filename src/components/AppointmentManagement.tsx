@@ -68,7 +68,7 @@ export function AppointmentManagement({ userRole = 'customer' }: AppointmentMana
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'scheduled':
-        return 'bg-blue-500/10 text-blue-500 border-blue-500/20';
+        return 'bg-primary/10 text-primary border-primary/20';
       case 'confirmed':
         return 'bg-green-500/10 text-green-500 border-green-500/20';
       case 'in_progress':

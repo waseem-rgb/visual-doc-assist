@@ -382,9 +382,9 @@ export function TeleconsultationBooking({ onBookingSuccess }: TeleconsultationBo
           </div>
 
           {/* Video Consultation Info */}
-          <div className="bg-blue-50 border border-blue-200 p-4 rounded-lg">
-            <h4 className="font-semibold text-blue-800 mb-2">🎥 Secure Video Consultation</h4>
-            <p className="text-blue-700 text-sm">
+           <div className="bg-accent border border-primary/20 p-4 rounded-lg">
+             <h4 className="font-semibold text-primary mb-2">🎥 Secure Video Consultation</h4>
+             <p className="text-foreground text-sm">
               Your consultation will be conducted via our secure video platform. You'll receive a link 
               to join the video consultation at your scheduled time. The session may be recorded with your consent for quality improvement.
             </p>

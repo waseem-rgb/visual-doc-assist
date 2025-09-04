@@ -7,7 +7,7 @@ const HowItWorks = () => {
       step: "01",
       title: "Select Body Part",
       description: "Choose the affected area from our interactive body diagram to focus your consultation.",
-      color: "bg-blue-500"
+      color: "bg-primary"
     },
     {
       step: "02", 

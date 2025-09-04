@@ -626,7 +626,7 @@ const InteractiveSymptomSelector = ({ bodyPart, patientData, onBack }: Interacti
                 <CardTitle className="text-xl text-center gradient-text">Probable Diagnosis</CardTitle>
               </CardHeader>
               <CardContent className="text-center space-y-6">
-                <div className="bg-blue-50 p-6 rounded-lg">
+                <div className="bg-accent p-6 rounded-lg">
                   <div className="flex items-center justify-center mb-4">
                     <Stethoscope className="h-8 w-8 text-primary mr-2" />
                     <h3 className="text-lg font-semibold text-primary">Medical Assessment</h3>
@@ -676,8 +676,8 @@ const InteractiveSymptomSelector = ({ bodyPart, patientData, onBack }: Interacti
                     to your mobile number within 15 minutes.
                   </p>
                 </div>
-                <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-                  <p className="text-sm text-blue-800">
+                 <div className="bg-accent p-4 rounded-lg border border-primary/20">
+                   <p className="text-sm text-foreground">
                     <strong>Note:</strong> Please keep your mobile phone accessible. 
                     You will receive the prescription via SMS or WhatsApp.
                   </p>

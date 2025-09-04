@@ -306,8 +306,8 @@ const GeneralSymptoms = ({ patientData }: GeneralSymptomsProps) => {
                 Our medical team is reviewing your case and will process it within 15 minutes.
               </p>
             </div>
-            <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-              <p className="text-sm text-blue-800">
+             <div className="bg-accent p-4 rounded-lg border border-primary/20">
+               <p className="text-sm text-foreground">
                 <strong>Note:</strong> You will be redirected to your dashboard shortly to track the status.
               </p>
             </div>
