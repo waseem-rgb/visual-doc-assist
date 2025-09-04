@@ -49,6 +49,21 @@ const CustomerAuth = () => {
           throw signUpError;
         }
 
+        // If user was created, assign customer role
+        if (data.user) {
+          const { error: roleError } = await supabase
+            .from('user_roles')
+            .insert({
+              user_id: data.user.id,
+              role: 'customer'
+            });
+          
+          if (roleError) {
+            console.error("Error assigning customer role:", roleError);
+            // Don't fail the signup for role assignment errors
+          }
+        }
+
         if (data.user && !data.user.email_confirmed_at) {
           toast({
             title: "Account Created",
@@ -96,6 +111,20 @@ const CustomerAuth = () => {
         // Check if email is confirmed (if confirmation is enabled)
         if (!data.user.email_confirmed_at) {
           throw new Error("Please confirm your email address before signing in");
+        }
+
+        // Check if user has customer role
+        const { data: roles, error: roleError } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', data.user.id);
+
+        if (roleError) throw roleError;
+
+        const hasCustomerRole = roles?.some(r => r.role === 'customer');
+        if (!hasCustomerRole) {
+          await supabase.auth.signOut();
+          throw new Error("Access denied - Customer account required");
         }
 
         toast({

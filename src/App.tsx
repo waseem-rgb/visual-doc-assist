@@ -27,13 +27,13 @@ const DesktopApp = () => (
     <Route path="/consultation" element={<Consultation />} />
     <Route path="/doctor/login" element={<DoctorLogin />} />
     <Route path="/doctor/dashboard" element={
-      <ProtectedRoute redirectTo="/doctor/login">
+      <ProtectedRoute redirectTo="/doctor/login" requireRole="doctor">
         <DoctorDashboard />
       </ProtectedRoute>
     } />
     <Route path="/customer/login" element={<CustomerAuth />} />
     <Route path="/customer/dashboard" element={
-      <ProtectedRoute redirectTo="/customer/login">
+      <ProtectedRoute redirectTo="/customer/login" requireRole="customer">
         <CustomerDashboard />
       </ProtectedRoute>
     } />
@@ -59,13 +59,13 @@ const MobileApp = () => (
     <Route path="/consultation" element={<ConsultationWizard />} />
     <Route path="/doctor/login" element={<MobileLayout hideBottomNav={true}><DoctorLogin /></MobileLayout>} />
     <Route path="/doctor/dashboard" element={
-      <ProtectedRoute redirectTo="/doctor/login">
+      <ProtectedRoute redirectTo="/doctor/login" requireRole="doctor">
         <MobileLayout hideBottomNav={true}><DoctorDashboard /></MobileLayout>
       </ProtectedRoute>
     } />
     <Route path="/customer/login" element={<MobileLayout hideBottomNav={true}><CustomerAuth /></MobileLayout>} />
     <Route path="/customer/dashboard" element={
-      <ProtectedRoute redirectTo="/customer/login">
+      <ProtectedRoute redirectTo="/customer/login" requireRole="customer">
         <MobileLayout><CustomerDashboard /></MobileLayout>
       </ProtectedRoute>
     } />
