@@ -31,6 +31,8 @@ const CustomerAuth = () => {
     try {
       if (isSignUp) {
         // Sign up new customer
+        console.log("Attempting signup with:", { email, redirectTo: `${window.location.origin}/customer/dashboard` });
+        
         const { data, error: signUpError } = await supabase.auth.signUp({
           email,
           password,
@@ -39,12 +41,29 @@ const CustomerAuth = () => {
           }
         });
 
-        if (signUpError) throw signUpError;
+        console.log("Signup response:", { data, error: signUpError });
 
-        toast({
-          title: "Account Created",
-          description: "Please check your email to confirm your account, then sign in.",
-        });
+        if (signUpError) {
+          console.error("Signup error details:", signUpError);
+          throw signUpError;
+        }
+
+        if (data.user && !data.user.email_confirmed_at) {
+          toast({
+            title: "Account Created",
+            description: "Please check your email to confirm your account, then sign in.",
+          });
+        } else if (data.user && data.user.email_confirmed_at) {
+          toast({
+            title: "Account Created & Confirmed",
+            description: "You can now sign in with your credentials.",
+          });
+        } else {
+          toast({
+            title: "Signup Initiated",
+            description: "Please check your email for further instructions.",
+          });
+        }
         
         setIsSignUp(false);
       } else {
