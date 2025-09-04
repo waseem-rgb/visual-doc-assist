@@ -403,6 +403,7 @@ const InteractiveSymptomSelector = ({ bodyPart, patientData, onBack }: Interacti
         patient_name: patientData.name,
         patient_age: patientData.age,
         patient_gender: patientData.gender,
+        patient_phone: clinicalData.mobileNumber, // Link the mobile number from clinical history
         body_part: bodyPart,
         symptoms: fullSymptomsText,
         probable_diagnosis: diagnosis || 'To be determined', // Keep for backward compatibility
