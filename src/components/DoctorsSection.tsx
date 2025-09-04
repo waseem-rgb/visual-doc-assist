@@ -82,14 +82,13 @@ const DoctorsSection = () => {
               </div>
             </div>
 
-            <Button 
-              size="lg" 
-              className="gradient-primary shadow-medium transition-bounce hover:shadow-large"
-              onClick={() => navigate("/doctor/login")}
-            >
-              Join Our Network
-              <ArrowRight className="ml-2 h-5 w-5" />
-            </Button>
+            <div className="bg-muted/50 rounded-lg p-4 border-l-4 border-primary">
+              <p className="text-sm text-muted-foreground">
+                <strong>Healthcare Providers:</strong> Our network is invitation-only to ensure 
+                quality care. Qualified doctors are onboarded through our administrative process. 
+                If you're interested in joining, please reach out through official channels.
+              </p>
+            </div>
           </div>
 
           <div className="grid grid-cols-2 gap-6">

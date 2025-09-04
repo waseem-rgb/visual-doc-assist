@@ -48,6 +48,14 @@ const Navigation = () => {
               >
                 Patient Login
               </Button>
+              {/* Discrete admin access */}
+              <button 
+                onClick={() => window.location.href = "/admin"}
+                className="text-xs text-muted-foreground hover:text-foreground transition-colors ml-4"
+                title="System Administration"
+              >
+                Admin
+              </button>
             </div>
           </div>
 

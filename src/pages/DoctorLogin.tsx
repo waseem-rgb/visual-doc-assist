@@ -14,7 +14,7 @@ const DoctorLogin = () => {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [isSignUp, setIsSignUp] = useState(false);
+  // Remove signup functionality - doctors are now onboarded by admin only
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -29,73 +29,38 @@ const DoctorLogin = () => {
     setError("");
     
     try {
-      if (isSignUp) {
-        // Sign up new doctor
-        const { data, error: signUpError } = await supabase.auth.signUp({
-          email,
-          password,
-          options: {
-            emailRedirectTo: `${window.location.origin}/doctor/dashboard`
-          }
-        });
+      // Only allow sign in - no signup functionality
+      const { data, error: signInError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
 
-        if (signUpError) throw signUpError;
+      if (signInError) throw signInError;
 
-        // If user was created, assign doctor role
-        if (data.user) {
-          const { error: roleError } = await supabase
-            .from('user_roles')
-            .insert({
-              user_id: data.user.id,
-              role: 'doctor'
-            });
-          
-          if (roleError) {
-            console.error("Error assigning doctor role:", roleError);
-            // Don't fail the signup for role assignment errors
-          }
-        }
-
-        toast({
-          title: "Account Created",
-          description: "Please check your email to confirm your account, then sign in.",
-        });
-        
-        setIsSignUp(false);
-      } else {
-        // Sign in existing doctor
-        const { data, error: signInError } = await supabase.auth.signInWithPassword({
-          email,
-          password,
-        });
-
-        if (signInError) throw signInError;
-
-        if (!data.user) {
-          throw new Error("Authentication failed");
-        }
-
-        // Check if user has doctor role
-        const { data: roles, error: roleError } = await supabase
-          .from('user_roles')
-          .select('role')
-          .eq('user_id', data.user.id);
-
-        if (roleError) throw roleError;
-
-        const hasDocRole = roles?.some(r => r.role === 'doctor');
-        if (!hasDocRole) {
-          await supabase.auth.signOut();
-          throw new Error("Access denied - Doctor role required");
-        }
-
-        toast({
-          title: "Login Successful",
-          description: "Welcome back, Doctor!",
-        });
-        
-        navigate("/doctor/dashboard");
+      if (!data.user) {
+        throw new Error("Authentication failed");
       }
+
+      // Check if user has doctor role
+      const { data: roles, error: roleError } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', data.user.id);
+
+      if (roleError) throw roleError;
+
+      const hasDocRole = roles?.some(r => r.role === 'doctor');
+      if (!hasDocRole) {
+        await supabase.auth.signOut();
+        throw new Error("Access denied - Doctor role required. Contact administrator for account creation.");
+      }
+
+      toast({
+        title: "Login Successful",
+        description: "Welcome back, Doctor!",
+      });
+      
+      navigate("/doctor/dashboard");
     } catch (error: any) {
       setError(error.message);
       console.error("Auth error:", error);
@@ -114,11 +79,17 @@ const DoctorLogin = () => {
             </div>
           </div>
           <CardTitle className="text-2xl font-bold text-foreground">
-            {isSignUp ? "Create Doctor Account" : "Doctor Login"}
+            Doctor Login
           </CardTitle>
           <p className="text-muted-foreground">
-            {isSignUp ? "Register as a new doctor" : "Access your medical dashboard"}
+            Access your medical dashboard
           </p>
+          <Alert>
+            <AlertDescription>
+              Doctor accounts are created by system administrators only. 
+              If you need access, please contact your administrator.
+            </AlertDescription>
+          </Alert>
         </CardHeader>
 
         <CardContent>
@@ -166,19 +137,7 @@ const DoctorLogin = () => {
               className="w-full"
               disabled={loading}
             >
-              {loading ? 
-                (isSignUp ? "Creating Account..." : "Signing In...") : 
-                (isSignUp ? "Create Account" : "Sign In")
-              }
-            </Button>
-
-            <Button
-              type="button"
-              variant="ghost"
-              className="w-full"
-              onClick={() => setIsSignUp(!isSignUp)}
-            >
-              {isSignUp ? "Already have an account? Sign In" : "Need an account? Sign Up"}
+              {loading ? "Signing In..." : "Sign In"}
             </Button>
 
 

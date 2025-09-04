@@ -14,6 +14,79 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_audit_logs: {
+        Row: {
+          action: string
+          admin_user_id: string
+          created_at: string
+          details: Json | null
+          id: string
+          target_id: string | null
+          target_type: string
+        }
+        Insert: {
+          action: string
+          admin_user_id: string
+          created_at?: string
+          details?: Json | null
+          id?: string
+          target_id?: string | null
+          target_type: string
+        }
+        Update: {
+          action?: string
+          admin_user_id?: string
+          created_at?: string
+          details?: Json | null
+          id?: string
+          target_id?: string | null
+          target_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "admin_audit_logs_admin_user_id_fkey"
+            columns: ["admin_user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      admin_users: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          email: string
+          id: string
+          is_active: boolean
+          role: Database["public"]["Enums"]["admin_role"]
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          email: string
+          id?: string
+          is_active?: boolean
+          role?: Database["public"]["Enums"]["admin_role"]
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          email?: string
+          id?: string
+          is_active?: boolean
+          role?: Database["public"]["Enums"]["admin_role"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "admin_users_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "admin_users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       appointments: {
         Row: {
           appointment_date: string
@@ -139,6 +212,65 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      doctor_onboarding_requests: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          created_by: string
+          doctor_user_id: string | null
+          email: string
+          full_name: string
+          id: string
+          invited_at: string | null
+          license_number: string | null
+          notes: string | null
+          phone: string | null
+          specialization: string | null
+          status: string
+          temporary_password: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          created_by: string
+          doctor_user_id?: string | null
+          email: string
+          full_name: string
+          id?: string
+          invited_at?: string | null
+          license_number?: string | null
+          notes?: string | null
+          phone?: string | null
+          specialization?: string | null
+          status?: string
+          temporary_password: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string
+          doctor_user_id?: string | null
+          email?: string
+          full_name?: string
+          id?: string
+          invited_at?: string | null
+          license_number?: string | null
+          notes?: string | null
+          phone?: string | null
+          specialization?: string | null
+          status?: string
+          temporary_password?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "doctor_onboarding_requests_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "admin_users"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       doctor_profiles: {
         Row: {
@@ -682,12 +814,17 @@ export type Database = {
         Args: { otp_code: string; salt_value: string }
         Returns: string
       }
+      is_super_admin: {
+        Args: { _user_id: string }
+        Returns: boolean
+      }
       verify_otp: {
         Args: { phone: string; provided_otp: string }
         Returns: boolean
       }
     }
     Enums: {
+      admin_role: "super_admin"
       app_role: "admin" | "doctor" | "customer"
       appointment_status:
         | "scheduled"
@@ -823,6 +960,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      admin_role: ["super_admin"],
       app_role: ["admin", "doctor", "customer"],
       appointment_status: [
         "scheduled",
