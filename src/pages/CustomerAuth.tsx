@@ -60,6 +60,11 @@ const CustomerAuth = () => {
           throw new Error("Authentication failed");
         }
 
+        // Check if email is confirmed (if confirmation is enabled)
+        if (!data.user.email_confirmed_at) {
+          throw new Error("Please confirm your email address before signing in");
+        }
+
         toast({
           title: "Welcome Back!",
           description: "You've been signed in successfully.",
