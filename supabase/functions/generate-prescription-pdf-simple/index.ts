@@ -658,7 +658,9 @@ Deno.serve(async (req) => {
             type: 'prescription_ready',
             patientName: requestData.patient_name,
             doctorName: doctor.full_name,
-            downloadUrl: downloadUrl
+            downloadUrl: downloadUrl,
+            prescriptionId: prescription.id,
+            requestId: requestData.id
           })
         });
 

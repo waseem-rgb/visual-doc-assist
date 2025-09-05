@@ -19,6 +19,8 @@ interface SMSRequest {
   joinLink?: string;
   appointmentId?: string;
   downloadUrl?: string;
+  prescriptionId?: string;
+  requestId?: string;
 }
 
 const serve_handler = async (req: Request): Promise<Response> => {
@@ -75,7 +77,7 @@ const serve_handler = async (req: Request): Promise<Response> => {
       console.log('⚙️ [SMS FUNCTION] System call detected - allowing SMS sending');
     }
 
-    const { to, message, type, patientName, doctorName, appointmentDate, appointmentTime, isReferral, referralSpecialist, joinLink, appointmentId, downloadUrl }: SMSRequest = await req.json();
+    const { to, message, type, patientName, doctorName, appointmentDate, appointmentTime, isReferral, referralSpecialist, joinLink, appointmentId, downloadUrl, prescriptionId, requestId }: SMSRequest = await req.json();
     
     // Log without PII - only log type and success/failure
     console.log(`📨 [SMS FUNCTION] Sending SMS notification of type: ${type}`);
