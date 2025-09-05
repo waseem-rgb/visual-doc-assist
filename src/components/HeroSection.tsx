@@ -23,10 +23,10 @@ const HeroSection = () => {
               </p>
             </div>
 
-            <div className="flex flex-col sm:flex-row gap-4">
+            <div className="flex flex-col gap-4 max-w-md">
               <Button 
                 size="lg" 
-                className="gradient-primary shadow-medium transition-bounce hover:shadow-large"
+                className="gradient-primary shadow-medium transition-bounce hover:shadow-large w-full"
                 onClick={() => navigate("/customer/login")}
               >
                 Login/My Dashboard & Prescription Download
@@ -35,7 +35,7 @@ const HeroSection = () => {
               <Button 
                 size="lg" 
                 variant="outline" 
-                className="border-primary text-primary hover:bg-primary hover:text-primary-foreground transition-smooth"
+                className="border-2 border-primary bg-background text-primary hover:bg-primary hover:text-primary-foreground transition-smooth w-full"
                 onClick={() => navigate("/doctor/login")}
               >
                 For Healthcare Providers
