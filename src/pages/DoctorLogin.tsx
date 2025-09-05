@@ -224,12 +224,6 @@ const DoctorLogin = () => {
           <p className="text-muted-foreground">
             Access your medical dashboard
           </p>
-          <Alert>
-            <AlertDescription>
-              Doctor accounts are created by system administrators only. 
-              Phone number 7993448425 has special access privileges.
-            </AlertDescription>
-          </Alert>
         </CardHeader>
 
         <CardContent>
