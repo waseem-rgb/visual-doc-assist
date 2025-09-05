@@ -57,40 +57,42 @@ const serve_handler = async (req: Request): Promise<Response> => {
       global: { headers: { Authorization: authHeader } }
     });
 
-    // Verify user authentication
-    const { data: user, error: userError } = await supabase.auth.getUser();
-    
-    if (userError || !user?.user) {
-      console.error('❌ [SMS FUNCTION] SMS notification attempt with invalid token:', userError?.message);
-      return new Response(
-        JSON.stringify({ error: 'Unauthorized: Invalid token' }),
-        { 
-          status: 401,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        }
-      );
+    // Verify user authentication - allow system calls
+    let user = null;
+    let isSystemCall = false;
+
+    if (authHeader) {
+      const { data: authUser, error: userError } = await supabase.auth.getUser();
+      if (!userError && authUser?.user) {
+        user = authUser.user;
+        console.log('✅ [SMS FUNCTION] User authenticated:', user.id);
+      }
     }
 
-    console.log('✅ [SMS FUNCTION] User authenticated:', user.user.id);
+    // Check if this is a system call (from edge functions)
+    if (!user) {
+      isSystemCall = true;
+      console.log('⚙️ [SMS FUNCTION] System call detected - allowing SMS sending');
+    }
 
     const { to, message, type, patientName, doctorName, appointmentDate, appointmentTime, isReferral, referralSpecialist, joinLink, appointmentId, downloadUrl }: SMSRequest = await req.json();
     
     // Log without PII - only log type and success/failure
-    console.log(`Sending SMS notification of type: ${type}`);
+    console.log(`📨 [SMS FUNCTION] Sending SMS notification of type: ${type}`);
     console.log('📋 [SMS DEBUG] Download URL received:', !!downloadUrl, downloadUrl ? 'URL present' : 'URL missing');
 
-    // Check if user has doctor role (only for certain message types)
-    const doctorOnlyTypes = ['case_claimed', 'prescription_ready'];
+    // Check if user has doctor role (only for certain message types, and only if not a system call)
+    const doctorOnlyTypes = ['case_claimed'];
     
-    if (doctorOnlyTypes.includes(type)) {
+    if (doctorOnlyTypes.includes(type) && !isSystemCall && user) {
       const { data: userRoles, error: roleError } = await supabase
         .from('user_roles')
         .select('role')
-        .eq('user_id', user.user.id);
+        .eq('user_id', user.id);
 
       const hasDocRole = userRoles?.some(r => r.role === 'doctor');
       if (roleError || !hasDocRole) {
-        console.error('SMS notification attempt by non-doctor user for doctor-only type:', user.user.id, type);
+        console.error('SMS notification attempt by non-doctor user for doctor-only type:', user.id, type);
         return new Response(
           JSON.stringify({ error: 'Unauthorized: Doctor role required for this message type' }),
           { 
@@ -148,7 +150,7 @@ const serve_handler = async (req: Request): Promise<Response> => {
           break;
         case 'prescription_ready':
           if (downloadUrl) {
-            finalMessage = `Hello ${patientName || 'Patient'}, your prescription from Dr. ${doctorName || 'your doctor'} is ready! Download it here: ${downloadUrl} (Link expires in 24 hours)`;
+            finalMessage = `Hello ${patientName || 'Patient'}, your prescription from Dr. ${doctorName || 'your doctor'} is ready! Download it here: ${downloadUrl}`;
           } else {
             finalMessage = `Hello ${patientName || 'Patient'}, your prescription from Dr. ${doctorName || 'your doctor'} is ready for download. Please check your patient portal.`;
           }

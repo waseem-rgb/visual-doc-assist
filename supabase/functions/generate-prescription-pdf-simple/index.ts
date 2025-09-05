@@ -102,10 +102,10 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Authorization check: allow doctors or customers accessing their own completed requests
+    // Authorization check: allow doctors, customers accessing their own requests, or system calls
     if (!isUserDoctor) {
-      // For customers, they can only access their own completed prescription requests
-      if (requestData.customer_id !== user.user.id) {
+      // For customers, they can only access their own requests (but allow system calls)
+      if (requestData.customer_id && requestData.customer_id !== user.user.id) {
         console.error('Unauthorized: Customer can only access their own prescriptions');
         return new Response(
           JSON.stringify({ error: 'Unauthorized: Access denied' }),
@@ -116,8 +116,9 @@ Deno.serve(async (req) => {
         );
       }
 
-      // Check if the request is completed for customers accessing referrals
-      if (!isReferral && requestData.status !== 'completed') {
+      // For referrals and immediate cases, allow generation regardless of status
+      // For prescription cases, require completion for customers (but doctors can always access)
+      if (!isReferral && requestData.prescription_required && requestData.status !== 'completed') {
         console.error('Unauthorized: Prescription not yet completed');
         return new Response(
           JSON.stringify({ error: 'Prescription not yet completed' }),

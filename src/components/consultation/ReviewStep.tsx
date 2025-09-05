@@ -174,15 +174,19 @@ export function ReviewStep({ onBack, onReset }: ReviewStepProps) {
         }
       }
 
-      // Send SMS notification to doctor for prescription requests
-      if (prescriptionRequired && prescriptionRequest) {
+      // Always send SMS notification to doctor for every submitted request
+      if (prescriptionRequest) {
         try {
           console.log('📱 [REVIEW STEP] Sending doctor notification SMS');
+          const doctorMessage = prescriptionRequired 
+            ? `New prescription request from ${patientData.name} (${patientData.age}y, ${patientData.gender}). Symptoms: ${selectedSymptoms.join(', ')}. Body parts: ${selectedBodyParts.join(', ')}. Please review in the doctor portal.`
+            : `New ${isReferralCase ? 'referral' : 'consultation'} from ${patientData.name} (${patientData.age}y, ${patientData.gender}). Symptoms: ${selectedSymptoms.join(', ')}. Body parts: ${selectedBodyParts.join(', ')}. ${isReferralCase ? 'Referral generated.' : 'Please review.'} Check the doctor portal.`;
+          
           const { data: doctorSmsResult, error: doctorSmsError } = await supabase.functions.invoke('send-sms-notification', {
             body: {
               to: '7993448425',
-              type: 'prescription_requested',
-              message: `New prescription request from ${patientData.name} (${patientData.age}y, ${patientData.gender}). Symptoms: ${selectedSymptoms.join(', ')}. Body parts: ${selectedBodyParts.join(', ')}. Please review in the doctor portal.`,
+              type: prescriptionRequired ? 'prescription_requested' : 'case_submitted',
+              message: doctorMessage,
               patientName: patientData.name
             }
           });
