@@ -9,7 +9,7 @@ const corsHeaders = {
 interface SMSRequest {
   to: string;
   message?: string;
-  type: 'case_claimed' | 'prescription_ready' | 'consultation_update' | 'prescription_requested' | 'referral_submitted' | 'appointment_booked' | 'teleconsultation_booked' | 'new_teleconsultation_assigned';
+  type: 'case_claimed' | 'prescription_ready' | 'consultation_update' | 'prescription_requested' | 'referral_submitted' | 'appointment_booked' | 'teleconsultation_booked' | 'new_teleconsultation_assigned' | 'doctor_new_request';
   patientName?: string;
   doctorName?: string;
   appointmentDate?: string;
@@ -176,6 +176,9 @@ const serve_handler = async (req: Request): Promise<Response> => {
           break;
         case 'new_teleconsultation_assigned':
           finalMessage = `📋 New Consultation Assigned. Hello Dr. ${doctorName || 'Doctor'}, you have a new teleconsultation with ${patientName || 'Patient'} on ${appointmentDate || 'the scheduled date'}${appointmentTime ? ` at ${appointmentTime}` : ''}. ${joinLink ? `Join here: ${joinLink}` : 'Check your dashboard for details.'}`;
+          break;
+        case 'doctor_new_request':
+          finalMessage = `🩺 New Patient Request. Hello Doctor, you have a new prescription request from ${patientName || 'Patient'}. Please login to your VrDoc portal to review and approve: https://vrdoc.co.in/doctor/login`;
           break;
         default:
           finalMessage = 'You have an update from your healthcare provider.';

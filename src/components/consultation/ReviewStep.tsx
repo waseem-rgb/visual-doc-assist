@@ -125,69 +125,40 @@ export function ReviewStep({ onBack, onReset }: ReviewStepProps) {
 
       if (requestError) throw requestError;
 
-      // Generate prescription/referral PDF
-      const { data: pdfResult, error: pdfError } = await supabase.functions
-        .invoke('generate-prescription-pdf-simple', {
-          body: {
-            requestId: prescriptionRequest.id,
-            isReferral: isReferralCase
-          }
-        });
+      if (prescriptionRequired) {
+        // Case A: Doctor review needed - Send SMS notifications but don't generate PDF yet
+        console.log('📱 [REVIEW STEP] Doctor review case - sending notifications only');
+        
+        // Send patient SMS - prescription requested
+        if (patientData.phone) {
+          try {
+            const { data: patientSmsResult, error: patientSmsError } = await supabase.functions.invoke('send-sms-notification', {
+              body: {
+                to: patientData.phone,
+                type: 'prescription_requested',
+                patientName: patientData.name
+              }
+            });
 
-      if (pdfError) throw pdfError;
-
-      // Send SMS notification for consultation review completion
-      if (patientData.phone && prescriptionRequest) {
-        try {
-          console.log('📱 [REVIEW STEP] Sending SMS notification');
-          const { data: smsResult, error: smsError } = await supabase.functions.invoke('send-sms-notification', {
-            body: {
-              to: patientData.phone,
-              type: prescriptionRequired ? 'prescription_requested' : 'referral_submitted',
-              patientName: patientData.name,
-              isReferral: isReferralCase,
-              referralSpecialist: referralSpecialist || undefined
+            if (patientSmsError) {
+              console.error('📱 [REVIEW STEP] Patient SMS Error:', patientSmsError);
+            } else {
+              console.log('📱 [REVIEW STEP] Patient SMS sent successfully:', patientSmsResult);
             }
-          });
-
-          if (smsError) {
-            console.error('📱 [REVIEW STEP] SMS Error:', smsError);
-            toast({
-              title: "SMS Failed",
-              description: "Consultation submitted but SMS notification failed",
-              variant: "destructive"
-            });
-          } else {
-            console.log('📱 [REVIEW STEP] SMS sent successfully:', smsResult);
-            toast({
-              title: "SMS Notification Sent",
-              description: `${prescriptionRequired ? 'Prescription request' : 'Consultation result'} sent to ${patientData.phone}`,
-            });
+          } catch (patientSmsError) {
+            console.error('Failed to send patient SMS notification:', patientSmsError);
           }
-        } catch (smsError) {
-          console.error('Failed to send SMS notification:', smsError);
-          toast({
-            title: "SMS Failed",
-            description: "Consultation submitted but SMS notification failed",
-            variant: "destructive"
-          });
         }
-      }
 
-      // Always send SMS notification to doctor for every submitted request
-      if (prescriptionRequest) {
+        // Send doctor SMS - new request notification  
         try {
-          console.log('📱 [REVIEW STEP] Sending doctor notification SMS');
-          const doctorMessage = prescriptionRequired 
-            ? `New prescription request from ${patientData.name} (${patientData.age}y, ${patientData.gender}). Symptoms: ${selectedSymptoms.join(', ')}. Body parts: ${selectedBodyParts.join(', ')}. Please review in the doctor portal.`
-            : `New ${isReferralCase ? 'referral' : 'consultation'} from ${patientData.name} (${patientData.age}y, ${patientData.gender}). Symptoms: ${selectedSymptoms.join(', ')}. Body parts: ${selectedBodyParts.join(', ')}. ${isReferralCase ? 'Referral generated.' : 'Please review.'} Check the doctor portal.`;
-          
+          console.log('📱 [REVIEW STEP] Sending doctor new request notification');
           const { data: doctorSmsResult, error: doctorSmsError } = await supabase.functions.invoke('send-sms-notification', {
             body: {
               to: '7993448425',
-              type: prescriptionRequired ? 'prescription_requested' : 'case_submitted',
-              message: doctorMessage,
-              patientName: patientData.name
+              type: 'doctor_new_request',
+              patientName: patientData.name,
+              message: `New prescription request from ${patientData.name} (${patientData.age}${patientData.gender?.charAt(0)?.toUpperCase() || ''}). Symptoms: ${selectedSymptoms.join(', ')}. Please login to review: https://vrdoc.co.in/doctor/login`
             }
           });
 
@@ -199,16 +170,34 @@ export function ReviewStep({ onBack, onReset }: ReviewStepProps) {
         } catch (doctorSmsError) {
           console.error('Failed to send doctor SMS notification:', doctorSmsError);
         }
-      }
 
-      toast({
-        title: referralSpecialist ? `Referred to ${referralSpecialist}` : 
-               prescriptionRequired ? "Sent for Doctor Review" : "Referral Generated Successfully",
-        description: referralSpecialist ? `Your consultation has been automatically referred to a ${referralSpecialist}.` :
-                    prescriptionRequired 
-                    ? "Your request has been sent to a doctor for review and prescription."
-                    : "Your consultation has been processed and referral document is ready.",
-      });
+        toast({
+          title: "Sent for Doctor Review",
+          description: "Your request has been sent to a doctor for review and prescription."
+        });
+        
+      } else {
+        // Case B: Referral case - Generate PDF immediately (PDF function will send SMS)
+        console.log('📱 [REVIEW STEP] Referral case - generating PDF');
+        
+        const { data: pdfResult, error: pdfError } = await supabase.functions
+          .invoke('generate-prescription-pdf-simple', {
+            body: {
+              requestId: prescriptionRequest.id,
+              isReferral: isReferralCase
+            }
+          });
+
+        if (pdfError) {
+          console.error('📱 [REVIEW STEP] PDF Generation Error:', pdfError);
+          throw pdfError;
+        }
+
+        toast({
+          title: referralSpecialist ? `Referred to ${referralSpecialist}` : "Referral Generated Successfully",
+          description: referralSpecialist ? `Your consultation has been automatically referred to a ${referralSpecialist}.` : "Your consultation has been processed and referral document is ready."
+        });
+      }
 
       // Reset consultation and navigate to dashboard
       resetConsultation();
