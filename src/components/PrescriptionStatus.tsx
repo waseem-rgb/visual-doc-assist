@@ -168,12 +168,23 @@ const PrescriptionStatus = ({ request }: PrescriptionStatusProps) => {
           onClick={async () => {
             try {
               setIsDownloading(true);
-              await supabase.functions.invoke('generate-prescription-pdf-simple', {
+              const { data, error } = await supabase.functions.invoke('generate-prescription-pdf-simple', {
                 body: {
                   requestId: request.id,
                   isReferral: !request.prescription_required
                 }
               });
+              
+              if (error) {
+                console.error('PDF generation error:', error);
+                toast({
+                  title: "Generation Failed", 
+                  description: "Failed to generate PDF. Please try again.",
+                  variant: "destructive",
+                });
+                return;
+              }
+              
               toast({
                 title: "PDF Generation Started",
                 description: "Your prescription is being generated. Please wait a moment.",
