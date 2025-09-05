@@ -591,6 +591,9 @@ Deno.serve(async (req) => {
     // Send SMS notification to patient with download link
     if (requestData.patient_phone) {
       try {
+        console.log('📋 [SMS DEBUG] About to send SMS with download URL present:', downloadUrl ? 'YES' : 'NO');
+        console.log('📋 [SMS DEBUG] Download URL length:', downloadUrl?.length || 0);
+        
         const smsResponse = await fetch(`${supabaseUrl}/functions/v1/send-sms-notification`, {
           method: 'POST',
           headers: {
@@ -608,14 +611,16 @@ Deno.serve(async (req) => {
 
         const smsResult = await smsResponse.json();
         if (smsResult.success) {
-          console.log('SMS notification sent successfully with download link');
+          console.log('✅ SMS notification sent successfully with download link');
         } else {
-          console.error('SMS notification failed:', smsResult.error);
+          console.error('❌ SMS notification failed:', smsResult.error);
         }
       } catch (smsError) {
-        console.error('Error sending SMS notification:', smsError);
+        console.error('❌ Error sending SMS notification:', smsError);
         // Don't fail the main request if SMS fails
       }
+    } else {
+      console.log('📱 No patient phone number available for SMS notification');
     }
 
     return new Response(
