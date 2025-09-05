@@ -82,7 +82,7 @@ const serve_handler = async (req: Request): Promise<Response> => {
     console.log('📋 [SMS DEBUG] Download URL received:', !!downloadUrl, downloadUrl ? 'URL present' : 'URL missing');
 
     // Check if user has doctor role (only for certain message types, and only if not a system call)
-    const doctorOnlyTypes = ['case_claimed'];
+    const doctorOnlyTypes = []; // Removed case_claimed to allow system notifications
     
     if (doctorOnlyTypes.includes(type) && !isSystemCall && user) {
       const { data: userRoles, error: roleError } = await supabase

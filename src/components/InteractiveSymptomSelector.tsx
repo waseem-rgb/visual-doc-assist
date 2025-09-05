@@ -496,9 +496,8 @@ const InteractiveSymptomSelector = ({ bodyPart, patientData, onBack }: Interacti
       const { data: doctorSmsResult, error: doctorSmsError } = await supabase.functions.invoke('send-sms-notification', {
         body: {
           to: '7993448425',
-          type: 'case_claimed',
+          type: 'doctor_new_request',
           patientName: patientData.name,
-          doctorName: 'Doctor',
           message: `New instant consultation from ${patientData.name} (${patientData.age}${patientData.gender?.charAt(0)?.toUpperCase() || ''}). Please login to VrDoc to review: https://vrdoc.co.in/doctor/login`
         }
       });
