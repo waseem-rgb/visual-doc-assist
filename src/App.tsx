@@ -36,7 +36,11 @@ const DesktopApp = () => (
         <CustomerDashboard />
       </ProtectedRoute>
     } />
-    <Route path="/admin/dashboard" element={<AdminDashboard />} />
+    <Route path="/admin/dashboard" element={
+      <ProtectedRoute redirectTo="/customer/login">
+        <AdminDashboard />
+      </ProtectedRoute>
+    } />
     {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
     <Route path="*" element={<NotFound />} />
   </Routes>
@@ -59,7 +63,11 @@ const MobileApp = () => (
         <MobileLayout><CustomerDashboard /></MobileLayout>
       </ProtectedRoute>
     } />
-    <Route path="/admin/dashboard" element={<MobileLayout hideBottomNav={true}><AdminDashboard /></MobileLayout>} />
+    <Route path="/admin/dashboard" element={
+      <ProtectedRoute redirectTo="/customer/login">
+        <MobileLayout hideBottomNav={true}><AdminDashboard /></MobileLayout>
+      </ProtectedRoute>
+    } />
     {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
     <Route path="*" element={<MobileLayout hideBottomNav={true}><NotFound /></MobileLayout>} />
   </Routes>
