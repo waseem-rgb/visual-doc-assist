@@ -78,7 +78,7 @@
   }
 
   body {
-    background: var(--gradient-purple);
+    background: #ffffff;
     @apply text-foreground font-sans antialiased;
     scroll-behavior: smooth;
     min-height: 100vh;
