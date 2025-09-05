@@ -178,7 +178,7 @@ const serve_handler = async (req: Request): Promise<Response> => {
           finalMessage = `📋 New Consultation Assigned. Hello Dr. ${doctorName || 'Doctor'}, you have a new teleconsultation with ${patientName || 'Patient'} on ${appointmentDate || 'the scheduled date'}${appointmentTime ? ` at ${appointmentTime}` : ''}. ${joinLink ? `Join here: ${joinLink}` : 'Check your dashboard for details.'}`;
           break;
         case 'doctor_new_request':
-          finalMessage = `🩺 New Patient Request. Hello Doctor, you have a new prescription request from ${patientName || 'Patient'}. Please login to review: https://9ef9f016-bd2c-406c-a384-b239fe6ec4e2.lovable.dev/doctor/login`;
+          finalMessage = `🩺 New Patient Request. Hello Doctor, you have a new prescription request from ${patientName || 'Patient'}. Please check your VrDoc portal to review and approve.`;
           break;
         default:
           finalMessage = 'You have an update from your healthcare provider.';
