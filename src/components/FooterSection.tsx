@@ -20,7 +20,7 @@ const FooterSection = () => {
           <div className="flex flex-col sm:flex-row gap-4 max-w-lg mx-auto">
             <Input 
               placeholder="Enter your email" 
-              className="flex-1 h-12 border-border/50 bg-background/50 backdrop-blur-sm"
+              className="flex-1 h-12 border-border/50 bg-background/50 backdrop-blur-sm placeholder:text-foreground/70"
             />
             <Button className="gradient-primary h-12 px-8">
               Subscribe

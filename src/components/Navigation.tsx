@@ -29,7 +29,7 @@ const Navigation = () => {
               <a
                 key={item.label}
                 href={item.href}
-                className="text-muted-foreground hover:text-foreground transition-smooth"
+                className="text-foreground hover:text-primary transition-smooth font-medium"
               >
                 {item.label}
               </a>
@@ -51,7 +51,7 @@ const Navigation = () => {
               {/* Discrete admin access */}
               <button 
                 onClick={() => window.location.href = "/admin"}
-                className="text-xs text-muted-foreground hover:text-foreground transition-colors ml-4"
+                className="text-xs text-foreground hover:text-primary transition-colors ml-4"
                 title="System Administration"
               >
                 Admin
@@ -76,7 +76,7 @@ const Navigation = () => {
                 <a
                   key={item.label}
                   href={item.href}
-                  className="text-muted-foreground hover:text-foreground transition-smooth"
+                  className="text-foreground hover:text-primary transition-smooth font-medium"
                   onClick={() => setIsMenuOpen(false)}
                 >
                   {item.label}
