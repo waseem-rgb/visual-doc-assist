@@ -156,6 +156,28 @@ const GeneralSymptoms = ({ patientData }: GeneralSymptomsProps) => {
         }
       }
 
+      // Always send SMS notification to doctor (7993448425) for every prescription request
+      try {
+        console.log('📱 [DOCTOR SMS] Sending notification to doctor for new general symptoms case');
+        const { data: doctorSmsResult, error: doctorSmsError } = await supabase.functions.invoke('send-sms-notification', {
+          body: {
+            to: '7993448425',
+            type: 'case_claimed',
+            patientName: patientData.name,
+            doctorName: 'Doctor',
+            message: `New general symptoms consultation from ${patientData.name} (${patientData.age}${patientData.gender?.charAt(0)?.toUpperCase() || ''}). Please login to VrDoc to review: https://vrdoc.co.in/doctor/login`
+          }
+        });
+
+        if (doctorSmsError) {
+          console.error('📱 [DOCTOR SMS] Error sending SMS to doctor:', doctorSmsError);
+        } else {
+          console.log('📱 [DOCTOR SMS] SMS sent successfully to doctor:', doctorSmsResult);
+        }
+      } catch (doctorSmsError) {
+        console.error('📱 [DOCTOR SMS] Failed to send SMS to doctor:', doctorSmsError);
+      }
+
       setShowClinicalForm(false);
       setPrescriptionSubmitted(true);
       

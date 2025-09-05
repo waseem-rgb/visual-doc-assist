@@ -77,7 +77,16 @@ const DoctorDashboard = () => {
 
   useEffect(() => {
     checkAuthAndFetchData();
-  }, []);
+    
+    // Set up auto-refresh every 10 seconds to pull new requests and update PDF status
+    const interval = setInterval(() => {
+      if (!loading) {
+        checkAuthAndFetchData();
+      }
+    }, 10000);
+
+    return () => clearInterval(interval);
+  }, [loading]);
 
   useEffect(() => {
     // Check for imported consultation parameter
