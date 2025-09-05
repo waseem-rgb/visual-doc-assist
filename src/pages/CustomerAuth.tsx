@@ -246,7 +246,14 @@ const CustomerAuth = () => {
             {isSignUp ? "Create Account" : "Welcome Back"}
           </CardTitle>
           <p className="text-muted-foreground">
-            {isSignUp ? "Sign up to track your medical consultations" : "Sign in to access your medical dashboard"}
+            {isSignUp 
+              ? (authMethod === "phone" 
+                  ? "Sign up with your mobile number to get started" 
+                  : "Sign up to track your medical consultations")
+              : (authMethod === "phone"
+                  ? "Sign in with your mobile number"
+                  : "Sign in to access your medical dashboard")
+            }
           </p>
         </CardHeader>
 
@@ -302,6 +309,15 @@ const CustomerAuth = () => {
                     disabled={loading}
                   >
                     {loading ? "Sending OTP..." : "Send OTP"}
+                  </Button>
+
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    className="w-full"
+                    onClick={() => setIsSignUp(!isSignUp)}
+                  >
+                    {isSignUp ? "Already have an account? Sign In" : "New user? Sign Up"}
                   </Button>
                 </form>
               ) : (
