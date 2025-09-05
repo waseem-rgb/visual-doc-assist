@@ -38,8 +38,8 @@ const CustomerAuth = () => {
       // Format phone number to E.164 format
       let formattedPhone = phone.trim();
       if (!formattedPhone.startsWith('+')) {
-        // Assume Pakistan if no country code
-        formattedPhone = '+92' + formattedPhone.replace(/^0/, '');
+        // Assume India if no country code, remove leading 0 if present
+        formattedPhone = '+91' + formattedPhone.replace(/^0/, '');
       }
 
       console.log("Sending OTP to:", formattedPhone);
@@ -80,7 +80,7 @@ const CustomerAuth = () => {
       // Format phone number to E.164 format
       let formattedPhone = phone.trim();
       if (!formattedPhone.startsWith('+')) {
-        formattedPhone = '+92' + formattedPhone.replace(/^0/, '');
+        formattedPhone = '+91' + formattedPhone.replace(/^0/, '');
       }
 
       console.log("Verifying OTP for:", formattedPhone);
@@ -287,12 +287,12 @@ const CustomerAuth = () => {
                       type="tel"
                       value={phone}
                       onChange={(e) => setPhone(e.target.value)}
-                      placeholder="03001234567 or +923001234567"
+                      placeholder="9876543210 or +919876543210"
                       required
                       className="transition-smooth"
                     />
                     <p className="text-xs text-muted-foreground">
-                      Enter your phone number with or without country code
+                      Enter your 10-digit mobile number (India +91 is default)
                     </p>
                   </div>
 
