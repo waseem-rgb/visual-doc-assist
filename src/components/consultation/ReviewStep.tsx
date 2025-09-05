@@ -158,7 +158,7 @@ export function ReviewStep({ onBack, onReset }: ReviewStepProps) {
               to: '7993448425',
               type: 'doctor_new_request',
               patientName: patientData.name,
-              message: `New prescription request from ${patientData.name} (${patientData.age}${patientData.gender?.charAt(0)?.toUpperCase() || ''}). Symptoms: ${selectedSymptoms.join(', ')}. Please login to review: https://vrdoc.co.in/doctor/login`
+              message: `New prescription request from ${patientData.name} (${patientData.age}${patientData.gender?.charAt(0)?.toUpperCase() || ''}). Symptoms: ${selectedSymptoms.join(', ')}. Please login to review: https://9ef9f016-bd2c-406c-a384-b239fe6ec4e2.lovable.dev/doctor/login`
             }
           });
 

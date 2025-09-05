@@ -164,7 +164,7 @@ const GeneralSymptoms = ({ patientData }: GeneralSymptomsProps) => {
             to: '7993448425',
             type: 'doctor_new_request',
             patientName: patientData.name,
-            message: `New general symptoms consultation from ${patientData.name} (${patientData.age}${patientData.gender?.charAt(0)?.toUpperCase() || ''}). Please login to VrDoc to review: https://vrdoc.co.in/doctor/login`
+            message: `New general symptoms consultation from ${patientData.name} (${patientData.age}${patientData.gender?.charAt(0)?.toUpperCase() || ''}). Please login to review: https://9ef9f016-bd2c-406c-a384-b239fe6ec4e2.lovable.dev/doctor/login`
           }
         });
 
