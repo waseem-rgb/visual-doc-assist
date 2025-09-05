@@ -6,24 +6,139 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Heart, Lock, Mail, ArrowLeft } from "lucide-react";
+import { Heart, Lock, Mail, ArrowLeft, Phone } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const CustomerAuth = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [phone, setPhone] = useState("");
+  const [otp, setOtp] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [isSignUp, setIsSignUp] = useState(false);
+  const [authMethod, setAuthMethod] = useState<"email" | "phone">("phone");
+  const [otpSent, setOtpSent] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
   // Clear any error when component mounts or form inputs change
   useEffect(() => {
     setError("");
-  }, [email, password, isSignUp]);
+  }, [email, password, phone, otp, isSignUp, authMethod]);
 
-  const handleAuth = async (e: React.FormEvent) => {
+  const handleSendOTP = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError("");
+
+    try {
+      // Format phone number to E.164 format
+      let formattedPhone = phone.trim();
+      if (!formattedPhone.startsWith('+')) {
+        // Assume Pakistan if no country code
+        formattedPhone = '+92' + formattedPhone.replace(/^0/, '');
+      }
+
+      console.log("Sending OTP to:", formattedPhone);
+
+      const { error } = await supabase.auth.signInWithOtp({
+        phone: formattedPhone,
+      });
+
+      if (error) {
+        console.error("OTP send error:", error);
+        throw error;
+      }
+
+      setOtpSent(true);
+      toast({
+        title: "OTP Sent",
+        description: "Please check your phone for the verification code.",
+      });
+    } catch (error: any) {
+      setError(error.message);
+      console.error("OTP send error:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleVerifyOTP = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (otp.length !== 6) {
+      setError("Please enter the complete 6-digit OTP code");
+      return;
+    }
+    
+    setLoading(true);
+    setError("");
+
+    try {
+      // Format phone number to E.164 format
+      let formattedPhone = phone.trim();
+      if (!formattedPhone.startsWith('+')) {
+        formattedPhone = '+92' + formattedPhone.replace(/^0/, '');
+      }
+
+      console.log("Verifying OTP for:", formattedPhone);
+
+      const { data, error } = await supabase.auth.verifyOtp({
+        phone: formattedPhone,
+        token: otp,
+        type: 'sms'
+      });
+
+      if (error) {
+        console.error("OTP verification error:", error);
+        throw error;
+      }
+
+      if (!data.user) {
+        throw new Error("Verification failed");
+      }
+
+      // Check if user has customer role, if not assign it
+      const { data: roles, error: roleError } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', data.user.id);
+
+      if (roleError && roleError.code !== 'PGRST116') {
+        console.error("Error checking roles:", roleError);
+      }
+
+      const hasCustomerRole = roles?.some(r => r.role === 'customer');
+      if (!hasCustomerRole) {
+        const { error: insertRoleError } = await supabase
+          .from('user_roles')
+          .insert({
+            user_id: data.user.id,
+            role: 'customer'
+          });
+        
+        if (insertRoleError) {
+          console.error("Error assigning customer role:", insertRoleError);
+        }
+      }
+
+      toast({
+        title: "Phone Verified!",
+        description: "You've been signed in successfully.",
+      });
+      
+      navigate("/customer/dashboard");
+    } catch (error: any) {
+      setError(error.message);
+      console.error("OTP verification error:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleEmailAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError("");
@@ -60,26 +175,13 @@ const CustomerAuth = () => {
           
           if (roleError) {
             console.error("Error assigning customer role:", roleError);
-            // Don't fail the signup for role assignment errors
           }
         }
 
-        if (data.user && !data.user.email_confirmed_at) {
-          toast({
-            title: "Account Created",
-            description: "Please check your email to confirm your account, then sign in.",
-          });
-        } else if (data.user && data.user.email_confirmed_at) {
-          toast({
-            title: "Account Created & Confirmed",
-            description: "You can now sign in with your credentials.",
-          });
-        } else {
-          toast({
-            title: "Signup Initiated",
-            description: "Please check your email for further instructions.",
-          });
-        }
+        toast({
+          title: "Account Created",
+          description: "Please check your email to confirm your account, then sign in.",
+        });
         
         setIsSignUp(false);
       } else {
@@ -95,22 +197,11 @@ const CustomerAuth = () => {
 
         if (signInError) {
           console.error("Sign in error details:", signInError);
-          
-          // Handle specific token errors
-          if (signInError.message?.includes('Invalid token') || signInError.message?.includes('signature is invalid')) {
-            throw new Error('Authentication token is invalid. Please try signing up again or contact support.');
-          }
-          
           throw signInError;
         }
 
         if (!data.user) {
           throw new Error("Authentication failed");
-        }
-
-        // Check if email is confirmed (if confirmation is enabled)
-        if (!data.user.email_confirmed_at) {
-          throw new Error("Please confirm your email address before signing in");
         }
 
         // Check if user has customer role
@@ -132,7 +223,6 @@ const CustomerAuth = () => {
           description: "You've been signed in successfully.",
         });
         
-        // Always redirect customer login to customer dashboard
         navigate("/customer/dashboard");
       }
     } catch (error: any) {
@@ -161,66 +251,165 @@ const CustomerAuth = () => {
         </CardHeader>
 
         <CardContent>
-          <form onSubmit={handleAuth} className="space-y-4">
+          <Tabs value={authMethod} onValueChange={(value) => {
+            setAuthMethod(value as "email" | "phone");
+            setError("");
+            setOtpSent(false);
+            setOtp("");
+          }} className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="phone" className="flex items-center gap-2">
+                <Phone className="h-4 w-4" />
+                Phone
+              </TabsTrigger>
+              <TabsTrigger value="email" className="flex items-center gap-2">
+                <Mail className="h-4 w-4" />
+                Email
+              </TabsTrigger>
+            </TabsList>
+
             {error && (
-              <Alert variant="destructive">
+              <Alert variant="destructive" className="mt-4">
                 <AlertDescription>{error}</AlertDescription>
               </Alert>
             )}
 
-            <div className="space-y-2">
-              <Label htmlFor="email" className="flex items-center gap-2">
-                <Mail className="h-4 w-4" />
-                Email Address
-              </Label>
-              <Input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="your@email.com"
-                required
-                className="transition-smooth"
-              />
-            </div>
+            <TabsContent value="phone" className="space-y-4 mt-4">
+              {!otpSent ? (
+                <form onSubmit={handleSendOTP} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="phone" className="flex items-center gap-2">
+                      <Phone className="h-4 w-4" />
+                      Phone Number
+                    </Label>
+                    <Input
+                      id="phone"
+                      type="tel"
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
+                      placeholder="03001234567 or +923001234567"
+                      required
+                      className="transition-smooth"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Enter your phone number with or without country code
+                    </p>
+                  </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="password" className="flex items-center gap-2">
-                <Lock className="h-4 w-4" />
-                Password
-              </Label>
-              <Input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="Enter your password"
-                required
-                className="transition-smooth"
-              />
-            </div>
+                  <Button
+                    type="submit"
+                    className="w-full"
+                    disabled={loading}
+                  >
+                    {loading ? "Sending OTP..." : "Send OTP"}
+                  </Button>
+                </form>
+              ) : (
+                <form onSubmit={handleVerifyOTP} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="otp" className="text-center block">
+                      Enter 6-digit OTP sent to {phone}
+                    </Label>
+                    <div className="flex justify-center">
+                      <InputOTP
+                        maxLength={6}
+                        value={otp}
+                        onChange={setOtp}
+                        className="justify-center"
+                      >
+                        <InputOTPGroup>
+                          <InputOTPSlot index={0} />
+                          <InputOTPSlot index={1} />
+                          <InputOTPSlot index={2} />
+                          <InputOTPSlot index={3} />
+                          <InputOTPSlot index={4} />
+                          <InputOTPSlot index={5} />
+                        </InputOTPGroup>
+                      </InputOTP>
+                    </div>
+                  </div>
 
-            <Button
-              type="submit"
-              className="w-full"
-              disabled={loading}
-            >
-              {loading ? 
-                (isSignUp ? "Creating Account..." : "Signing In...") : 
-                (isSignUp ? "Create Account" : "Sign In")
-              }
-            </Button>
+                  <Button
+                    type="submit"
+                    className="w-full"
+                    disabled={loading || otp.length !== 6}
+                  >
+                    {loading ? "Verifying..." : "Verify OTP"}
+                  </Button>
 
-            <Button
-              type="button"
-              variant="ghost"
-              className="w-full"
-              onClick={() => setIsSignUp(!isSignUp)}
-            >
-              {isSignUp ? "Already have an account? Sign In" : "Need an account? Sign Up"}
-            </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    className="w-full"
+                    onClick={() => {
+                      setOtpSent(false);
+                      setOtp("");
+                      setError("");
+                    }}
+                  >
+                    Change Phone Number
+                  </Button>
+                </form>
+              )}
+            </TabsContent>
 
-            <div className="pt-4 border-t">
+            <TabsContent value="email" className="space-y-4 mt-4">
+              <form onSubmit={handleEmailAuth} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="email" className="flex items-center gap-2">
+                    <Mail className="h-4 w-4" />
+                    Email Address
+                  </Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="your@email.com"
+                    required
+                    className="transition-smooth"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="password" className="flex items-center gap-2">
+                    <Lock className="h-4 w-4" />
+                    Password
+                  </Label>
+                  <Input
+                    id="password"
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="Enter your password"
+                    required
+                    className="transition-smooth"
+                  />
+                </div>
+
+                <Button
+                  type="submit"
+                  className="w-full"
+                  disabled={loading}
+                >
+                  {loading ? 
+                    (isSignUp ? "Creating Account..." : "Signing In...") : 
+                    (isSignUp ? "Create Account" : "Sign In")
+                  }
+                </Button>
+
+                <Button
+                  type="button"
+                  variant="ghost"
+                  className="w-full"
+                  onClick={() => setIsSignUp(!isSignUp)}
+                >
+                  {isSignUp ? "Already have an account? Sign In" : "Need an account? Sign Up"}
+                </Button>
+              </form>
+            </TabsContent>
+
+            <div className="pt-4 border-t mt-4">
               <Button
                 type="button"
                 variant="ghost"
@@ -231,7 +420,7 @@ const CustomerAuth = () => {
                 Back to Home
               </Button>
             </div>
-          </form>
+          </Tabs>
         </CardContent>
       </Card>
     </div>
