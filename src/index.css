@@ -8,7 +8,7 @@
   :root {
     /* Core Background & Text */
     --background: 0 0% 100%;
-    --foreground: 0 0% 98%;
+    --foreground: 220 9% 15%;
     
     /* Dark Pink Gradient System */
     --primary: 330 81% 31%;
@@ -43,17 +43,17 @@
     --success: 142 76% 36%;
     --success-foreground: 0 0% 98%;
     
-    /* Maroon Gradient System */
-    --maroon-light: 0 50% 45%;
-    --maroon-medium: 0 60% 35%;
-    --maroon-dark: 0 70% 25%;
+    /* Light Purple Gradient System */
+    --purple-light: 280 100% 95%;
+    --purple-medium: 280 60% 85%;
+    --purple-dark: 280 30% 75%;
     
     /* Beautiful Gradients */
     --gradient-primary: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary-light)));
     --gradient-hero: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--primary-light)) 50%, hsl(var(--primary-dark)) 100%);
     --gradient-subtle: linear-gradient(180deg, hsl(var(--background)) 0%, hsl(var(--accent)) 100%);
-    --gradient-maroon: linear-gradient(135deg, hsl(var(--maroon-light)) 0%, hsl(var(--maroon-medium)) 50%, hsl(var(--maroon-dark)) 100%);
-    --gradient-maroon-subtle: linear-gradient(180deg, hsl(var(--maroon-dark)) 0%, hsl(var(--maroon-medium)) 100%);
+    --gradient-purple: linear-gradient(135deg, hsl(var(--purple-light)) 0%, hsl(var(--purple-medium)) 50%, hsl(var(--purple-dark)) 100%);
+    --gradient-purple-subtle: linear-gradient(180deg, hsl(var(--purple-light)) 0%, hsl(var(--purple-medium)) 100%);
     
     /* Elegant Shadows */
     --shadow-soft: 0 4px 20px -2px hsl(var(--primary) / 0.1);
@@ -74,7 +74,7 @@
   }
 
   body {
-    background: var(--gradient-maroon);
+    background: var(--gradient-purple);
     @apply text-foreground font-sans antialiased;
     scroll-behavior: smooth;
     min-height: 100vh;
@@ -116,12 +116,12 @@
     background: var(--gradient-hero);
   }
   
-  .gradient-maroon {
-    background: var(--gradient-maroon);
+  .gradient-purple {
+    background: var(--gradient-purple);
   }
   
-  .gradient-maroon-subtle {
-    background: var(--gradient-maroon-subtle);
+  .gradient-purple-subtle {
+    background: var(--gradient-purple-subtle);
   }
   
   .gradient-text {
