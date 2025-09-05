@@ -86,7 +86,7 @@ Deno.serve(async (req) => {
     }
 
     // Use the correct bucket based on prescription data
-    const bucketName = prescription.pdf_bucket || 'new_prescription-templet';
+    const bucketName = prescription.pdf_bucket || 'prescriptions';
     const filePath = prescription.pdf_url;
 
     console.log(`Attempting to access file in bucket: ${bucketName}`);

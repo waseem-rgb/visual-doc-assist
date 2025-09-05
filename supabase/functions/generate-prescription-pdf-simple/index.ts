@@ -80,10 +80,9 @@ Deno.serve(async (req) => {
     const { data: userRoles, error: roleError } = await userSupabase
       .from('user_roles')
       .select('role')
-      .eq('user_id', user.user.id)
-      .single();
+      .eq('user_id', user.user.id);
 
-    if (!roleError && userRoles && userRoles.role === 'doctor') {
+    if (!roleError && userRoles && userRoles.some(r => r.role === 'doctor')) {
       isUserDoctor = true;
     }
 
