@@ -6,27 +6,31 @@
 
 @layer base {
   :root {
+    /* Brand Colors - Exact Hex Values */
+    --brand-deep: #01257D;
+    --brand-electric: #00FFFF;
+    
     /* Core Background & Text */
     --background: 0 0% 100%;
-    --foreground: 220 9% 15%;
+    --foreground: 0 0% 98%;
     
-    /* Dark Pink Gradient System */
-    --primary: 330 81% 31%;
-    --primary-light: 330 85% 45%;
-    --primary-dark: 330 85% 25%;
+    /* Deep Navy & Electric Blue System */
+    --primary: 223 98% 25%;
+    --primary-light: 180 100% 50%;
+    --primary-dark: 223 98% 25%;
     --primary-foreground: 0 0% 100%;
     
-    /* Secondary Pink Tones */
-    --secondary: 330 15% 96%;
-    --secondary-foreground: 330 25% 15%;
+    /* Secondary Tones */
+    --secondary: 223 15% 96%;
+    --secondary-foreground: 0 0% 100%;
     
     /* Accent Colors */
-    --accent: 330 50% 95%;
-    --accent-foreground: 330 25% 15%;
+    --accent: 180 50% 95%;
+    --accent-foreground: 223 25% 15%;
     
     /* Neutral Grays */
     --muted: 220 13% 96%;
-    --muted-foreground: 0 0% 70%;
+    --muted-foreground: 0 0% 80%;
     
     /* UI Elements */
     --card: 0 0% 100%;
@@ -35,7 +39,7 @@
     --popover-foreground: 0 0% 15%;
     --border: 220 13% 91%;
     --input: 220 13% 91%;
-    --ring: 330 81% 31%;
+    --ring: 180 100% 50%;
     
     /* Status Colors */
     --destructive: 0 84% 60%;
@@ -43,17 +47,17 @@
     --success: 142 76% 36%;
     --success-foreground: 0 0% 98%;
     
-    /* Light Purple Gradient System */
-    --purple-light: 280 100% 95%;
-    --purple-medium: 280 60% 85%;
-    --purple-dark: 280 30% 75%;
+    /* Navy & Electric Gradient System */
+    --purple-light: 180 100% 95%;
+    --purple-medium: 180 60% 75%;
+    --purple-dark: 223 98% 25%;
     
     /* Beautiful Gradients */
-    --gradient-primary: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary-light)));
-    --gradient-hero: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--primary-light)) 50%, hsl(var(--primary-dark)) 100%);
-    --gradient-subtle: linear-gradient(180deg, hsl(var(--background)) 0%, hsl(var(--accent)) 100%);
-    --gradient-purple: linear-gradient(135deg, hsl(var(--purple-light)) 0%, hsl(var(--purple-medium)) 50%, hsl(var(--purple-dark)) 100%);
-    --gradient-purple-subtle: linear-gradient(180deg, hsl(var(--purple-light)) 0%, hsl(var(--purple-medium)) 100%);
+    --gradient-primary: linear-gradient(135deg, var(--brand-deep) 0%, var(--brand-electric) 100%);
+    --gradient-hero: linear-gradient(135deg, var(--brand-electric) 0%, #ffffff 100%);
+    --gradient-subtle: linear-gradient(180deg, rgba(1,37,125,0.06) 0%, rgba(0,255,255,0.06) 100%);
+    --gradient-purple: linear-gradient(135deg, var(--brand-deep) 0%, var(--brand-electric) 100%);
+    --gradient-purple-subtle: linear-gradient(180deg, var(--brand-deep) 0%, var(--brand-electric) 100%);
     
     /* Elegant Shadows */
     --shadow-soft: 0 4px 20px -2px hsl(var(--primary) / 0.1);
