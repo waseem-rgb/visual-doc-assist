@@ -169,6 +169,29 @@ export function ReviewStep({ onBack, onReset }: ReviewStepProps) {
         }
       }
 
+      // Send SMS notification to doctor for prescription requests
+      if (prescriptionRequired && prescriptionRequest) {
+        try {
+          console.log('📱 [REVIEW STEP] Sending doctor notification SMS');
+          const { data: doctorSmsResult, error: doctorSmsError } = await supabase.functions.invoke('send-sms-notification', {
+            body: {
+              to: '7993448425',
+              type: 'prescription_requested',
+              message: `New prescription request from ${patientData.name} (${patientData.age}y, ${patientData.gender}). Symptoms: ${selectedSymptoms.join(', ')}. Body parts: ${selectedBodyParts.join(', ')}. Please review in the doctor portal.`,
+              patientName: patientData.name
+            }
+          });
+
+          if (doctorSmsError) {
+            console.error('📱 [REVIEW STEP] Doctor SMS Error:', doctorSmsError);
+          } else {
+            console.log('📱 [REVIEW STEP] Doctor SMS sent successfully:', doctorSmsResult);
+          }
+        } catch (doctorSmsError) {
+          console.error('Failed to send doctor SMS notification:', doctorSmsError);
+        }
+      }
+
       toast({
         title: referralSpecialist ? `Referred to ${referralSpecialist}` : 
                prescriptionRequired ? "Sent for Doctor Review" : "Referral Generated Successfully",
