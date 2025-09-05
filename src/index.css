@@ -12,7 +12,7 @@
     
     /* Core Background & Text */
     --background: 0 0% 100%;
-    --foreground: 220 9% 15%;
+    --foreground: 220 9% 5%;
     
     /* Dark Pink Gradient System */
     --primary: 330 81% 31%;
@@ -85,10 +85,7 @@
   }
   
   h1, h2, h3, h4, h5, h6 {
-    background: var(--gradient-hero);
-    background-clip: text;
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
+    color: hsl(330 85% 25%);
     font-weight: 700;
     letter-spacing: -0.025em;
   }
