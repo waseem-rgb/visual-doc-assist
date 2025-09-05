@@ -90,9 +90,13 @@ export function ReviewStep({ onBack, onReset }: ReviewStepProps) {
         }
       }
 
+      // Get current user to set customer_id
+      const { data: { user } } = await supabase.auth.getUser();
+      
       // Debug logging
       console.log('🔍 [DEBUG] Patient data in ReviewStep:', patientData);
       console.log('🔍 [DEBUG] Patient phone:', patientData.phone);
+      console.log('🔍 [DEBUG] Current user:', user?.id);
 
       // Create prescription request record with correct flags
       const requestData = {
@@ -102,6 +106,7 @@ export function ReviewStep({ onBack, onReset }: ReviewStepProps) {
         patient_age: patientData.age,
         patient_gender: patientData.gender,
         patient_phone: patientData.phone,
+        customer_id: user?.id, // Explicitly set customer_id for defense in depth
         status: prescriptionRequired ? 'pending' as const : 'completed' as const,
         symptoms: selectedSymptoms.join(', '),
         prescription_required: prescriptionRequired,

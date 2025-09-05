@@ -18,6 +18,7 @@ interface SMSRequest {
   referralSpecialist?: string;
   joinLink?: string;
   appointmentId?: string;
+  downloadUrl?: string;
 }
 
 const serve_handler = async (req: Request): Promise<Response> => {
@@ -72,7 +73,7 @@ const serve_handler = async (req: Request): Promise<Response> => {
 
     console.log('✅ [SMS FUNCTION] User authenticated:', user.user.id);
 
-    const { to, message, type, patientName, doctorName, appointmentDate, appointmentTime, isReferral, referralSpecialist, joinLink, appointmentId }: SMSRequest = await req.json();
+    const { to, message, type, patientName, doctorName, appointmentDate, appointmentTime, isReferral, referralSpecialist, joinLink, appointmentId, downloadUrl }: SMSRequest = await req.json();
     
     // Log without PII - only log type and success/failure
     console.log(`Sending SMS notification of type: ${type}`);
@@ -145,7 +146,11 @@ const serve_handler = async (req: Request): Promise<Response> => {
           finalMessage = `Hello ${patientName || 'Patient'}, your consultation request has been assigned to Dr. ${doctorName || 'our medical team'}. You will receive updates shortly.`;
           break;
         case 'prescription_ready':
-          finalMessage = `Hello ${patientName || 'Patient'}, your prescription from Dr. ${doctorName || 'your doctor'} is ready for download. Please check your patient portal.`;
+          if (downloadUrl) {
+            finalMessage = `Hello ${patientName || 'Patient'}, your prescription from Dr. ${doctorName || 'your doctor'} is ready! Download it here: ${downloadUrl} (Link expires in 24 hours)`;
+          } else {
+            finalMessage = `Hello ${patientName || 'Patient'}, your prescription from Dr. ${doctorName || 'your doctor'} is ready for download. Please check your patient portal.`;
+          }
           break;
         case 'consultation_update':
           finalMessage = `Hello ${patientName || 'Patient'}, there's an update on your consultation. Please check your patient portal for details.`;

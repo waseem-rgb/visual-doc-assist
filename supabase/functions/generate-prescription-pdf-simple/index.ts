@@ -571,7 +571,20 @@ Deno.serve(async (req) => {
 
     console.log('VrDoc PDF generated successfully:', fileName);
 
-    // Send SMS notification to patient
+    // Create signed URL for patient download (valid for 24 hours)
+    const { data: signedUrlData, error: signedUrlError } = await adminSupabase.storage
+      .from('prescriptions')
+      .createSignedUrl(fileName, 24 * 3600); // 24 hours expiry
+
+    let downloadUrl = null;
+    if (!signedUrlError && signedUrlData?.signedUrl) {
+      downloadUrl = signedUrlData.signedUrl;
+      console.log('Created signed download URL for patient');
+    } else {
+      console.error('Failed to create signed URL:', signedUrlError);
+    }
+
+    // Send SMS notification to patient with download link
     if (requestData.patient_phone) {
       try {
         const smsResponse = await fetch(`${supabaseUrl}/functions/v1/send-sms-notification`, {
@@ -584,13 +597,14 @@ Deno.serve(async (req) => {
             to: requestData.patient_phone,
             type: 'prescription_ready',
             patientName: requestData.patient_name,
-            doctorName: doctor.full_name
+            doctorName: doctor.full_name,
+            downloadUrl: downloadUrl
           })
         });
 
         const smsResult = await smsResponse.json();
         if (smsResult.success) {
-          console.log('SMS notification sent successfully');
+          console.log('SMS notification sent successfully with download link');
         } else {
           console.error('SMS notification failed:', smsResult.error);
         }
