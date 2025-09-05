@@ -75,29 +75,61 @@ Deno.serve(async (req) => {
       );
     }
 
-    // For referrals, skip doctor role check (customers can generate referrals)
-    // For regular prescriptions, verify doctor role
+    // Check if user is a doctor
     let isUserDoctor = false;
-    if (!isReferral) {
-      const { data: userRoles, error: roleError } = await userSupabase
-        .from('user_roles')
-        .select('role')
-        .eq('user_id', user.user.id)
-        .single();
+    const { data: userRoles, error: roleError } = await userSupabase
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', user.user.id)
+      .single();
 
-      if (roleError || !userRoles || userRoles.role !== 'doctor') {
-        console.error('Unauthorized: User is not a doctor');
+    if (!roleError && userRoles && userRoles.role === 'doctor') {
+      isUserDoctor = true;
+    }
+
+    // Fetch prescription request data to check authorization
+    const { data: requestData, error: requestError } = await adminSupabase
+      .from('prescription_requests')
+      .select('*')
+      .eq('id', requestId)
+      .single();
+
+    if (requestError || !requestData) {
+      console.error('Prescription request not found:', requestError);
+      return new Response(
+        JSON.stringify({ error: 'Prescription request not found' }),
+        { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Authorization check: allow doctors or customers accessing their own completed requests
+    if (!isUserDoctor) {
+      // For customers, they can only access their own completed prescription requests
+      if (requestData.patient_phone !== user.user.phone && 
+          requestData.user_id !== user.user.id) {
+        console.error('Unauthorized: Customer can only access their own prescriptions');
         return new Response(
-          JSON.stringify({ error: 'Unauthorized: Doctor role required for prescriptions' }),
+          JSON.stringify({ error: 'Unauthorized: Access denied' }),
           { 
             status: 403,
             headers: { ...corsHeaders, 'Content-Type': 'application/json' }
           }
         );
       }
-      isUserDoctor = true;
 
-      // For regular prescriptions, verify the doctor owns this prescription
+      // Check if the request is completed
+      if (requestData.status !== 'completed') {
+        console.error('Unauthorized: Prescription not yet completed');
+        return new Response(
+          JSON.stringify({ error: 'Prescription not yet completed' }),
+          { 
+            status: 403,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          }
+        );
+      }
+    } else {
+      // For doctors, verify they own this prescription (if doctorId is specified)
       if (doctorId && doctorId !== user.user.id) {
         console.error('Unauthorized: Doctor attempting to access another doctors prescription');
         return new Response(
