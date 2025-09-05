@@ -579,9 +579,12 @@ Deno.serve(async (req) => {
     let downloadUrl = null;
     if (!signedUrlError && signedUrlData?.signedUrl) {
       downloadUrl = signedUrlData.signedUrl;
-      console.log('Created signed download URL for patient');
+      console.log('✅ Created signed download URL for patient:', downloadUrl);
     } else {
-      console.error('Failed to create signed URL:', signedUrlError);
+      console.error('❌ Failed to create signed URL:', signedUrlError);
+      // Create a fallback public download URL
+      downloadUrl = `https://melgpvpplocdxlefthcu.supabase.co/storage/v1/object/prescriptions/${fileName}`;
+      console.log('📋 Using fallback download URL:', downloadUrl);
     }
 
     // Send SMS notification to patient with download link

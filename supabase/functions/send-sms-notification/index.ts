@@ -77,6 +77,7 @@ const serve_handler = async (req: Request): Promise<Response> => {
     
     // Log without PII - only log type and success/failure
     console.log(`Sending SMS notification of type: ${type}`);
+    console.log('📋 [SMS DEBUG] Download URL received:', !!downloadUrl, downloadUrl ? 'URL present' : 'URL missing');
 
     // Check if user has doctor role (only for certain message types)
     const doctorOnlyTypes = ['case_claimed', 'prescription_ready'];
