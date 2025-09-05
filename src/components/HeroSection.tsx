@@ -1,7 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Stethoscope, Smartphone } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import heroBackground from "@/assets/hero-app-background.png";
 
 const HeroSection = () => {
   const navigate = useNavigate();
@@ -10,13 +9,13 @@ const HeroSection = () => {
     <section 
       className="min-h-screen flex items-center justify-center pt-20 relative"
       style={{
-        backgroundImage: `url(${heroBackground})`,
+        backgroundImage: `url('/lovable-uploads/1fc5d967-e004-4f91-b641-b8986e5eab63.png')`,
         backgroundSize: 'cover',
         backgroundPosition: 'center',
         backgroundRepeat: 'no-repeat'
       }}
     >
-      <div className="absolute inset-0 bg-white/80"></div>
+      <div className="absolute inset-0 bg-black/20"></div>
       <div className="container mx-auto px-6 relative z-10">
         <div className="max-w-4xl mx-auto text-center space-y-8">
           <div className="space-y-4">
