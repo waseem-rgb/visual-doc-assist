@@ -105,8 +105,7 @@ Deno.serve(async (req) => {
     // Authorization check: allow doctors or customers accessing their own completed requests
     if (!isUserDoctor) {
       // For customers, they can only access their own completed prescription requests
-      if (requestData.patient_phone !== user.user.phone && 
-          requestData.user_id !== user.user.id) {
+      if (requestData.customer_id !== user.user.id) {
         console.error('Unauthorized: Customer can only access their own prescriptions');
         return new Response(
           JSON.stringify({ error: 'Unauthorized: Access denied' }),
@@ -117,8 +116,8 @@ Deno.serve(async (req) => {
         );
       }
 
-      // Check if the request is completed
-      if (requestData.status !== 'completed') {
+      // Check if the request is completed for customers accessing referrals
+      if (!isReferral && requestData.status !== 'completed') {
         console.error('Unauthorized: Prescription not yet completed');
         return new Response(
           JSON.stringify({ error: 'Prescription not yet completed' }),
@@ -141,13 +140,6 @@ Deno.serve(async (req) => {
         );
       }
     }
-
-    // Fetch prescription request data using admin client
-    const { data: requestData, error: requestError } = await adminSupabase
-      .from('prescription_requests')
-      .select('*')
-      .eq('id', requestId)
-      .single();
 
     if (requestError || !requestData) {
       console.error('Prescription request not found:', requestError);
