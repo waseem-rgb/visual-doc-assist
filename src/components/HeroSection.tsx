@@ -16,24 +16,24 @@ const HeroSection = () => {
       }}
     >
       <div className="absolute inset-0 bg-black/20"></div>
-      <div className="container mx-auto px-6 relative z-10">
-        <div className="max-w-4xl mx-auto text-center space-y-8">
+      <div className="container mx-auto px-6 relative z-10 flex items-center min-h-screen">
+        <div className="max-w-2xl text-left space-y-8">
           <div className="space-y-4">
-            <h1 className="text-5xl lg:text-7xl font-bold leading-tight">
+            <h1 className="text-4xl lg:text-6xl font-bold leading-tight text-white">
               Virtual Healthcare
               <br />
-              <span className="gradient-text">Redefined</span>
+              <span className="text-pink-300">Redefined</span>
             </h1>
-            <p className="text-xl text-muted-foreground leading-relaxed max-w-2xl mx-auto">
+            <p className="text-lg text-white/90 leading-relaxed">
               Get secure medical consultations by selecting symptoms from interactive body diagrams. 
               Login required for AI-powered prescriptions backed by real doctors.
             </p>
           </div>
 
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          <div className="flex flex-col sm:flex-row gap-4">
             <Button 
               size="lg" 
-              className="gradient-primary shadow-medium transition-bounce hover:shadow-large"
+              className="bg-pink-600 hover:bg-pink-700 text-white shadow-lg"
               onClick={() => navigate("/customer/login")}
             >
               Login/My Dashboard & Prescription Download
@@ -42,7 +42,7 @@ const HeroSection = () => {
             <Button 
               size="lg" 
               variant="outline" 
-              className="border-primary text-primary hover:bg-primary hover:text-primary-foreground transition-smooth"
+              className="border-white text-white hover:bg-white hover:text-pink-600"
               onClick={() => navigate("/doctor/login")}
             >
               For Healthcare Providers
@@ -50,23 +50,23 @@ const HeroSection = () => {
             </Button>
           </div>
 
-          <div className="flex items-center justify-center space-x-8">
-            <div className="flex items-center space-x-2">
-              <div className="w-12 h-12 bg-success/10 rounded-full flex items-center justify-center">
-                <Smartphone className="h-6 w-6 text-success" />
+          <div className="flex items-center space-x-8">
+            <div className="flex items-center space-x-3">
+              <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center">
+                <Smartphone className="h-6 w-6 text-white" />
               </div>
               <div>
-                <div className="font-semibold">Secure Access</div>
-                <div className="text-sm text-muted-foreground">Login required for consultations</div>
+                <div className="font-semibold text-white">Secure Access</div>
+                <div className="text-sm text-white/80">Login required for consultations</div>
               </div>
             </div>
-            <div className="flex items-center space-x-2">
-              <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
-                <Stethoscope className="h-6 w-6 text-primary" />
+            <div className="flex items-center space-x-3">
+              <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center">
+                <Stethoscope className="h-6 w-6 text-white" />
               </div>
               <div>
-                <div className="font-semibold">Doctor Verified</div>
-                <div className="text-sm text-muted-foreground">AI + Human expertise</div>
+                <div className="font-semibold text-white">Doctor Verified</div>
+                <div className="text-sm text-white/80">AI + Human expertise</div>
               </div>
             </div>
           </div>
