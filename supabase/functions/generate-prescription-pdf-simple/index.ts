@@ -241,37 +241,91 @@ Deno.serve(async (req) => {
       };
     } else {
       // For regular prescriptions, fetch the actual prescription and doctor
-      const { data: existingPrescription, error: prescriptionError } = await adminSupabase
-        .from('prescriptions')
-        .select('*')
-        .eq('request_id', requestId)
-        .eq('doctor_id', doctorId)
-        .single();
+      // If doctorId is not provided, try to get it from existing prescription
+      let finalDoctorId = doctorId;
+      let existingPrescription;
 
-      if (prescriptionError || !existingPrescription) {
-        console.error('Prescription not found:', prescriptionError);
-        return new Response(
-          JSON.stringify({ error: 'Prescription not found' }),
-          { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
+      if (!finalDoctorId) {
+        // Try to find existing prescription to get doctor_id
+        const { data: tempPrescription } = await adminSupabase
+          .from('prescriptions')
+          .select('doctor_id')
+          .eq('request_id', requestId)
+          .single();
+        
+        if (tempPrescription?.doctor_id) {
+          finalDoctorId = tempPrescription.doctor_id;
+          console.log('Found doctor_id from existing prescription:', finalDoctorId);
+        }
       }
 
-      const { data: doctorProfile, error: doctorError } = await adminSupabase
-        .from('doctor_profiles')
-        .select('*')
-        .eq('id', doctorId)
-        .single();
+      // Fetch the prescription
+      if (finalDoctorId) {
+        const { data: prescriptionData, error: prescriptionError } = await adminSupabase
+          .from('prescriptions')
+          .select('*')
+          .eq('request_id', requestId)
+          .eq('doctor_id', finalDoctorId)
+          .single();
 
-      if (doctorError || !doctorProfile) {
-        console.error('Doctor not found:', doctorError);
-        return new Response(
-          JSON.stringify({ error: 'Doctor profile not found' }),
-          { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
+        if (prescriptionError || !prescriptionData) {
+          console.error('Prescription not found with doctor_id:', prescriptionError);
+          return new Response(
+            JSON.stringify({ error: 'Prescription not found' }),
+            { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+        existingPrescription = prescriptionData;
+      } else {
+        // Try to get any prescription for this request if no doctor_id found
+        const { data: prescriptionData, error: prescriptionError } = await adminSupabase
+          .from('prescriptions')
+          .select('*')
+          .eq('request_id', requestId)
+          .single();
+
+        if (prescriptionError || !prescriptionData) {
+          console.error('No prescription found for request:', prescriptionError);
+          return new Response(
+            JSON.stringify({ error: 'Prescription not found' }),
+            { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+        existingPrescription = prescriptionData;
+        finalDoctorId = prescriptionData.doctor_id;
+      }
+
+      // Fetch doctor profile
+      if (finalDoctorId) {
+        const { data: doctorProfile, error: doctorError } = await adminSupabase
+          .from('doctor_profiles')
+          .select('*')
+          .eq('id', finalDoctorId)
+          .single();
+
+        if (doctorError || !doctorProfile) {
+          console.error('Doctor not found:', doctorError);
+          // Use a default doctor profile if not found
+          doctor = {
+            full_name: 'VrDoc Doctor',
+            specialization: 'General Medicine',
+            license_number: 'VRDOC-001',
+            phone: 'N/A'
+          };
+        } else {
+          doctor = doctorProfile;
+        }
+      } else {
+        // Use default doctor if no doctor_id found
+        doctor = {
+          full_name: 'VrDoc Doctor',
+          specialization: 'General Medicine',
+          license_number: 'VRDOC-001',
+          phone: 'N/A'
+        };
       }
 
       prescription = existingPrescription;
-      doctor = doctorProfile;
     }
 
     // Create PDF with VrDoc template
