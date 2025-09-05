@@ -20,3 +20,6 @@ verify_jwt = false
 
 [functions.book-teleconsultation]
 verify_jwt = false
+
+[functions.prescription-redirect]
+verify_jwt = false

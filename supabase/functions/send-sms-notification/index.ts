@@ -150,7 +150,10 @@ const serve_handler = async (req: Request): Promise<Response> => {
           break;
         case 'prescription_ready':
           if (downloadUrl) {
-            finalMessage = `Hello ${patientName || 'Patient'}, your prescription from Dr. ${doctorName || 'your doctor'} is ready! Download it here: ${downloadUrl}`;
+            // Create a shorter, mobile-friendly redirect URL
+            const baseUrl = 'https://melgpvpplocdxlefthcu.supabase.co/functions/v1/prescription-redirect';
+            const shortUrl = prescriptionId ? `${baseUrl}?id=${prescriptionId}` : `${baseUrl}?r=${requestId}`;
+            finalMessage = `Hello ${patientName || 'Patient'}, your prescription from Dr. ${doctorName || 'your doctor'} is ready! Download: ${shortUrl}`;
           } else {
             finalMessage = `Hello ${patientName || 'Patient'}, your prescription from Dr. ${doctorName || 'your doctor'} is ready for download. Please check your patient portal.`;
           }
