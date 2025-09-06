@@ -7,38 +7,38 @@ const FooterSection = () => {
     <footer id="contact" className="bg-gradient-subtle pt-24 pb-12">
       <div className="container mx-auto px-6">
         {/* Newsletter Section */}
-        <div className="text-center space-y-8 mb-16">
-          <h2 className="text-4xl lg:text-5xl font-bold">
+        <div className="text-center space-y-6 sm:space-y-8 mb-12 sm:mb-16">
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold px-4">
             Stay Updated with
             <br />
             <span className="gradient-text">VrDoc</span>
           </h2>
-          <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+          <p className="text-lg sm:text-xl text-muted-foreground max-w-2xl mx-auto px-4">
             Get the latest updates on AI healthcare innovations and be the first to know 
             about new features and improvements.
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 max-w-lg mx-auto">
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 max-w-lg mx-auto px-4">
             <Input 
               placeholder="Enter your email" 
-              className="flex-1 h-12 border-border/50 bg-background/50 backdrop-blur-sm placeholder:text-foreground/70"
+              className="flex-1 h-10 sm:h-12 border-border/50 bg-background/50 backdrop-blur-sm placeholder:text-foreground/70 text-sm sm:text-base"
             />
-            <Button className="gradient-primary h-12 px-8">
+            <Button className="gradient-primary h-10 sm:h-12 px-6 sm:px-8 text-sm sm:text-base">
               Subscribe
-              <ArrowRight className="ml-2 h-4 w-4" />
+              <ArrowRight className="ml-2 h-3 w-3 sm:h-4 sm:w-4" />
             </Button>
           </div>
         </div>
 
         {/* Footer Content */}
-        <div className="grid md:grid-cols-4 gap-8 mb-12">
-          <div className="space-y-4">
+        <div className="grid sm:grid-cols-2 md:grid-cols-4 gap-6 sm:gap-8 mb-8 sm:mb-12">
+          <div className="space-y-4 sm:col-span-2 md:col-span-1">
             <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 gradient-primary rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-lg">V</span>
+              <div className="w-7 h-7 sm:w-8 sm:h-8 gradient-primary rounded-lg flex items-center justify-center">
+                <span className="text-white font-bold text-base sm:text-lg">V</span>
               </div>
-              <span className="text-2xl font-bold gradient-text">VrDoc</span>
+              <span className="text-xl sm:text-2xl font-bold gradient-text">VrDoc</span>
             </div>
-            <p className="text-muted-foreground">
+            <p className="text-sm sm:text-base text-muted-foreground">
               Revolutionizing healthcare with AI-powered virtual consultations 
               and professional medical oversight.
             </p>

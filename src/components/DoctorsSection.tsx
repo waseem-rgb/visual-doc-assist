@@ -41,12 +41,12 @@ const DoctorsSection = () => {
         <div className="grid lg:grid-cols-2 gap-16 items-center">
           <div className="space-y-8">
             <div className="space-y-4">
-              <h2 className="text-4xl lg:text-5xl font-bold">
+              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold">
                 Empowering
                 <br />
                 <span className="gradient-text">Healthcare Providers</span>
               </h2>
-              <p className="text-xl text-muted-foreground leading-relaxed">
+              <p className="text-lg sm:text-xl text-muted-foreground leading-relaxed">
                 Join our network of healthcare professionals using AI to enhance 
                 patient care while reducing consultation time and improving diagnostic accuracy.
               </p>
@@ -91,20 +91,20 @@ const DoctorsSection = () => {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
             {benefits.map((benefit, index) => (
               <Card 
                 key={index}
                 className="border-0 shadow-soft hover:shadow-medium transition-smooth bg-card/50 backdrop-blur-sm"
               >
-                <CardContent className="p-6">
-                  <div className="space-y-4">
-                    <div className="w-12 h-12 gradient-primary rounded-2xl flex items-center justify-center">
-                      <benefit.icon className="h-6 w-6 text-white" />
+                <CardContent className="p-4 sm:p-6">
+                  <div className="space-y-3 sm:space-y-4">
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 gradient-primary rounded-2xl flex items-center justify-center">
+                      <benefit.icon className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
                     </div>
-                    <div className="space-y-2">
-                      <h3 className="font-semibold text-lg">{benefit.title}</h3>
-                      <p className="text-muted-foreground text-sm leading-relaxed">
+                    <div className="space-y-1 sm:space-y-2">
+                      <h3 className="font-semibold text-base sm:text-lg">{benefit.title}</h3>
+                      <p className="text-muted-foreground text-xs sm:text-sm leading-relaxed">
                         {benefit.description}
                       </p>
                     </div>
