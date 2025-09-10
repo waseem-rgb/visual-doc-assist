@@ -1,6 +1,9 @@
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Stethoscope, Smartphone } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import heroImageMobile from "@/assets/hero-medical-mobile.jpg";
+import heroImageTablet from "@/assets/hero-medical-tablet.jpg";
+import heroImageDesktop from "@/assets/hero-medical-desktop.jpg";
 import heroImage from "@/assets/hero-medical.jpg";
 
 const HeroSection = () => {
@@ -69,9 +72,12 @@ const HeroSection = () => {
           <div className="relative">
             <div className="absolute inset-0 gradient-primary rounded-3xl blur-3xl opacity-20 animate-pulse"></div>
             <img
-              src={heroImage}
+              src={heroImageDesktop}
+              srcSet={`${heroImageMobile} 640w, ${heroImageTablet} 800w, ${heroImageDesktop} 1200w`}
+              sizes="(max-width: 640px) 640px, (max-width: 1024px) 800px, 1200px"
               alt="VrDoc Virtual Healthcare Interface"
               className="relative rounded-3xl shadow-large transition-smooth hover:shadow-xl"
+              loading="eager"
             />
           </div>
         </div>
