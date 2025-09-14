@@ -87,7 +87,7 @@ const getQuadrantParts = (quadrant: string, view: string) => {
         { name: "NOSE", x1: 0.49, y1: 0.48, x2: 0.51, y2: 0.54 }, // Nose tip
         { name: "MOUTH", x1: 0.48, y1: 0.60, x2: 0.52, y2: 0.66 }, // Lips center
         { name: "EAR PHYSICAL", x1: 0.82, y1: 0.40, x2: 0.88, y2: 0.48 }, // Right side ear
-        { name: "EAR HEARING", x1: 0.12, y1: 0.40, x2: 0.18, y2: 0.48 }, // Left side ear
+        { name: "EAR HEARING", x1: 0.16, y1: 0.40, x2: 0.22, y2: 0.48 }, // Left side ear - moved right to be on ear
         { name: "NECK", x1: 0.45, y1: 0.82, x2: 0.55, y2: 0.93 }, // Lower neck
         { name: "THROAT", x1: 0.47, y1: 0.76, x2: 0.53, y2: 0.82 }, // Throat area - moved down
         { name: "THROAT VOICE", x1: 0.48, y1: 0.78, x2: 0.52, y2: 0.84 }, // Voice box - moved down
