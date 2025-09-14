@@ -78,19 +78,19 @@ const getQuadrantParts = (quadrant: string, view: string) => {
     head: {
       Front: [
         { name: "HAIR AND SCALP", x1: 0.25, y1: 0.02, x2: 0.75, y2: 0.25 },
-        { name: "HEAD FRONT", x1: 0.35, y1: 0.12, x2: 0.65, y2: 0.25 }, // On forehead
-        { name: "HEAD SIDE", x1: 0.75, y1: 0.32, x2: 0.85, y2: 0.42 }, // Right temple area
-        { name: "FACE", x1: 0.25, y1: 0.45, x2: 0.35, y2: 0.55 }, // Left cheek area
+        { name: "HEAD FRONT", x1: 0.40, y1: 0.15, x2: 0.60, y2: 0.28 }, // Centered on forehead
+        { name: "HEAD SIDE", x1: 0.78, y1: 0.35, x2: 0.88, y2: 0.45 }, // Right temple, more precise
+        { name: "FACE", x1: 0.20, y1: 0.50, x2: 0.30, y2: 0.60 }, // Left cheek, more precise
         // Separate eye dots to avoid overlap - left and right eyes
-        { name: "EYE VISION", x1: 0.36, y1: 0.37, x2: 0.44, y2: 0.41 }, // Centered in left eye
-        { name: "EYE PHYSICAL", x1: 0.56, y1: 0.37, x2: 0.64, y2: 0.41 }, // Centered in right eye
-        { name: "NOSE", x1: 0.46, y1: 0.48, x2: 0.54, y2: 0.58 },
-        { name: "MOUTH", x1: 0.42, y1: 0.62, x2: 0.58, y2: 0.68 },
-        { name: "EAR PHYSICAL", x1: 0.85, y1: 0.40, x2: 0.95, y2: 0.50 }, // Right ear position
-        { name: "EAR HEARING", x1: 0.05, y1: 0.40, x2: 0.15, y2: 0.50 }, // Left ear position
-        { name: "NECK", x1: 0.42, y1: 0.78, x2: 0.58, y2: 0.90 }, // Lower neck area
-        { name: "THROAT", x1: 0.45, y1: 0.70, x2: 0.55, y2: 0.76 }, // Throat area
-        { name: "THROAT VOICE", x1: 0.46, y1: 0.72, x2: 0.54, y2: 0.78 }, // Voice box area
+        { name: "EYE VISION", x1: 0.35, y1: 0.38, x2: 0.43, y2: 0.43 }, // Precisely in left eye
+        { name: "EYE PHYSICAL", x1: 0.57, y1: 0.38, x2: 0.65, y2: 0.43 }, // Precisely in right eye
+        { name: "NOSE", x1: 0.47, y1: 0.48, x2: 0.53, y2: 0.55 }, // Centered on nose tip
+        { name: "MOUTH", x1: 0.44, y1: 0.61, x2: 0.56, y2: 0.67 }, // Centered on lips
+        { name: "EAR PHYSICAL", x1: 0.82, y1: 0.42, x2: 0.90, y2: 0.50 }, // Precisely on right ear
+        { name: "EAR HEARING", x1: 0.10, y1: 0.42, x2: 0.18, y2: 0.50 }, // Precisely on left ear
+        { name: "NECK", x1: 0.43, y1: 0.80, x2: 0.57, y2: 0.92 }, // Lower neck area, more precise
+        { name: "THROAT", x1: 0.46, y1: 0.70, x2: 0.54, y2: 0.77 }, // Throat area, more precise
+        { name: "THROAT VOICE", x1: 0.47, y1: 0.72, x2: 0.53, y2: 0.78 }, // Voice box, more precise
       ],
       "Back view": [
         { name: "HAIR AND SCALP", x1: 0.20, y1: 0.02, x2: 0.80, y2: 0.85 },
