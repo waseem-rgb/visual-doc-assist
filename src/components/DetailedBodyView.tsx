@@ -78,19 +78,19 @@ const getQuadrantParts = (quadrant: string, view: string) => {
     head: {
       Front: [
         { name: "HAIR AND SCALP", x1: 0.25, y1: 0.02, x2: 0.75, y2: 0.25 },
-        { name: "HEAD FRONT", x1: 0.35, y1: 0.12, x2: 0.65, y2: 0.25 },
-        { name: "HEAD SIDE", x1: 0.15, y1: 0.30, x2: 0.25, y2: 0.45 },
-        { name: "FACE", x1: 0.35, y1: 0.28, x2: 0.65, y2: 0.65 },
+        { name: "HEAD FRONT", x1: 0.35, y1: 0.12, x2: 0.65, y2: 0.25 }, // On forehead
+        { name: "HEAD SIDE", x1: 0.75, y1: 0.32, x2: 0.85, y2: 0.42 }, // Right temple area
+        { name: "FACE", x1: 0.25, y1: 0.45, x2: 0.35, y2: 0.55 }, // Left cheek area
         // Separate eye dots to avoid overlap - left and right eyes
-        { name: "EYE VISION", x1: 0.32, y1: 0.35, x2: 0.44, y2: 0.42 }, // Left eye vision
-        { name: "EYE PHYSICAL", x1: 0.56, y1: 0.35, x2: 0.68, y2: 0.42 }, // Right eye physical
+        { name: "EYE VISION", x1: 0.36, y1: 0.37, x2: 0.44, y2: 0.41 }, // Centered in left eye
+        { name: "EYE PHYSICAL", x1: 0.56, y1: 0.37, x2: 0.64, y2: 0.41 }, // Centered in right eye
         { name: "NOSE", x1: 0.46, y1: 0.48, x2: 0.54, y2: 0.58 },
         { name: "MOUTH", x1: 0.42, y1: 0.62, x2: 0.58, y2: 0.68 },
-        { name: "EAR PHYSICAL", x1: 0.15, y1: 0.42, x2: 0.25, y2: 0.52 },
-        { name: "EAR HEARING", x1: 0.75, y1: 0.42, x2: 0.85, y2: 0.52 },
-        { name: "NECK", x1: 0.40, y1: 0.76, x2: 0.60, y2: 0.88 },
-        { name: "THROAT", x1: 0.42, y1: 0.78, x2: 0.58, y2: 0.84 },
-        { name: "THROAT VOICE", x1: 0.44, y1: 0.80, x2: 0.56, y2: 0.86 },
+        { name: "EAR PHYSICAL", x1: 0.85, y1: 0.40, x2: 0.95, y2: 0.50 }, // Right ear position
+        { name: "EAR HEARING", x1: 0.05, y1: 0.40, x2: 0.15, y2: 0.50 }, // Left ear position
+        { name: "NECK", x1: 0.42, y1: 0.78, x2: 0.58, y2: 0.90 }, // Lower neck area
+        { name: "THROAT", x1: 0.45, y1: 0.70, x2: 0.55, y2: 0.76 }, // Throat area
+        { name: "THROAT VOICE", x1: 0.46, y1: 0.72, x2: 0.54, y2: 0.78 }, // Voice box area
       ],
       "Back view": [
         { name: "HAIR AND SCALP", x1: 0.20, y1: 0.02, x2: 0.80, y2: 0.85 },
