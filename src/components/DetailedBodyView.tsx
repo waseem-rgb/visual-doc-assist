@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
@@ -283,71 +283,6 @@ const DetailedBodyView = ({
   const title = getQuadrantTitle(quadrant, currentView);
   const dedicatedImage = getQuadrantImage(quadrant, currentView, gender);
 
-  // Anchoring overlays to the actual rendered image
-  const containerRef = useRef<HTMLDivElement>(null);
-  const imgRef = useRef<HTMLImageElement>(null);
-  const [overlayRect, setOverlayRect] = useState<{ left: number; top: number; width: number; height: number } | null>(null);
-
-  const updateOverlayRect = () => {
-    if (!containerRef.current || !imgRef.current) return;
-    const cr = containerRef.current.getBoundingClientRect();
-    const ir = imgRef.current.getBoundingClientRect();
-    setOverlayRect({
-      left: ir.left - cr.left,
-      top: ir.top - cr.top,
-      width: ir.width,
-      height: ir.height,
-    });
-  };
-
-  useEffect(() => {
-    updateOverlayRect();
-    window.addEventListener('resize', updateOverlayRect);
-    return () => window.removeEventListener('resize', updateOverlayRect);
-  }, []);
-
-  // Calibration mode (Head Front only)
-  const [calibrationMode, setCalibrationMode] = useState(false);
-  const adjustableNames = new Set(["EAR PHYSICAL", "EAR HEARING", "HEAD SIDE"]);
-  type Box = { x1: number; y1: number; x2: number; y2: number };
-
-  const loadSaved = (): Record<string, Box> => {
-    try {
-      const raw = localStorage.getItem('calibration_head_front');
-      return raw ? JSON.parse(raw) : {};
-    } catch {
-      return {};
-    }
-  };
-
-  const [calibration, setCalibration] = useState<Record<string, Box>>({});
-
-  useEffect(() => {
-    if (quadrant === 'head' && currentView === 'Front') {
-      setCalibration(loadSaved());
-    }
-  }, [quadrant, currentView]);
-
-  const saveCalibration = () => {
-    try { localStorage.setItem('calibration_head_front', JSON.stringify(calibration)); } catch {}
-  };
-  const resetCalibration = () => {
-    setCalibration({});
-    try { localStorage.removeItem('calibration_head_front'); } catch {}
-  };
-
-  const applyCalibration = (p: any): any => {
-    if (quadrant === 'head' && currentView === 'Front' && calibration[p.name]) {
-      return { ...p, ...calibration[p.name] };
-    }
-    return p;
-  };
-
-  const partsWithCalibration = parts.map(applyCalibration);
-
-  const clamp = (v: number, min = 0, max = 1) => Math.min(max, Math.max(min, v));
-  const [dragging, setDragging] = useState<string | null>(null);
-
   // Priority-based part selection to handle overlapping regions
   const getPartPriority = (partName: string): number => {
     const priorities: Record<string, number> = {
@@ -373,7 +308,7 @@ const DetailedBodyView = ({
 
   const selectBestPart = (x: number, y: number) => {
     // Find all parts that contain the cursor position
-    const matchingParts = partsWithCalibration.filter(p => 
+    const matchingParts = parts.filter(p => 
       x >= p.x1 && x <= p.x2 && y >= p.y1 && y <= p.y2
     );
 
@@ -400,59 +335,25 @@ const DetailedBodyView = ({
   };
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!containerRef.current || !overlayRect) return;
-    const containerBox = containerRef.current.getBoundingClientRect();
-    const mouseX = e.clientX - containerBox.left;
-    const mouseY = e.clientY - containerBox.top;
-
-    const relX = mouseX - overlayRect.left;
-    const relY = mouseY - overlayRect.top;
-
-    // If outside the image area, clear hover and stop
-    if (relX < 0 || relY < 0 || relX > overlayRect.width || relY > overlayRect.height) {
-      onBodyPartHover(null);
-      return;
-    }
-
-    const x = clamp(relX / overlayRect.width);
-    const y = clamp(relY / overlayRect.height);
-
-    // Update drag if in calibration mode
-    if (calibrationMode && dragging) {
-      const half = 0.02;
-      setCalibration((prev) => ({
-        ...prev,
-        [dragging]: {
-          x1: clamp(x - half),
-          y1: clamp(y - half),
-          x2: clamp(x + half),
-          y2: clamp(y + half),
-        },
-      }));
-      return; // while dragging, don't change hover label
-    }
-
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = (e.clientX - rect.left) / rect.width;
+    const y = (e.clientY - rect.top) / rect.height;
+    
     const part = selectBestPart(x, y);
     onBodyPartHover(part?.name || null);
   };
 
   const handleClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!containerRef.current || !overlayRect) return;
-    const containerBox = containerRef.current.getBoundingClientRect();
-    const mouseX = e.clientX - containerBox.left;
-    const mouseY = e.clientY - containerBox.top;
-    const relX = mouseX - overlayRect.left;
-    const relY = mouseY - overlayRect.top;
-    if (relX < 0 || relY < 0 || relX > overlayRect.width || relY > overlayRect.height) return;
-
-    const x = clamp(relX / overlayRect.width);
-    const y = clamp(relY / overlayRect.height);
-
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = (e.clientX - rect.left) / rect.width;
+    const y = (e.clientY - rect.top) / rect.height;
+    
     const part = selectBestPart(x, y);
     if (part?.name) {
       onBodyPartClick(part.name);
     }
   };
+
   return (
     <Card>
       <CardHeader>
