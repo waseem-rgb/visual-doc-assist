@@ -464,7 +464,7 @@ const DetailedBodyView = ({
                   className="absolute bg-background/80 backdrop-blur-sm rounded-full"
                   style={{
                     left: '65%',
-                    top: '55%',
+                    top: '52%',
                     width: '8%',
                     height: '10%',
                     transform: 'translate(-50%, -50%)'
