@@ -167,10 +167,10 @@ const getQuadrantParts = (quadrant: string, view: string) => {
           { name: "FOOT UNDERSIDE", x1: 0.50, y1: 0.96, x2: 0.66, y2: 0.99 }, // foot underside
         ],
         "Back view": [
-          { name: "HIP BACK", x1: 0.35, y1: 0.02, x2: 0.65, y2: 0.12 },
+          { name: "HIP BACK", x1: 0.28, y1: 0.08, x2: 0.45, y2: 0.18 }, // moved lower and to left side
           { name: "THIGH BACK", x1: 0.28, y1: 0.18, x2: 0.72, y2: 0.48 },
-          { name: "KNEE BACK", x1: 0.35, y1: 0.50, x2: 0.65, y2: 0.58 },
-          { name: "LOWER LEG BACK", x1: 0.32, y1: 0.62, x2: 0.68, y2: 0.82 },
+          { name: "KNEE BACK", x1: 0.28, y1: 0.50, x2: 0.58, y2: 0.58 }, // shifted left
+          { name: "LOWER LEG BACK", x1: 0.25, y1: 0.62, x2: 0.61, y2: 0.82 }, // shifted left
           { name: "ANKLE", x1: 0.38, y1: 0.84, x2: 0.62, y2: 0.90 },
           { name: "FOOT", x1: 0.28, y1: 0.92, x2: 0.72, y2: 0.98 },
           { name: "FOOT UNDERSIDE", x1: 0.32, y1: 0.94, x2: 0.68, y2: 0.98 },
