@@ -79,15 +79,15 @@ const getQuadrantParts = (quadrant: string, view: string) => {
       Front: [
         { name: "HAIR AND SCALP", x1: 0.25, y1: 0.02, x2: 0.75, y2: 0.25 },
         { name: "HEAD FRONT", x1: 0.42, y1: 0.16, x2: 0.58, y2: 0.25 }, // Forehead center
-        { name: "HEAD SIDE", x1: 0.765, y1: 0.285, x2: 0.805, y2: 0.345 }, // Right head side (hairline exact)
+        { name: "HEAD SIDE", x1: 0.82, y1: 0.32, x2: 0.88, y2: 0.40 }, // Right head side - temple area
         { name: "FACE", x1: 0.34, y1: 0.52, x2: 0.40, y2: 0.60 }, // Left cheek
         // Separate eye dots to avoid overlap - left and right eyes
         { name: "EYE VISION", x1: 0.42, y1: 0.40, x2: 0.46, y2: 0.45 }, // Left eye center
         { name: "EYE PHYSICAL", x1: 0.56, y1: 0.40, x2: 0.60, y2: 0.45 }, // Right eye center
         { name: "NOSE", x1: 0.49, y1: 0.48, x2: 0.51, y2: 0.54 }, // Nose tip
         { name: "MOUTH", x1: 0.48, y1: 0.60, x2: 0.52, y2: 0.66 }, // Lips center
-        { name: "EAR PHYSICAL", x1: 0.725, y1: 0.455, x2: 0.775, y2: 0.545 }, // Right ear - spot on ear
-        { name: "EAR HEARING", x1: 0.22, y1: 0.46, x2: 0.28, y2: 0.54 }, // Left ear - spot on ear
+        { name: "EAR PHYSICAL", x1: 0.85, y1: 0.46, x2: 0.91, y2: 0.54 }, // Right ear - directly on ear
+        { name: "EAR HEARING", x1: 0.09, y1: 0.46, x2: 0.15, y2: 0.54 }, // Left ear - directly on ear
         { name: "NECK", x1: 0.45, y1: 0.82, x2: 0.55, y2: 0.93 }, // Lower neck
         { name: "THROAT", x1: 0.47, y1: 0.76, x2: 0.53, y2: 0.82 }, // Throat area - moved down
         { name: "THROAT VOICE", x1: 0.48, y1: 0.78, x2: 0.52, y2: 0.84 }, // Voice box - moved down
