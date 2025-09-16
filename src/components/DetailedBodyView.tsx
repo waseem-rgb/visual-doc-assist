@@ -144,9 +144,9 @@ const getQuadrantParts = (quadrant: string, view: string) => {
     },
     arms: {
       Front: [
-        { name: "UPPER ARM", x1: 0.58, y1: 0.08, x2: 0.86, y2: 0.34 }, // shifted right and tightened to sit on biceps
-        { name: "FOREARM AND WRIST", x1: 0.25, y1: 0.45, x2: 0.75, y2: 0.70 },
-        { name: "HAND PALM", x1: 0.60, y1: 0.72, x2: 0.90, y2: 0.90 }, // moved up/right to palm center
+        { name: "UPPER ARM", x1: 0.50, y1: 0.10, x2: 0.70, y2: 0.28 }, // centered on biceps
+        { name: "FOREARM AND WRIST", x1: 0.36, y1: 0.48, x2: 0.68, y2: 0.72 }, // tightened to forearm
+        { name: "HAND PALM", x1: 0.26, y1: 0.74, x2: 0.46, y2: 0.92 }, // centered on palm
       ],
       "Back view": [
         { name: "UPPER ARM", x1: 0.20, y1: 0.05, x2: 0.80, y2: 0.40 },
@@ -483,9 +483,9 @@ const DetailedBodyView = ({
                           ? 'bg-primary scale-150' 
                           : selectedBodyParts.includes(part.name)
                           ? 'bg-green-500 scale-125'
-                          : `bg-red-500 ${['SHOULDER FRONT','EAR PHYSICAL','EAR HEARING','HEAD SIDE'].includes(part.name) ? '' : 'animate-pulse'}`
-                      }`}
-                    />
+                          : 'bg-red-500'
+                        }`}
+                      />
                   </div>
                 </div>
               );
