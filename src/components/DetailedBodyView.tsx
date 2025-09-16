@@ -139,7 +139,7 @@ const getQuadrantParts = (quadrant: string, view: string) => {
     buttocks: {
       "Back view": [
         { name: "LOWER BACK", x1: 0.22, y1: 0.02, x2: 0.78, y2: 0.38 },
-        { name: "BUTTOCKS AND ANUS", x1: 0.18, y1: 0.42, x2: 0.82, y2: 0.85 },
+        { name: "BUTTOCKS AND ANUS", x1: 0.18, y1: 0.65, x2: 0.82, y2: 0.95 }, // moved lower on buttocks
       ]
     },
     arms: {
