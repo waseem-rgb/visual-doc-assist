@@ -158,9 +158,9 @@ const getQuadrantParts = (quadrant: string, view: string) => {
         Front: [
           // Position all dots directly over the leg anatomy
           { name: "HIP FRONT", x1: 0.48, y1: 0.02, x2: 0.62, y2: 0.12 }, // hip positioned over leg
-          { name: "THIGH FRONT", x1: 0.44, y1: 0.18, x2: 0.58, y2: 0.48 }, // thigh center
+          { name: "THIGH FRONT", x1: 0.48, y1: 0.18, x2: 0.62, y2: 0.48 }, // thigh center - moved right
           { name: "KNEE FRONT", x1: 0.47, y1: 0.50, x2: 0.56, y2: 0.58 }, // knee center
-          { name: "LOWER LEG FRONT", x1: 0.48, y1: 0.62, x2: 0.56, y2: 0.82 }, // shin center
+          { name: "LOWER LEG FRONT", x1: 0.52, y1: 0.62, x2: 0.60, y2: 0.82 }, // shin center - moved right
           { name: "ANKLE", x1: 0.49, y1: 0.84, x2: 0.56, y2: 0.90 }, // ankle center
           { name: "FOOT", x1: 0.50, y1: 0.92, x2: 0.66, y2: 0.98 }, // foot center
           { name: "FOOT UPPER", x1: 0.50, y1: 0.88, x2: 0.66, y2: 0.92 }, // foot upper
