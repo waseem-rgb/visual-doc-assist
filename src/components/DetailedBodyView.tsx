@@ -101,8 +101,8 @@ const getQuadrantParts = (quadrant: string, view: string) => {
         { name: "SHOULDER FRONT", x1: 0.14, y1: 0.12, x2: 0.26, y2: 0.24 }, // Left shoulder cap (placed directly over deltoid)
         { name: "CHEST UPPER", x1: 0.30, y1: 0.25, x2: 0.70, y2: 0.42 },
         { name: "CHEST CENTRAL", x1: 0.35, y1: 0.45, x2: 0.65, y2: 0.62 },
-        { name: "CHEST SIDE", x1: 0.18, y1: 0.30, x2: 0.32, y2: 0.45 }, // Left chest side moved to proper chest area
-        { name: "BREAST", x1: 0.22, y1: 0.45, x2: 0.35, y2: 0.58 }, // Positioned on left breast area
+        { name: "CHEST SIDE", x1: 0.25, y1: 0.30, x2: 0.38, y2: 0.45 }, // Chest side moved more to right
+        { name: "BREAST", x1: 0.28, y1: 0.45, x2: 0.42, y2: 0.58 }, // Breast dot moved to right side of breast
       ],
       "Back view": [
         { name: "SHOULDER BACK", x1: 0.26, y1: 0.33, x2: 0.46, y2: 0.47 }, // aligned to back of left shoulder (nudged down)
@@ -444,6 +444,34 @@ const DetailedBodyView = ({
               className="block w-full h-auto max-h-[600px] object-contain"
               onLoad={updateImageBox}
             />
+            
+            {/* Nipple masking for chest/breast area */}
+            {quadrant === 'chest' && currentView === 'Front' && (
+              <>
+                {/* Left nipple mask */}
+                <div 
+                  className="absolute bg-background/80 backdrop-blur-sm rounded-full"
+                  style={{
+                    left: '22%',
+                    top: '50%',
+                    width: '6%',
+                    height: '8%',
+                    transform: 'translate(-50%, -50%)'
+                  }}
+                />
+                {/* Right nipple mask */}
+                <div 
+                  className="absolute bg-background/80 backdrop-blur-sm rounded-full"
+                  style={{
+                    left: '78%',
+                    top: '50%',
+                    width: '6%',
+                    height: '8%',
+                    transform: 'translate(-50%, -50%)'
+                  }}
+                />
+              </>
+            )}
             
             {/* Interactive red dots for each body part - positioned relative to the image container */}
             {parts.map((part) => {
