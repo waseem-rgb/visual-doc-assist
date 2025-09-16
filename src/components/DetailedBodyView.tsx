@@ -452,10 +452,10 @@ const DetailedBodyView = ({
                 <div 
                   className="absolute bg-background/80 backdrop-blur-sm rounded-full"
                   style={{
-                    left: '22%',
-                    top: '50%',
-                    width: '6%',
-                    height: '8%',
+                    left: '35%',
+                    top: '55%',
+                    width: '8%',
+                    height: '10%',
                     transform: 'translate(-50%, -50%)'
                   }}
                 />
@@ -463,10 +463,10 @@ const DetailedBodyView = ({
                 <div 
                   className="absolute bg-background/80 backdrop-blur-sm rounded-full"
                   style={{
-                    left: '78%',
-                    top: '50%',
-                    width: '6%',
-                    height: '8%',
+                    left: '65%',
+                    top: '55%',
+                    width: '8%',
+                    height: '10%',
                     transform: 'translate(-50%, -50%)'
                   }}
                 />
