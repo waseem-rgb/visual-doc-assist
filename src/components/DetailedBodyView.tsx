@@ -101,8 +101,8 @@ const getQuadrantParts = (quadrant: string, view: string) => {
         { name: "SHOULDER FRONT", x1: 0.14, y1: 0.12, x2: 0.26, y2: 0.24 }, // Left shoulder cap (placed directly over deltoid)
         { name: "CHEST UPPER", x1: 0.30, y1: 0.25, x2: 0.70, y2: 0.42 },
         { name: "CHEST CENTRAL", x1: 0.35, y1: 0.45, x2: 0.65, y2: 0.62 },
-        { name: "CHEST SIDE", x1: 0.65, y1: 0.30, x2: 0.80, y2: 0.45 }, // Right chest side moved to proper chest area
-        { name: "BREAST", x1: 0.42, y1: 0.35, x2: 0.58, y2: 0.48 }, // Positioned on breast area
+        { name: "CHEST SIDE", x1: 0.18, y1: 0.30, x2: 0.32, y2: 0.45 }, // Left chest side moved to proper chest area
+        { name: "BREAST", x1: 0.22, y1: 0.45, x2: 0.35, y2: 0.58 }, // Positioned on left breast area
       ],
       "Back view": [
         { name: "SHOULDER BACK", x1: 0.26, y1: 0.33, x2: 0.46, y2: 0.47 }, // aligned to back of left shoulder (nudged down)
