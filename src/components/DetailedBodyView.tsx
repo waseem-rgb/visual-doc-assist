@@ -150,8 +150,8 @@ const getQuadrantParts = (quadrant: string, view: string) => {
       ],
       "Back view": [
         { name: "UPPER ARM", x1: 0.20, y1: 0.05, x2: 0.80, y2: 0.40 },
-        { name: "ELBOW", x1: 0.40, y1: 0.48, x2: 0.60, y2: 0.56 }, // moved down to actual elbow area
-        { name: "HAND BACK", x1: 0.15, y1: 0.75, x2: 0.55, y2: 0.95 }, // positioned on back of hand
+        { name: "ELBOW", x1: 0.36, y1: 0.56, x2: 0.56, y2: 0.64 }, // moved slightly lower and left to sit over elbow
+        { name: "HAND BACK", x1: 0.46, y1: 0.84, x2: 0.68, y2: 0.96 }, // shifted right and tightened to back of hand
       ]
     },
       legs: {
