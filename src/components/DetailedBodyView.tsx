@@ -105,8 +105,8 @@ const getQuadrantParts = (quadrant: string, view: string) => {
         { name: "BREAST", x1: 0.35, y1: 0.30, x2: 0.65, y2: 0.50 }, // Over actual breast area
       ],
       "Back view": [
-        { name: "SHOULDER BACK", x1: 0.15, y1: 0.15, x2: 0.85, y2: 0.35 }, // moved down to actual shoulder area
-        { name: "UPPER BACK", x1: 0.18, y1: 0.40, x2: 0.82, y2: 0.85 }, // adjusted to avoid overlap
+        { name: "SHOULDER BACK", x1: 0.10, y1: 0.25, x2: 0.35, y2: 0.40 }, // moved to left bottom behind shoulder
+        { name: "UPPER BACK", x1: 0.18, y1: 0.45, x2: 0.82, y2: 0.85 }, // adjusted to avoid overlap
       ]
     },
     abdomen: {
@@ -132,8 +132,8 @@ const getQuadrantParts = (quadrant: string, view: string) => {
     },
     back: {
       "Back view": [
-        { name: "SHOULDER BACK", x1: 0.08, y1: 0.15, x2: 0.92, y2: 0.35 }, // moved down to actual shoulder area
-        { name: "UPPER BACK", x1: 0.18, y1: 0.40, x2: 0.82, y2: 0.85 }, // adjusted to avoid overlap
+        { name: "SHOULDER BACK", x1: 0.10, y1: 0.25, x2: 0.35, y2: 0.40 }, // moved to left bottom behind shoulder
+        { name: "UPPER BACK", x1: 0.18, y1: 0.45, x2: 0.82, y2: 0.85 }, // adjusted to avoid overlap
       ]
     },
     buttocks: {
