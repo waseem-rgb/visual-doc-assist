@@ -116,8 +116,8 @@ const getQuadrantParts = (quadrant: string, view: string) => {
         { name: "LOWER ABDOMEN LEFT", x1: 0.20, y1: 0.45, x2: 0.45, y2: 0.58 },
         { name: "LOWER ABDOMEN RIGHT", x1: 0.55, y1: 0.45, x2: 0.80, y2: 0.58 },
         { name: "FEMALE LOWER ABDOMEN", x1: 0.30, y1: 0.60, x2: 0.70, y2: 0.70 },
-        { name: "BOWELS DIARRHOEA", x1: 0.10, y1: 0.35, x2: 0.22, y2: 0.50 }, // Left flank
-        { name: "BOWELS CONSTIPATION", x1: 0.78, y1: 0.35, x2: 0.90, y2: 0.50 }, // Right flank
+        { name: "BOWELS DIARRHOEA", x1: 0.25, y1: 0.35, x2: 0.40, y2: 0.48 }, // Left middle abdomen
+        { name: "BOWELS CONSTIPATION", x1: 0.60, y1: 0.35, x2: 0.75, y2: 0.48 }, // Right middle abdomen
         { name: "BOWELS ABNORMAL STOOL", x1: 0.32, y1: 0.50, x2: 0.68, y2: 0.60 },
         { name: "GROIN MALE AND FEMALE", x1: 0.35, y1: 0.72, x2: 0.65, y2: 0.80 },
         { name: "MALE GENITALS", x1: 0.42, y1: 0.82, x2: 0.58, y2: 0.90 },
