@@ -156,14 +156,15 @@ const getQuadrantParts = (quadrant: string, view: string) => {
     },
       legs: {
         Front: [
-          { name: "HIP FRONT", x1: 0.35, y1: 0.02, x2: 0.65, y2: 0.12 },
-          { name: "THIGH FRONT", x1: 0.28, y1: 0.18, x2: 0.72, y2: 0.48 },
-          { name: "KNEE FRONT", x1: 0.35, y1: 0.50, x2: 0.65, y2: 0.58 },
-          { name: "LOWER LEG FRONT", x1: 0.32, y1: 0.62, x2: 0.68, y2: 0.82 },
-          { name: "ANKLE", x1: 0.38, y1: 0.84, x2: 0.62, y2: 0.90 },
-          { name: "FOOT", x1: 0.28, y1: 0.92, x2: 0.72, y2: 0.98 },
-          { name: "FOOT UPPER", x1: 0.30, y1: 0.88, x2: 0.70, y2: 0.94 },
-          { name: "FOOT UNDERSIDE", x1: 0.32, y1: 0.94, x2: 0.68, y2: 0.98 },
+          // Shift dots to the right leg and keep hip at same height but on the lateral side
+          { name: "HIP FRONT", x1: 0.72, y1: 0.02, x2: 0.88, y2: 0.12 }, // lateral right hip
+          { name: "THIGH FRONT", x1: 0.60, y1: 0.18, x2: 0.80, y2: 0.48 }, // right thigh
+          { name: "KNEE FRONT", x1: 0.62, y1: 0.50, x2: 0.74, y2: 0.58 }, // right knee
+          { name: "LOWER LEG FRONT", x1: 0.62, y1: 0.62, x2: 0.74, y2: 0.82 }, // right shin
+          { name: "ANKLE", x1: 0.63, y1: 0.84, x2: 0.73, y2: 0.90 }, // right ankle
+          { name: "FOOT", x1: 0.62, y1: 0.92, x2: 0.82, y2: 0.98 }, // right foot (general)
+          { name: "FOOT UPPER", x1: 0.62, y1: 0.88, x2: 0.82, y2: 0.92 }, // move up to create space
+          { name: "FOOT UNDERSIDE", x1: 0.62, y1: 0.96, x2: 0.82, y2: 0.99 }, // move slightly down for separation
         ],
         "Back view": [
           { name: "HIP BACK", x1: 0.35, y1: 0.02, x2: 0.65, y2: 0.12 },
