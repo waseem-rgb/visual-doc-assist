@@ -378,21 +378,19 @@ const DetailedBodyView = ({
       <CardContent>
         <div className="relative w-full max-w-2xl mx-auto">
           <div 
-            className="relative cursor-pointer"
+            className="relative overflow-hidden rounded-lg border bg-gradient-to-b from-accent to-accent/70 cursor-pointer"
             onMouseMove={handleMouseMove}
             onClick={handleClick}
             onMouseLeave={() => onBodyPartHover(null)}
           >
             {/* Dedicated body part image for this specific quadrant */}
-            <div className="overflow-hidden rounded-lg border bg-gradient-to-b from-accent to-accent/70">
-              <img 
-                src={dedicatedImage} 
-                alt={`${quadrant} ${currentView} detailed view`}
-                className="w-full h-auto max-h-[600px] object-contain"
-              />
-            </div>
+            <img 
+              src={dedicatedImage} 
+              alt={`${quadrant} ${currentView} detailed view`}
+              className="block w-full h-auto max-h-[600px] object-contain"
+            />
             
-            {/* Interactive red dots for each body part */}
+            {/* Interactive red dots for each body part - positioned relative to the image container */}
             {parts.map((part) => {
               const centerX = (part.x1 + part.x2) / 2;
               const centerY = (part.y1 + part.y2) / 2;
@@ -439,7 +437,7 @@ const DetailedBodyView = ({
               );
             })}
             
-            {/* Hover label */}
+            {/* Hover label - relative to image box */}
             {hoveredPart && (
               <div className="absolute top-4 left-4 bg-primary text-primary-foreground px-3 py-2 rounded-md text-sm font-medium shadow-lg border border-white/20 pointer-events-none z-10">
                 Click to select: {hoveredPart} ✓
