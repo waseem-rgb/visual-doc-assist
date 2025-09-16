@@ -144,9 +144,9 @@ const getQuadrantParts = (quadrant: string, view: string) => {
     },
     arms: {
       Front: [
-        { name: "UPPER ARM", x1: 0.20, y1: 0.05, x2: 0.80, y2: 0.40 },
+        { name: "UPPER ARM", x1: 0.58, y1: 0.08, x2: 0.86, y2: 0.34 }, // shifted right and tightened to sit on biceps
         { name: "FOREARM AND WRIST", x1: 0.25, y1: 0.45, x2: 0.75, y2: 0.70 },
-        { name: "HAND PALM", x1: 0.30, y1: 0.75, x2: 0.70, y2: 0.95 },
+        { name: "HAND PALM", x1: 0.60, y1: 0.72, x2: 0.90, y2: 0.90 }, // moved up/right to palm center
       ],
       "Back view": [
         { name: "UPPER ARM", x1: 0.20, y1: 0.05, x2: 0.80, y2: 0.40 },
