@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
@@ -79,15 +79,15 @@ const getQuadrantParts = (quadrant: string, view: string) => {
       Front: [
         { name: "HAIR AND SCALP", x1: 0.25, y1: 0.02, x2: 0.75, y2: 0.25 },
         { name: "HEAD FRONT", x1: 0.42, y1: 0.16, x2: 0.58, y2: 0.25 }, // Forehead center
-        { name: "HEAD SIDE", x1: 0.765, y1: 0.285, x2: 0.805, y2: 0.345 }, // Right head side (hairline exact)
+        { name: "HEAD SIDE", x1: 0.76, y1: 0.33, x2: 0.80, y2: 0.39 }, // Right head side (precise hairline/temple)
         { name: "FACE", x1: 0.34, y1: 0.52, x2: 0.40, y2: 0.60 }, // Left cheek
         // Separate eye dots to avoid overlap - left and right eyes
         { name: "EYE VISION", x1: 0.42, y1: 0.40, x2: 0.46, y2: 0.45 }, // Left eye center
         { name: "EYE PHYSICAL", x1: 0.56, y1: 0.40, x2: 0.60, y2: 0.45 }, // Right eye center
         { name: "NOSE", x1: 0.49, y1: 0.48, x2: 0.51, y2: 0.54 }, // Nose tip
         { name: "MOUTH", x1: 0.48, y1: 0.60, x2: 0.52, y2: 0.66 }, // Lips center
-         { name: "EAR PHYSICAL", x1: 0.865, y1: 0.445, x2: 0.925, y2: 0.555 }, // Right ear - directly over ear
-         { name: "EAR HEARING", x1: 0.13, y1: 0.445, x2: 0.19, y2: 0.555 }, // Left ear - directly over ear
+         { name: "EAR PHYSICAL", x1: 0.81, y1: 0.47, x2: 0.85, y2: 0.53 }, // Right ear - directly on ear
+         { name: "EAR HEARING", x1: 0.15, y1: 0.47, x2: 0.19, y2: 0.53 }, // Left ear - directly on ear
         { name: "NECK", x1: 0.45, y1: 0.82, x2: 0.55, y2: 0.93 }, // Lower neck
         { name: "THROAT", x1: 0.47, y1: 0.76, x2: 0.53, y2: 0.82 }, // Throat area - moved down
         { name: "THROAT VOICE", x1: 0.48, y1: 0.78, x2: 0.52, y2: 0.84 }, // Voice box - moved down
@@ -283,6 +283,29 @@ const DetailedBodyView = ({
   const title = getQuadrantTitle(quadrant, currentView);
   const dedicatedImage = getQuadrantImage(quadrant, currentView, gender);
 
+  // Measure actual rendered image box to place dots precisely on the image (no letterboxing drift)
+  const containerRef = useRef<HTMLDivElement>(null);
+  const imgRef = useRef<HTMLImageElement>(null);
+  const [imgBox, setImgBox] = useState({ left: 0, top: 0, width: 0, height: 0 });
+
+  const updateImageBox = () => {
+    if (!containerRef.current || !imgRef.current) return;
+    const cRect = containerRef.current.getBoundingClientRect();
+    const iRect = imgRef.current.getBoundingClientRect();
+    setImgBox({
+      left: iRect.left - cRect.left,
+      top: iRect.top - cRect.top,
+      width: iRect.width,
+      height: iRect.height,
+    });
+  };
+
+  useEffect(() => {
+    updateImageBox();
+    window.addEventListener("resize", updateImageBox);
+    return () => window.removeEventListener("resize", updateImageBox);
+  }, [dedicatedImage]);
+
   // Priority-based part selection to handle overlapping regions
   const getPartPriority = (partName: string): number => {
     const priorities: Record<string, number> = {
@@ -335,19 +358,47 @@ const DetailedBodyView = ({
   };
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    const x = (e.clientX - rect.left) / rect.width;
-    const y = (e.clientY - rect.top) / rect.height;
-    
+    if (!containerRef.current) return;
+    const cRect = containerRef.current.getBoundingClientRect();
+    const px = e.clientX - cRect.left;
+    const py = e.clientY - cRect.top;
+
+    // Only respond when inside the actual image box
+    if (
+      px < imgBox.left ||
+      py < imgBox.top ||
+      px > imgBox.left + imgBox.width ||
+      py > imgBox.top + imgBox.height
+    ) {
+      onBodyPartHover(null);
+      return;
+    }
+
+    const x = (px - imgBox.left) / imgBox.width;
+    const y = (py - imgBox.top) / imgBox.height;
+
     const part = selectBestPart(x, y);
     onBodyPartHover(part?.name || null);
   };
 
   const handleClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    const x = (e.clientX - rect.left) / rect.width;
-    const y = (e.clientY - rect.top) / rect.height;
-    
+    if (!containerRef.current) return;
+    const cRect = containerRef.current.getBoundingClientRect();
+    const px = e.clientX - cRect.left;
+    const py = e.clientY - cRect.top;
+
+    if (
+      px < imgBox.left ||
+      py < imgBox.top ||
+      px > imgBox.left + imgBox.width ||
+      py > imgBox.top + imgBox.height
+    ) {
+      return;
+    }
+
+    const x = (px - imgBox.left) / imgBox.width;
+    const y = (py - imgBox.top) / imgBox.height;
+
     const part = selectBestPart(x, y);
     if (part?.name) {
       onBodyPartClick(part.name);
@@ -378,6 +429,7 @@ const DetailedBodyView = ({
       <CardContent>
         <div className="relative w-full max-w-2xl mx-auto">
           <div 
+            ref={containerRef}
             className="relative overflow-hidden rounded-lg border bg-gradient-to-b from-accent to-accent/70 cursor-pointer"
             onMouseMove={handleMouseMove}
             onClick={handleClick}
