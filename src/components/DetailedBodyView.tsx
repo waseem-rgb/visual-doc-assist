@@ -437,9 +437,11 @@ const DetailedBodyView = ({
           >
             {/* Dedicated body part image for this specific quadrant */}
             <img 
+              ref={imgRef}
               src={dedicatedImage} 
               alt={`${quadrant} ${currentView} detailed view`}
               className="block w-full h-auto max-h-[600px] object-contain"
+              onLoad={updateImageBox}
             />
             
             {/* Interactive red dots for each body part - positioned relative to the image container */}
@@ -469,8 +471,8 @@ const DetailedBodyView = ({
                   <div
                     className="absolute pointer-events-none"
                     style={{
-                      left: `${centerX * 100}%`,
-                      top: `${centerY * 100}%`,
+                      left: imgBox.left + centerX * imgBox.width,
+                      top: imgBox.top + centerY * imgBox.height,
                       transform: 'translate(-50%, -50%)',
                       zIndex: zIndex
                     }}
@@ -481,7 +483,7 @@ const DetailedBodyView = ({
                           ? 'bg-primary scale-150' 
                           : selectedBodyParts.includes(part.name)
                           ? 'bg-green-500 scale-125'
-                          : `bg-red-500 ${['SHOULDER FRONT','EAR PHYSICAL','EAR HEARING'].includes(part.name) ? '' : 'animate-pulse'}`
+                          : `bg-red-500 ${['SHOULDER FRONT','EAR PHYSICAL','EAR HEARING','HEAD SIDE'].includes(part.name) ? '' : 'animate-pulse'}`
                       }`}
                     />
                   </div>
